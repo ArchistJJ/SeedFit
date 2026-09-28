@@ -374,8 +374,8 @@
       updateProjectsStatus();
     }
 
-    const STORAGE_KEY_THEME = 'J_APP_THEME_V1';
-    let isLightMode = true; // 기본적으로 화이트 테마
+    const STORAGE_KEY_THEME = 'J_APP_THEME_V2';
+    let isLightMode = false; // 기본적으로 블랙(다크) 테마
     try {
       const savedTheme = safeStorage.get(STORAGE_KEY_THEME);
       if (savedTheme !== null) {

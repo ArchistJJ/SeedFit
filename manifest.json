@@ -4,8 +4,8 @@
   "description": "베팅 및 시드 챌린지 기록·통계 PWA 어플",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#ffffff",
+  "background_color": "#000000",
+  "theme_color": "#000000",
   "orientation": "portrait",
   "icons": [
     {
