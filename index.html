@@ -217,17 +217,26 @@
         <div class="space-y-1.5">
           <div class="flex justify-between items-center">
             <label class="text-xs font-semibold text-neutral-300">적중 시 회수(환급) 금액</label>
-            <span id="expectedProfitNotice" class="text-[10px] text-neutral-400 font-medium">예상 순손익: +0원</span>
+            <div id="oddsLiveBadge" class="hidden items-center gap-1 bg-amber-500/15 border border-amber-500/30 px-2 py-0.5 rounded-full">
+              <span class="text-[10px] text-amber-300 font-medium">배당률</span>
+              <span id="oddsLiveValue" class="text-xs font-bold text-amber-400 font-mono">0.00배</span>
+            </div>
           </div>
           <div class="relative">
             <input type="number" id="inputExpectedReturn" placeholder="예: 95000" class="w-full bg-neutral-800 border border-neutral-700 rounded-xl px-3.5 py-2.5 text-base font-bold text-emerald-400 placeholder-neutral-500 focus:outline-none focus:border-emerald-500 font-mono" />
             <span class="absolute right-3.5 top-2.5 text-sm font-semibold text-neutral-400">원</span>
           </div>
-          <div class="flex gap-1.5 pt-1">
-            <button type="button" onclick="window.applyReturnMultiplier(1.5)" class="text-[10px] bg-neutral-800 hover:bg-neutral-700 text-neutral-300 px-2 py-1 rounded-lg border border-neutral-700/60">x1.5배</button>
-            <button type="button" onclick="window.applyReturnMultiplier(1.8)" class="text-[10px] bg-neutral-800 hover:bg-neutral-700 text-neutral-300 px-2 py-1 rounded-lg border border-neutral-700/60">x1.8배</button>
-            <button type="button" onclick="window.applyReturnMultiplier(2.0)" class="text-[10px] bg-neutral-800 hover:bg-neutral-700 text-neutral-300 px-2 py-1 rounded-lg border border-neutral-700/60">x2.0배</button>
-            <button type="button" onclick="window.applyReturnMultiplier(3.0)" class="text-[10px] bg-neutral-800 hover:bg-neutral-700 text-neutral-300 px-2 py-1 rounded-lg border border-neutral-700/60">x3.0배</button>
+          <!-- 계산 요약 안내 바 (배당률 및 예상 순익 실시간 계산) -->
+          <div id="expectedReturnSummary" class="hidden text-[11px] p-2 rounded-lg bg-neutral-800/90 border border-neutral-700/60 items-center justify-between">
+            <span class="text-neutral-400 flex items-center gap-1.5">
+              <span>계산 배당률</span>
+              <strong id="summaryOdds" class="text-amber-400 font-bold font-mono text-xs">0.00배</strong>
+            </span>
+            <span class="flex items-center gap-1.5 font-mono">
+              <span class="text-neutral-400">예상 순익</span>
+              <strong id="summaryProfit" class="text-emerald-400 font-bold">+0원</strong>
+              <span id="summaryRoi" class="text-emerald-400/80 text-[10px]">(+0%)</span>
+            </span>
           </div>
         </div>
 
@@ -2275,31 +2284,62 @@
       }
     }
 
-    window.applyReturnMultiplier = function(mult) {
-      const investInput = document.getElementById('inputInvestAmount');
-      const returnInput = document.getElementById('inputExpectedReturn');
-      const inv = Number(investInput.value) || 0;
-      if (inv > 0) {
-        returnInput.value = Math.round(inv * mult);
-      } else {
-        showToast('먼저 투입 금액을 입력해주세요.');
-      }
-      updateExpectedProfitNotice();
-    };
-
     function updateExpectedProfitNotice() {
       const inv = Number(document.getElementById('inputInvestAmount')?.value) || 0;
       const ret = Number(document.getElementById('inputExpectedReturn')?.value) || 0;
-      const notice = document.getElementById('expectedProfitNotice');
-      if (!notice) return;
+      const oddsBadge = document.getElementById('oddsLiveBadge');
+      const oddsValue = document.getElementById('oddsLiveValue');
+      const summary = document.getElementById('expectedReturnSummary');
+      const summaryOdds = document.getElementById('summaryOdds');
+      const summaryProfit = document.getElementById('summaryProfit');
+      const summaryRoi = document.getElementById('summaryRoi');
+
+      if (!summary) return;
+
       if (ret > 0 && inv > 0) {
+        const odds = (ret / inv).toFixed(2);
         const profit = ret - inv;
         const roi = Math.round((profit / inv) * 100);
-        notice.textContent = `예상 순손익: ${profit >= 0 ? '+' : ''}${profit.toLocaleString()}원 (${roi}%)`;
-        notice.className = `text-[10px] font-medium ${profit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+
+        if (oddsBadge && oddsValue) {
+          oddsValue.textContent = `${odds}배`;
+          oddsBadge.classList.remove('hidden');
+          oddsBadge.classList.add('flex');
+        }
+
+        if (summaryOdds) summaryOdds.textContent = `${odds}배`;
+        if (summaryProfit) {
+          summaryProfit.textContent = `${profit >= 0 ? '+' : ''}${profit.toLocaleString()}원`;
+          summaryProfit.className = `font-bold font-mono text-xs ${profit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+        }
+        if (summaryRoi) {
+          summaryRoi.textContent = `(${roi >= 0 ? '+' : ''}${roi}%)`;
+          summaryRoi.className = `text-[10px] font-mono ${roi >= 0 ? 'text-emerald-400/80' : 'text-rose-400/80'}`;
+        }
+
+        summary.classList.remove('hidden');
+        summary.classList.add('flex');
+      } else if (ret > 0 && inv === 0) {
+        if (oddsBadge) {
+          oddsBadge.classList.remove('flex');
+          oddsBadge.classList.add('hidden');
+        }
+        if (summaryOdds) summaryOdds.textContent = '투입금 필요';
+        if (summaryProfit) {
+          summaryProfit.textContent = '투입 금액 입력 시 계산';
+          summaryProfit.className = 'text-neutral-400 font-normal text-[11px]';
+        }
+        if (summaryRoi) summaryRoi.textContent = '';
+
+        summary.classList.remove('hidden');
+        summary.classList.add('flex');
       } else {
-        notice.textContent = '예상 순손익: +0원';
-        notice.className = 'text-[10px] text-neutral-400 font-medium';
+        if (oddsBadge) {
+          oddsBadge.classList.remove('flex');
+          oddsBadge.classList.add('hidden');
+        }
+        summary.classList.remove('flex');
+        summary.classList.add('hidden');
       }
     }
 
