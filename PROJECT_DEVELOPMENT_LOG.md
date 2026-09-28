@@ -32,3 +32,32 @@
 - 초기 진입 시 화이트 테마(`isLightMode = true`) 적용 확인.
 - 테마 토글 시 `J_APP_THEME_V1`에 `light`/`dark` 저장 및 재로드 시 저장된 상태 복원 확인.
 - 자바스크립트 문법 검사 통과 완료.
+
+## [2026-09-28] GitHub 레포지토리 연결 및 GitHub Pages 라이브 실서비스 배포 완료
+
+### 1. 연결 계정 및 환경
+- 연결된 GitHub 계정: **`ArchistJJ`**
+- 신규 레포지토리: **`https://github.com/ArchistJJ/j-app`**
+- 브랜치: `main`
+
+### 2. 배포 결과
+- **라이브 HTTPS 배포 주소**: **`https://archistjj.github.io/j-app/`**
+- **PWA 설정**:
+  - `manifest.json`: HTTP 200 검증 완료
+  - `sw.js` (오프라인 캐싱 서비스 워커): HTTP 200 검증 완료
+  - `apple-touch-icon.png`, `icon-192.png`: HTTP 200 검증 완료
+  - `index.html`: HTTP 200 검증 완료
+- 아이폰 사파리(Safari)에서 즉시 설치 가능한 환경 구축 완료.
+
+## [2026-09-28] 저장소 보안(비공개) 전환 및 자동 업데이트·데이터 무결성 강화
+
+### 1. 보안 및 비공개(Private) 설정
+- GitHub 저장소(`ArchistJJ/j-app`)를 **비공개(`private: true`)**로 즉시 전환 완료 (오직 본인만 코드 열람 가능).
+- 보안 무결성 검증:
+  - 깃허브 코드 상에 개인 API 키, 비밀번호, 토큰 등 민감 정보 일체 미포함 확인.
+  - 사용자의 베팅 기록, 금액, 메모, 통계 등 일체의 데이터는 깃허브나 외부 서버로 전송되지 않으며, **오직 본인의 아이폰 로컬(LocalStorage)에만 안전하게 암호화 보존**됨을 검증.
+
+### 2. PWA 무손실 자동 업데이트 로직 강화
+- `sw.js`: HTML 페이지 탐색 요청 시 **Network-First** 전략을 적용하여, 인터넷 연결 시 항상 최신 코드를 즉시 불러오고 백그라운드 캐시를 갱신하도록 개선. 오프라인 시에는 캐시된 버전으로 부드럽게 대체 구동.
+- `index.html`: 앱 실행 및 화면 복귀(visibility change) 시 서비스 워커 업데이트 체크(`reg.update()`) 자동 트리거 추가.
+- 데이터 보존 검증: 코드가 업데이트되고 새 버전이 배포되어도 기기 로컬 스토리지(`J_APP_RECORDS_V1`, `J_APP_PROJECTS_V1`, `J_APP_THEME_V1`) 데이터는 100% 무손실 영구 유지됨을 확인.
