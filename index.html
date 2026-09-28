@@ -242,10 +242,9 @@
 
         <div class="space-y-1.5">
           <label class="text-xs font-semibold text-neutral-300">카테고리 1 (유형)</label>
-          <div class="grid grid-cols-3 gap-2" id="categoryButtons">
-            <button type="button" onclick="window.selectCategory('승무패')" class="category-btn py-2 rounded-xl text-xs font-semibold bg-blue-600 text-white border border-blue-500">승무패</button>
-            <button type="button" onclick="window.selectCategory('언옵')" class="category-btn py-2 rounded-xl text-xs font-semibold bg-neutral-800 text-neutral-300 border border-neutral-700">언옵</button>
-            <button type="button" onclick="window.selectCategory('핸디')" class="category-btn py-2 rounded-xl text-xs font-semibold bg-neutral-800 text-neutral-300 border border-neutral-700">핸디</button>
+          <div class="grid grid-cols-2 gap-2" id="categoryButtons">
+            <button type="button" onclick="window.selectCategory('승무패')" class="category-btn py-2.5 rounded-xl text-xs font-semibold bg-blue-600 text-white border border-blue-500">승무패</button>
+            <button type="button" onclick="window.selectCategory('언옵&핸디')" class="category-btn py-2.5 rounded-xl text-xs font-semibold bg-neutral-800 text-neutral-300 border border-neutral-700">언옵&핸디</button>
           </div>
         </div>
 
@@ -506,7 +505,7 @@
         investAmount: 30000,
         expectedReturn: 60000,
         returnAmount: 0,
-        category: '언옵',
+        category: '언옵&핸디',
         fold: '2폴',
         status: 'LOSE',
         memo: 'KBO 잠실 8.5 오버',
@@ -518,7 +517,7 @@
         investAmount: 50000,
         expectedReturn: 95000,
         returnAmount: 95000,
-        category: '핸디',
+        category: '언옵&핸디',
         fold: '1폴',
         status: 'WIN',
         memo: 'NBA 레이커스 -4.5 핸디승',
@@ -559,9 +558,12 @@
     try {
       const rawR = safeStorage.get(STORAGE_KEY_RECORDS);
       records = rawR ? JSON.parse(rawR) : DEFAULT_RECORDS;
-      // 호환성 보장: fold 및 expectedReturn 필드 자동 마이그레이션
+      // 호환성 보장: fold, expectedReturn 및 category 마이그레이션 (언옵, 핸디 -> 언옵&핸디)
       records.forEach(r => {
         if (!r.fold) r.fold = '1폴';
+        if (r.category === '언옵' || r.category === '핸디') {
+          r.category = '언옵&핸디';
+        }
         if (r.expectedReturn === undefined) {
           r.expectedReturn = (r.returnAmount && r.returnAmount > 0) ? r.returnAmount : Math.round(r.investAmount * 1.9);
         }
@@ -1058,8 +1060,7 @@
                 { id: 'ALL', label: '전체 보기' },
                 { id: 'PENDING', label: `정산 대기중 ⏳${pendingCount > 0 ? ` (${pendingCount})` : ''}` },
                 { id: '승무패', label: '승무패' },
-                { id: '언옵', label: '언옵' },
-                { id: '핸디', label: '핸디' }
+                { id: '언옵&핸디', label: '언옵&핸디' }
               ].map(item => `
                 <button onclick="window.setRecordFilter('${item.id}')" class="px-3 py-1.5 rounded-full font-semibold transition shrink-0 ${recordFilterCategory === item.id ? (item.id === 'PENDING' ? 'bg-amber-500 text-black shadow-md font-bold' : 'bg-blue-600 text-white shadow-sm') : (isLightMode ? 'bg-white text-neutral-600 border border-neutral-200' : 'bg-neutral-900 text-neutral-400 border border-neutral-800')}">
                   ${item.label}
@@ -1144,9 +1145,8 @@
 
     function getCategoryColorClass(cat) {
       if (cat === '승무패') return 'bg-blue-500/20 text-blue-400 border border-blue-500/30';
-      if (cat === '언옵') return 'bg-amber-500/20 text-amber-400 border border-amber-500/30';
-      if (cat === '핸디') return 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
-      return 'bg-neutral-800 text-neutral-300';
+      if (cat === '언옵&핸디' || cat === '언옵' || cat === '핸디') return 'bg-purple-500/20 text-purple-400 border border-purple-500/30';
+      return 'bg-neutral-800 text-neutral-300 border border-neutral-700';
     }
 
     function getFoldColorClass(fold) {
@@ -1611,8 +1611,8 @@
         svgGraphHtml = `<div class="h-20 flex items-center justify-center text-xs text-neutral-500">선택된 조건의 정산 기록이 쌓이면 손익 곡선이 나타납니다.</div>`;
       }
 
-      // 5. 3x3 교차 분석 매트릭스 데이터 생성 (승무패/언옵/핸디 x 1폴/2폴/3폴)
-      const categories = ['승무패', '언옵', '핸디'];
+      // 5. 2x3 교차 분석 매트릭스 데이터 생성 (승무패/언옵&핸디 x 1폴/2폴/3폴)
+      const categories = ['승무패', '언옵&핸디'];
       const folds = ['1폴', '2폴', '3폴'];
 
       const matrixData = categories.map(cat => {
@@ -1716,7 +1716,7 @@
               ` : ''}
             </div>
             <div class="flex space-x-1.5 overflow-x-auto pb-0.5 custom-scroll text-xs">
-              ${['ALL', '승무패', '언옵', '핸디'].map(cat => `
+              ${['ALL', '승무패', '언옵&핸디'].map(cat => `
                 <button onclick="window.setStatsCategoryFilter('${cat}')" class="px-3 py-1.5 rounded-full font-semibold transition shrink-0 ${statsCategoryFilter === cat ? 'bg-blue-600 text-white shadow-sm' : (isLightMode ? 'bg-neutral-100 text-neutral-600 border border-neutral-200' : 'bg-neutral-800 text-neutral-400 border border-neutral-700/60')}">
                   ${cat === 'ALL' ? '전체 유형' : cat}
                 </button>
