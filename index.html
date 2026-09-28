@@ -977,12 +977,12 @@
     }
 
     window.setRecordFilter = function(cat) {
-      recordFilterCategory = cat;
+      recordFilterCategory = (recordFilterCategory === cat ? 'ALL' : cat);
       renderCurrentTab();
     };
 
     window.setRecordFoldFilter = function(fold) {
-      recordFilterFold = fold;
+      recordFilterFold = (recordFilterFold === fold ? 'ALL' : fold);
       renderCurrentTab();
     };
 
@@ -1465,18 +1465,39 @@
     };
 
     window.setStatsCategoryFilter = function(cat) {
-      statsCategoryFilter = cat;
+      statsCategoryFilter = (statsCategoryFilter === cat ? 'ALL' : cat);
       renderCurrentTab();
     };
 
     window.setStatsFoldFilter = function(fold) {
-      statsFoldFilter = fold;
+      statsFoldFilter = (statsFoldFilter === fold ? 'ALL' : fold);
       renderCurrentTab();
     };
 
     window.setStatsCombo = function(cat, fold) {
-      statsCategoryFilter = cat;
-      statsFoldFilter = fold;
+      if (fold === 'ALL') {
+        if (statsCategoryFilter === cat && statsFoldFilter === 'ALL') {
+          statsCategoryFilter = 'ALL';
+        } else {
+          statsCategoryFilter = cat;
+          statsFoldFilter = 'ALL';
+        }
+      } else if (cat === 'ALL') {
+        if (statsFoldFilter === fold && statsCategoryFilter === 'ALL') {
+          statsFoldFilter = 'ALL';
+        } else {
+          statsCategoryFilter = 'ALL';
+          statsFoldFilter = fold;
+        }
+      } else {
+        if (statsCategoryFilter === cat && statsFoldFilter === fold) {
+          statsCategoryFilter = 'ALL';
+          statsFoldFilter = 'ALL';
+        } else {
+          statsCategoryFilter = cat;
+          statsFoldFilter = fold;
+        }
+      }
       renderCurrentTab();
     };
 
@@ -1488,8 +1509,7 @@
 
     // 하위 호환성 유지
     window.selectStatsCategory = function(cat) {
-      statsCategoryFilter = cat;
-      renderCurrentTab();
+      window.setStatsCategoryFilter(cat);
     };
 
     window.exitCategoryStats = function() {
@@ -1889,69 +1909,6 @@
               </div>
             `).join('')}
           </div>
-        </div>
-
-        <!-- 선택 조합 상세 기록 목록 -->
-        <div class="space-y-2 pt-2">
-          <div class="flex justify-between items-center px-1">
-            <span class="text-xs font-bold ${isLightMode ? 'text-neutral-900' : 'text-white'}">선택 조건 상세 내역 (${comboRecords.length}건)</span>
-            <span class="text-[10px] text-neutral-400">터치하여 정산/수정</span>
-          </div>
-
-          ${comboRecords.length === 0 ? `
-            <div class="text-center py-10 text-neutral-500 text-xs ${isLightMode ? 'bg-white' : 'bg-neutral-900/40'} rounded-2xl border ${isLightMode ? 'border-neutral-200' : 'border-neutral-800'}">
-              선택된 조건에 해당하는 기록이 없습니다.<br>
-              ${isFilterActive ? `<button onclick="window.resetStatsFilters()" class="mt-2 text-blue-400 font-semibold underline text-xs">필터 초기화하기</button>` : ''}
-            </div>
-          ` : comboRecords.map(r => {
-            const project = projects.find(p => p.id === r.projectId);
-            let statusBadge = '';
-            let profitDisplay = '';
-
-            if (r.status === 'PENDING') {
-              statusBadge = `<span class="bg-amber-500/15 text-amber-400 border border-amber-500/30 text-[10px] font-bold px-2 py-0.5 rounded-full animate-pulse">대기중</span>`;
-              profitDisplay = `<span class="text-xs text-amber-400 font-mono">진행 중</span>`;
-            } else if (r.status === 'WIN') {
-              const profit = (r.returnAmount || 0) - r.investAmount;
-              statusBadge = `<span class="bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold px-2 py-0.5 rounded-full">적중 🎯</span>`;
-              profitDisplay = `<span class="text-xs font-mono font-bold text-emerald-400">+${profit.toLocaleString()}원</span>`;
-            } else {
-              statusBadge = `<span class="bg-rose-500/15 text-rose-400 border border-rose-500/30 text-[10px] font-bold px-2 py-0.5 rounded-full">미적중 ❌</span>`;
-              profitDisplay = `<span class="text-xs font-mono font-bold text-rose-400">-${r.investAmount.toLocaleString()}원</span>`;
-            }
-
-            return `
-              <div onclick="window.openSettleModal(${r.id})" class="cursor-pointer active:scale-[0.98] transition ${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900/80 hover:bg-neutral-900 border-neutral-800/90'} p-3.5 rounded-2xl border space-y-2 shadow-sm">
-                <div class="flex justify-between items-center">
-                  <div class="flex items-center space-x-1.5">
-                    <span class="text-[11px] font-bold px-2 py-0.5 rounded-lg ${getCategoryColorClass(r.category)}">${r.category}</span>
-                    <span class="text-[11px] font-bold px-2 py-0.5 rounded-lg ${getFoldColorClass(r.fold || '1폴')}">${r.fold || '1폴'}</span>
-                    ${project ? `<span class="text-[9px] bg-purple-500/15 text-purple-400 border border-purple-500/30 px-1.5 py-0.5 rounded font-medium truncate max-w-[100px]">${project.name}</span>` : ''}
-                  </div>
-                  ${statusBadge}
-                </div>
-
-                <div class="flex justify-between items-baseline pt-1">
-                  <div>
-                    <div class="text-sm font-bold font-mono ${isLightMode ? 'text-neutral-900' : 'text-white'}">
-                      투입 ${r.investAmount.toLocaleString()}원
-                    </div>
-                    ${r.status === 'WIN' ? `<div class="text-[11px] text-neutral-400">회수 ${r.returnAmount.toLocaleString()}원</div>` : ''}
-                  </div>
-                  <div class="text-right">
-                    ${profitDisplay}
-                  </div>
-                </div>
-
-                ${r.memo ? `<div class="text-xs text-neutral-400 truncate">${r.memo}</div>` : ''}
-
-                <div class="flex justify-between items-center pt-1 border-t ${isLightMode ? 'border-neutral-100' : 'border-neutral-800/60'} text-[10px] text-neutral-500">
-                  <span>${r.createdAt}</span>
-                  <span class="text-blue-400 font-medium">상세/정산 ></span>
-                </div>
-              </div>
-            `;
-          }).join('')}
         </div>
       `;
     }
