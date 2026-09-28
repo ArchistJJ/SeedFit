@@ -1,5 +1,5 @@
 // J PWA Service Worker
-const CACHE_NAME = 'j-cache-v1.0.5';
+const CACHE_NAME = 'j-cache-v1.0.6';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
@@ -28,16 +28,23 @@ self.addEventListener('activate', (event) => {
           }
         })
       );
+    }).then(() => self.clients.claim()).then(() => {
+      return self.clients.matchAll({ type: 'window' }).then((clients) => {
+        clients.forEach((client) => {
+          if ('navigate' in client) {
+            client.navigate(client.url);
+          }
+        });
+      });
     })
   );
-  self.clients.claim();
 });
 
 self.addEventListener('fetch', (event) => {
   // HTML 페이지 탐색은 Network-First: 온라인 시 항상 최신 코드를 즉시 불러오고 캐시 갱신, 오프라인 시 캐시 사용
   if (event.request.mode === 'navigate' || event.request.destination === 'document') {
     event.respondWith(
-      fetch(event.request)
+      fetch(event.request, { cache: 'reload' })
         .then((networkResponse) => {
           if (networkResponse && networkResponse.status === 200) {
             const responseToCache = networkResponse.clone();

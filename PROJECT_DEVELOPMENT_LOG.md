@@ -164,3 +164,30 @@
 - Node.js 스택 검사: 태그 불일치 0건, 스크립트 실행 오류 0건 확인.
 - 깃허브 푸시 및 GitHub Pages 배포 검증.
 
+## [2026-09-28] iOS 설치형 웹앱(PWA Standalone) 캐시 강제 무효화 및 WebKit flex 잘림 방지 (v1.0.6)
+
+### 1. 현상 분석
+- 사파리 브라우저에서는 하단 네비게이션 바가 정상 노출되나, 아이폰 홈 화면에 설치된 웹앱(WebClip)에서는 여전히 비정상/오류 화면으로 노출되고 앱을 종료 후 재실행해도 갱신되지 않는 현상.
+- **원인 1 (iOS Standalone WebKit의 영구 캐시 격리)**:
+  - iOS 홈 화면 추가 웹앱은 일반 사파리와 격리된 독립 샌드박스로 구동되며, 주소창/새로고침 버튼이 없음.
+  - 앱 종료/재실행 시에도 iOS가 이전 메모리/디스크 스냅샷 및 이전 Service Worker 캐시(`j-cache-v1.0.3/1.0.4`)를 그대로 복원하여 구버전 HTML을 지속 렌더링함.
+- **원인 2 (WebKit Flexbox min-h-0 결함)**:
+  - Safari WebKit 엔진 특성상 스크롤 가능한 flex 아이템(`main#contentArea`)에 `min-h-0`(`min-height: 0`)이 명시되지 않을 경우, 내부 컨텐츠 높이에 의해 flex 아이템이 강제로 확장되며 하단의 `bottomTabBar`를 뷰포트 바깥으로 밀어내어 잘리는 현상 발생.
+
+### 2. 해결 및 조치 내역
+1. **Service Worker 강제 네비게이션/새로고침 탑재 (`sw.js`)**:
+   - `sw.js`의 `activate` 이벤트 발생 시, 구버전 캐시 삭제 후 `self.clients.matchAll()`로 현재 열려 있는 모든 창을 탐색하여 **`client.navigate(client.url)`를 자동 호출**.
+   - 이를 통해 사용자가 구버전 HTML을 보고 있더라도 백그라운드에서 신규 SW가 활성화되는 순간 앱 화면이 자동으로 최신 빌드로 강제 리로드되도록 구현.
+   - `fetch` 이벤트 내 탐색 요청 시 `{ cache: 'reload' }` 옵션을 강제하여 브라우저 HTTP 캐시를 완전 우회하고 원본 서버 최신 HTML을 즉각 수신.
+   - `CACHE_NAME`을 `j-cache-v1.0.6`으로 승격.
+2. **WebKit Flexbox 레이아웃 무결성 확보**:
+   - `#appContainer` 및 `main#contentArea`에 `min-h-0`을 명시하여 내부 컨텐츠가 늘어나더라도 상단 헤더, 하단 액션 바, 하단 탭 바의 위치와 높이가 100% 온전히 보존되도록 레이아웃 수정.
+3. **인앱 수동 새로고침 & 캐시 비우기 기능 추가**:
+   - 상단 헤더 우측에 원터치 **[새로고침]** 버튼 배치 (`window.forceAppReload`).
+   - 설정(Settings) 탭 내 **[v1.0.6 앱 버전 및 캐시 즉시 갱신]** 전용 관리 카드 추가.
+   - 버튼 터치 시 Service Worker 캐시 전면 초기화 후 `window.location.reload()` 실행.
+
+### 3. 검증
+- Node.js 스택 검사 및 스크립트 실행 무결성 100% 통과.
+- GitHub 원격 저장소 푸시 및 Pages 빌드 배포 완료.
+
