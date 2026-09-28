@@ -139,3 +139,28 @@
 - Node.js 스크립트 기반 `index.html` 및 `j_simulator.html` 전체 자바스크립트 문법 검증 100% 통과.
 - DOM 계층 분리 후 하단 네비게이션 바 및 4개 탭 전환 정상 구동 확인.
 
+## [2026-09-28] 하단 바 실종의 근본 원인(newRecordModal 미닫힘) 최종 박멸 및 즉각 갱신 배포
+
+### 1. 근본 원인 정밀 규명
+- 이전 커밋에서 `newProjectModal`의 닫는 태그를 수정했으나, 그 상단에 위치한 **`#newRecordModal` 내부의 메모 인풋 래퍼(`line 175: <div class="space-y-1.5">`)의 닫는 `</div>`가 누락**되어 있었음.
+- 이 누락으로 인해 `</div>` 계층이 1단계씩 밀려나며 `#newRecordModal` 전체가 닫히지 않고 열려 있는 상태로 유지되었고, 그 결과 하단의 `#newProjectModal`, `#mentalCareModal`, 그리고 **`<nav id="bottomTabBar">` 전체가 여전히 `class="hidden"`을 가진 `#newRecordModal`의 자식 요소로 파싱**되어 렌더링되지 않았음.
+- 브라우저 PWA 캐시 문제: 모바일 PWA 환경에서 이전 서비스 워커 캐시가 유지되어 수정 사항이 즉각 반영되지 않았던 점도 병행 확인.
+
+### 2. 해결 및 조치 내역
+1. **DOM 무결성 완전 복원**:
+   - `inputRecordMemo` 래퍼에 누락된 `</div>` 삽입.
+   - Node.js 기반 정밀 파서로 `index.html` 및 `j_simulator.html` 전체 태그 열림/닫힘 대조 검증 수행 -> **Mismatch 0건, Unclosed 0건 확인 완료**.
+   - `<nav id="bottomTabBar">`가 최상위 `#appContainer`의 직계 자식(depth 1)으로 완전히 독립 확인.
+2. **모바일 뷰포트 및 레이아웃 안정화 (`shrink-0`, `100dvh`)**:
+   - iOS Safari 주소창/하단 툴바로 인한 탭 바 밀림 및 축소 방지를 위해 `#topHeader`, `#bottomActionBar`, `#bottomTabBar`에 `shrink-0` 적용.
+   - `body`와 `#appContainer`에 `h-[100dvh]`를 지정하여 모바일 동적 화면 높이에서 잘림 현상 방지.
+   - 테마 전환 함수(`applyThemeUI`) 내 클래스 목록에도 `shrink-0` 및 `h-[100dvh]` 완전 동기화.
+3. **PWA 캐시 우회 및 실시간 자동 갱신 메커니즘 구축**:
+   - 서비스 워커 등록 URL을 `./sw.js?v=1.0.5`로 지정하여 브라우저 수준의 HTTP 캐시 무효화.
+   - `sw.js`의 `CACHE_NAME`을 `j-cache-v1.0.5`로 승격.
+   - `controllerchange` 이벤트 리스너를 장착하여 새 서비스 워커가 활성화되는 즉시 화면이 자동으로 최신 빌드로 갱신되도록 구현.
+
+### 3. 검증
+- Node.js 스택 검사: 태그 불일치 0건, 스크립트 실행 오류 0건 확인.
+- 깃허브 푸시 및 GitHub Pages 배포 검증.
+
