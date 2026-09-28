@@ -1,0 +1,1693 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="J">
+  <meta name="theme-color" content="#000000">
+  <title>J</title>
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="manifest" href="manifest.json">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    * {
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      box-sizing: border-box;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Pretendard", Roboto, Helvetica, Arial, sans-serif;
+    }
+    input, textarea, select {
+      user-select: text;
+    }
+    .custom-scroll::-webkit-scrollbar {
+      display: none;
+    }
+    .custom-scroll {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    .glass-dark {
+      background: rgba(24, 24, 27, 0.92);
+      backdrop-filter: blur(25px);
+      -webkit-backdrop-filter: blur(25px);
+    }
+    .glass-light {
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(25px);
+      -webkit-backdrop-filter: blur(25px);
+    }
+    .pt-safe {
+      padding-top: max(env(safe-area-inset-top, 0px), 14px);
+    }
+    .pb-safe {
+      padding-bottom: max(env(safe-area-inset-bottom, 0px), 16px);
+    }
+    button {
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body class="bg-black text-neutral-100 min-h-screen flex flex-col justify-between overflow-hidden antialiased">
+
+  <div id="appContainer" class="flex-1 flex flex-col h-screen max-w-md mx-auto w-full relative bg-neutral-950 text-neutral-100 overflow-hidden shadow-2xl">
+    
+    <!-- Top Navigation Header -->
+    <header id="topHeader" class="pt-safe px-5 pb-3 border-b border-neutral-800/80 flex items-center justify-between glass-dark z-30 transition-colors">
+      <div class="flex items-center space-x-2.5">
+        <!-- Back button (shown only in project detail view) -->
+        <button id="headerBackBtn" onclick="window.exitProjectDetail()" class="hidden w-8 h-8 rounded-full bg-neutral-800/80 hover:bg-neutral-700 flex items-center justify-center text-neutral-300 transition active:scale-90 mr-0.5">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+        </button>
+
+        <div id="headerAppIcon" class="w-8 h-8 rounded-xl bg-gradient-to-br from-neutral-800 via-neutral-900 to-black border border-neutral-700/80 flex items-center justify-center shadow-sm">
+          <span class="text-base font-black italic bg-gradient-to-b from-white via-neutral-200 to-neutral-400 bg-clip-text text-transparent">J</span>
+        </div>
+        <div>
+          <h1 id="screenTitle" class="text-base font-bold text-white tracking-tight leading-none">기록</h1>
+          <span id="screenSubtitle" class="text-[10px] text-neutral-400 font-medium">실시간 현황</span>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-2">
+        <button onclick="window.toggleTheme()" class="w-8 h-8 rounded-full bg-neutral-800/80 hover:bg-neutral-700 flex items-center justify-center text-neutral-300 transition active:scale-90">
+          <svg id="themeIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main id="contentArea" class="flex-1 overflow-y-auto custom-scroll p-4 space-y-4">
+      <!-- 동적 탭 컨텐츠 -->
+    </main>
+
+    <!-- Bottom Full-Width Action Bar (가로 바 형태의 기록하기 버튼) -->
+    <div id="bottomActionBar" class="p-3 border-t border-neutral-800/80 glass-dark z-20">
+      <!-- 동적으로 버튼 내용이 교체됩니다 -->
+    </div>
+
+    <!-- Settlement Modal -->
+    <div id="settleModal" class="absolute inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-end justify-center">
+      <div class="w-full bg-neutral-900 border-t border-neutral-800 rounded-t-[28px] p-5 pb-safe space-y-4 shadow-2xl">
+        <div class="w-10 h-1 bg-neutral-700 rounded-full mx-auto"></div>
+        
+        <div class="flex justify-between items-start">
+          <div>
+            <span id="settleCategoryBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400">승무패</span>
+            <h3 class="text-base font-bold text-white mt-1">결과 정산하기</h3>
+            <p id="settleSummaryText" class="text-xs text-neutral-400 mt-0.5">투입 금액: 50,000원</p>
+          </div>
+          <button onclick="window.closeSettleModal()" class="text-neutral-500 hover:text-white p-1 text-xs">닫기</button>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 pt-1">
+          <button onclick="selectSettleType('WIN')" id="btnSettleWin" class="py-3 rounded-2xl bg-emerald-500/15 border-2 border-emerald-500/50 hover:bg-emerald-500/25 flex flex-col items-center space-y-1 transition active:scale-95">
+            <span class="text-lg">🎯</span>
+            <span class="text-xs font-bold text-emerald-400">적중</span>
+          </button>
+          <button onclick="selectSettleType('LOSE')" id="btnSettleLose" class="py-3 rounded-2xl bg-rose-500/15 border-2 border-rose-500/50 hover:bg-rose-500/25 flex flex-col items-center space-y-1 transition active:scale-95">
+            <span class="text-lg">❌</span>
+            <span class="text-xs font-bold text-rose-400">미적중 (0원)</span>
+          </button>
+        </div>
+
+        <div id="winAmountArea" class="hidden space-y-2 pt-1 border-t border-neutral-800">
+          <label class="text-[11px] font-semibold text-neutral-300">회수(출금) 금액 (원)</label>
+          <div class="relative">
+            <input type="number" id="winReturnInput" placeholder="예: 95000" class="w-full bg-neutral-800 border border-neutral-700 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-neutral-500 focus:outline-none focus:border-emerald-500 font-mono" />
+            <span class="absolute right-3 top-2.5 text-xs text-neutral-400">원</span>
+          </div>
+          <p id="expectedProfitText" class="text-[11px] text-emerald-400 font-medium">예상 순손익: +0원</p>
+        </div>
+
+        <div class="flex gap-2 pt-2">
+          <button onclick="resetToPending()" id="btnResetPending" class="hidden flex-1 py-3 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 rounded-xl text-xs font-semibold transition">
+            대기중으로 복구
+          </button>
+          <button onclick="confirmSettlement()" id="btnSubmitSettle" class="flex-1 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition shadow-md active:scale-95">
+            정산 완료
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- New Record Modal -->
+    <div id="newRecordModal" class="absolute inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-end justify-center">
+      <div class="w-full bg-neutral-900 border-t border-neutral-800 rounded-t-[28px] p-5 pb-safe space-y-4 shadow-2xl">
+        <div class="w-10 h-1 bg-neutral-700 rounded-full mx-auto"></div>
+        
+        <div class="flex justify-between items-center">
+          <h3 id="recordModalHeaderTitle" class="text-base font-bold text-white">새로운 기록 작성</h3>
+          <button onclick="window.closeNewRecordModal()" class="text-neutral-400 text-xs">취소</button>
+        </div>
+
+        <div class="space-y-1.5">
+          <label class="text-xs font-semibold text-neutral-300">투입 금액</label>
+          <div class="relative">
+            <input type="number" id="inputInvestAmount" placeholder="0" class="w-full bg-neutral-800 border border-neutral-700 rounded-xl px-3.5 py-2.5 text-base font-bold text-white placeholder-neutral-500 focus:outline-none focus:border-blue-500 font-mono" required />
+            <span class="absolute right-3.5 top-2.5 text-sm font-semibold text-neutral-400">원</span>
+          </div>
+          <div class="flex gap-1.5 pt-1">
+            <button onclick="window.addQuickAmount(10000)" class="text-[10px] bg-neutral-800 hover:bg-neutral-700 text-neutral-300 px-2 py-1 rounded-lg border border-neutral-700/60">+1만</button>
+            <button onclick="window.addQuickAmount(50000)" class="text-[10px] bg-neutral-800 hover:bg-neutral-700 text-neutral-300 px-2 py-1 rounded-lg border border-neutral-700/60">+5만</button>
+            <button onclick="window.addQuickAmount(100000)" class="text-[10px] bg-neutral-800 hover:bg-neutral-700 text-neutral-300 px-2 py-1 rounded-lg border border-neutral-700/60">+10만</button>
+            <button onclick="window.addQuickAmount(500000)" class="text-[10px] bg-neutral-800 hover:bg-neutral-700 text-neutral-300 px-2 py-1 rounded-lg border border-neutral-700/60">+50만</button>
+          </div>
+        </div>
+
+        <div class="space-y-1.5">
+          <label class="text-xs font-semibold text-neutral-300">카테고리</label>
+          <div class="grid grid-cols-3 gap-2" id="categoryButtons">
+            <button type="button" onclick="window.selectCategory('승무패')" class="category-btn py-2 rounded-xl text-xs font-semibold bg-blue-600 text-white border border-blue-500">승무패</button>
+            <button type="button" onclick="window.selectCategory('언옵')" class="category-btn py-2 rounded-xl text-xs font-semibold bg-neutral-800 text-neutral-300 border border-neutral-700">언옵</button>
+            <button type="button" onclick="window.selectCategory('핸디')" class="category-btn py-2 rounded-xl text-xs font-semibold bg-neutral-800 text-neutral-300 border border-neutral-700">핸디</button>
+          </div>
+        </div>
+
+        <div class="space-y-1.5" id="recordProjectContainer">
+          <label class="text-xs font-semibold text-neutral-300">프로젝트 연결</label>
+          <select id="selectRecordProject" class="w-full bg-neutral-800 border border-neutral-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+            <option value="">일반 기록 (프로젝트 미연결)</option>
+          </select>
+        </div>
+
+        <div class="space-y-1.5">
+          <label class="text-xs font-semibold text-neutral-300">메모 / 경기 내용</label>
+          <input type="text" id="inputRecordMemo" placeholder="예: 토트넘 승 / 2.5 오버" class="w-full bg-neutral-800 border border-neutral-700 rounded-xl px-3.5 py-2 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-blue-500" />
+        </div>
+
+        <button id="btnSaveNewRecord" class="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-bold shadow-lg transition active:scale-95">
+          기록 저장 (최초 시간 자동 등록)
+        </button>
+      </div>
+    </div>
+
+    <!-- New Project Modal -->
+    <div id="newProjectModal" class="absolute inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-end justify-center">
+      <div class="w-full bg-neutral-900 border-t border-neutral-800 rounded-t-[28px] p-5 pb-safe space-y-4 shadow-2xl">
+        <div class="w-10 h-1 bg-neutral-700 rounded-full mx-auto"></div>
+        
+        <div class="flex justify-between items-center">
+          <div>
+            <h3 class="text-base font-bold text-white">새 프로젝트(챌린지) 생성</h3>
+            <p class="text-[11px] text-neutral-400">초기금과 목표금액을 설정하여 체계적으로 관리합니다.</p>
+          </div>
+          <button onclick="window.closeNewProjectModal()" class="text-neutral-400 text-xs">취소</button>
+        </div>
+
+        <div class="space-y-1.5">
+          <label class="text-xs font-semibold text-neutral-300">프로젝트 이름</label>
+          <input type="text" id="inputProjectName" placeholder="예: 10만 원으로 100만 원 만들기" class="w-full bg-neutral-800 border border-neutral-700 rounded-xl px-3.5 py-2 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-blue-500" required />
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div class="space-y-1.5">
+            <label class="text-xs font-semibold text-neutral-300">초기 시드금액</label>
+            <input type="number" id="inputProjectInitial" placeholder="예: 100000" class="w-full bg-neutral-800 border border-neutral-700 rounded-xl px-3 py-2 text-xs text-white font-mono placeholder-neutral-500 focus:outline-none focus:border-blue-500" required />
+          </div>
+          <div class="space-y-1.5">
+            <label class="text-xs font-semibold text-neutral-300">목표 달성금액</label>
+            <input type="number" id="inputProjectTarget" placeholder="예: 1000000" class="w-full bg-neutral-800 border border-neutral-700 rounded-xl px-3 py-2 text-xs text-white font-mono placeholder-neutral-500 focus:outline-none focus:border-blue-500" required />
+          </div>
+        </div>
+
+        <button id="btnSaveNewProject" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-sm font-bold shadow-lg transition active:scale-95">
+          프로젝트 시작하기
+        </button>
+      </div>
+    </div>
+
+    <!-- Bottom Navigation Bar -->
+    <nav id="bottomTabBar" class="pb-safe pt-1 glass-dark border-t border-neutral-800/80 flex justify-around items-center px-2 z-30 select-none">
+      <button onclick="window.switchTab('records')" id="nav-records" class="flex flex-col items-center text-blue-500 transition py-1">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+        <span class="text-[10px] font-semibold mt-0.5">기록</span>
+      </button>
+
+      <button onclick="window.switchTab('projects')" id="nav-projects" class="flex flex-col items-center text-neutral-500 hover:text-neutral-300 transition py-1">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+        <span class="text-[10px] font-semibold mt-0.5">프로젝트</span>
+      </button>
+
+      <button onclick="window.switchTab('stats')" id="nav-stats" class="flex flex-col items-center text-neutral-500 hover:text-neutral-300 transition py-1">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"/></svg>
+        <span class="text-[10px] font-semibold mt-0.5">통계·분석</span>
+      </button>
+
+      <button onclick="window.switchTab('settings')" id="nav-settings" class="flex flex-col items-center text-neutral-500 hover:text-neutral-300 transition py-1">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+        <span class="text-[10px] font-semibold mt-0.5">설정</span>
+      </button>
+    </nav>
+
+  </div>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW fail', err));
+      });
+    }
+
+    const safeStorage = {
+      get: function(key) {
+        try {
+          if (typeof window !== 'undefined' && window.localStorage) {
+            return localStorage.getItem(key);
+          }
+        } catch (e) {
+          console.warn('Storage read unavailable:', e);
+        }
+        return null;
+      },
+      set: function(key, val) {
+        try {
+          if (typeof window !== 'undefined' && window.localStorage) {
+            localStorage.setItem(key, val);
+          }
+        } catch (e) {
+          console.warn('Storage write unavailable:', e);
+        }
+      }
+    };
+
+    function showToast(msg) {
+      let toast = document.getElementById('toastAlert');
+      if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'toastAlert';
+        toast.className = 'fixed top-12 left-1/2 -translate-x-1/2 bg-blue-600/90 backdrop-blur-md text-white px-4 py-2 rounded-full text-xs font-semibold shadow-xl z-50 transition-all duration-300 pointer-events-none opacity-0 -translate-y-2';
+        document.body.appendChild(toast);
+      }
+      toast.textContent = msg;
+      toast.classList.remove('opacity-0', '-translate-y-2');
+      toast.classList.add('opacity-100', 'translate-y-0');
+      setTimeout(() => {
+        toast.classList.remove('opacity-100', 'translate-y-0');
+        toast.classList.add('opacity-0', '-translate-y-2');
+      }, 2000);
+    }
+
+    const DEFAULT_RECORDS = [
+      {
+        id: 101,
+        investAmount: 50000,
+        returnAmount: 115000,
+        category: '승무패',
+        status: 'WIN',
+        memo: 'EPL 맨시티 vs 아스날 (홈 승)',
+        createdAt: '2026.09.26 18:30:12',
+        projectId: 'proj-1'
+      },
+      {
+        id: 102,
+        investAmount: 30000,
+        returnAmount: 0,
+        category: '언옵',
+        status: 'LOSE',
+        memo: 'KBO 잠실 8.5 오버',
+        createdAt: '2026.09.27 14:10:45',
+        projectId: 'proj-1'
+      },
+      {
+        id: 103,
+        investAmount: 50000,
+        returnAmount: 95000,
+        category: '핸디',
+        status: 'WIN',
+        memo: 'NBA 레이커스 -4.5 핸디승',
+        createdAt: '2026.09.28 09:20:00',
+        projectId: 'proj-1'
+      },
+      {
+        id: 104,
+        investAmount: 40000,
+        returnAmount: null,
+        category: '승무패',
+        status: 'PENDING',
+        memo: '챔피언스리그 레알마드리드 단통승',
+        createdAt: '2026.09.28 13:15:30',
+        projectId: ''
+      }
+    ];
+
+    const DEFAULT_PROJECTS = [
+      {
+        id: 'proj-1',
+        name: '시드 10만 원 100만 챌린지',
+        initialSeed: 100000,
+        targetAmount: 1000000,
+        createdAt: '2026.09.25 10:00:00',
+        status: 'ACTIVE'
+      }
+    ];
+
+    const STORAGE_KEY_RECORDS = 'J_APP_RECORDS_V1';
+    const STORAGE_KEY_PROJECTS = 'J_APP_PROJECTS_V1';
+
+    let records = [];
+    let projects = [];
+
+    try {
+      const rawR = safeStorage.get(STORAGE_KEY_RECORDS);
+      records = rawR ? JSON.parse(rawR) : DEFAULT_RECORDS;
+      const rawP = safeStorage.get(STORAGE_KEY_PROJECTS);
+      projects = rawP ? JSON.parse(rawP) : DEFAULT_PROJECTS;
+    } catch(e) {
+      records = DEFAULT_RECORDS;
+      projects = DEFAULT_PROJECTS;
+    }
+
+    function saveState() {
+      safeStorage.set(STORAGE_KEY_RECORDS, JSON.stringify(records));
+      safeStorage.set(STORAGE_KEY_PROJECTS, JSON.stringify(projects));
+      updateProjectsStatus();
+    }
+
+    const STORAGE_KEY_THEME = 'J_APP_THEME_V1';
+    let isLightMode = true; // 기본적으로 화이트 테마
+    try {
+      const savedTheme = safeStorage.get(STORAGE_KEY_THEME);
+      if (savedTheme !== null) {
+        isLightMode = (savedTheme === 'light');
+      }
+    } catch (e) {}
+
+    function applyThemeUI() {
+      const app = document.getElementById('appContainer');
+      const header = document.getElementById('topHeader');
+      const tabBar = document.getElementById('bottomTabBar');
+      const actionBar = document.getElementById('bottomActionBar');
+      if (!app || !header || !tabBar || !actionBar) return;
+
+      if (isLightMode) {
+        app.className = "flex-1 flex flex-col h-screen max-w-md mx-auto w-full relative bg-neutral-100 text-neutral-900 overflow-hidden shadow-2xl";
+        header.className = "pt-safe px-5 pb-3 border-b border-neutral-200 flex items-center justify-between glass-light z-30 transition-colors";
+        tabBar.className = "pb-safe pt-1 glass-light border-t border-neutral-200 flex justify-around items-center px-2 z-30 select-none";
+        actionBar.className = "p-3 border-t border-neutral-200 glass-light z-20";
+        document.body.className = "bg-neutral-100 text-neutral-900 min-h-screen flex flex-col justify-between overflow-hidden antialiased";
+        document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#f5f5f5');
+      } else {
+        app.className = "flex-1 flex flex-col h-screen max-w-md mx-auto w-full relative bg-neutral-950 text-neutral-100 overflow-hidden shadow-2xl";
+        header.className = "pt-safe px-5 pb-3 border-b border-neutral-800/80 flex items-center justify-between glass-dark z-30 transition-colors";
+        tabBar.className = "pb-safe pt-1 glass-dark border-t border-neutral-800/80 flex justify-around items-center px-2 z-30 select-none";
+        actionBar.className = "p-3 border-t border-neutral-800/80 glass-dark z-20";
+        document.body.className = "bg-black text-neutral-100 min-h-screen flex flex-col justify-between overflow-hidden antialiased";
+        document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#000000');
+      }
+    }
+
+    window.toggleTheme = function() {
+      isLightMode = !isLightMode;
+      safeStorage.set(STORAGE_KEY_THEME, isLightMode ? 'light' : 'dark');
+      applyThemeUI();
+      renderCurrentTab();
+      showToast(isLightMode ? '화이트 테마 적용' : '다크 모드 적용');
+    };
+
+    let currentTab = 'records';
+    let selectedProjectId = null;
+    let selectedStatsCategory = null;
+    let statsPeriod = 'all';
+    let includeProjectsInStats = true;
+    let recordFilterCategory = 'ALL';
+
+    window.switchTab = function(tab) {
+      currentTab = tab;
+      if (tab !== 'projects') selectedProjectId = null;
+      if (tab !== 'stats') selectedStatsCategory = null;
+
+      ['records', 'projects', 'stats', 'settings'].forEach(t => {
+        const btn = document.getElementById(`nav-${t}`);
+        if (!btn) return;
+        if (t === tab) {
+          btn.className = 'flex flex-col items-center text-blue-500 transition py-1';
+        } else {
+          btn.className = 'flex flex-col items-center text-neutral-500 hover:text-neutral-300 transition py-1';
+        }
+      });
+
+      renderCurrentTab();
+    };
+
+    function updateHeaderUI(title, subtitle, showBack = false, backAction = null) {
+      const titleEl = document.getElementById('screenTitle');
+      const subEl = document.getElementById('screenSubtitle');
+      const backBtn = document.getElementById('headerBackBtn');
+      const appIcon = document.getElementById('headerAppIcon');
+
+      if (titleEl) titleEl.textContent = title;
+      if (subEl) subEl.textContent = subtitle;
+
+      if (showBack) {
+        backBtn?.classList.remove('hidden');
+        if (backBtn && backAction) {
+          backBtn.onclick = backAction;
+        }
+        appIcon?.classList.add('hidden');
+      } else {
+        backBtn?.classList.add('hidden');
+        appIcon?.classList.remove('hidden');
+      }
+    }
+
+    function renderCurrentTab() {
+      const area = document.getElementById('contentArea');
+      const actionBar = document.getElementById('bottomActionBar');
+      if (!area || !actionBar) return;
+
+      if (currentTab === 'records') {
+        updateHeaderUI('기록', '실시간 현황', false);
+        renderRecordsTab(area, actionBar);
+      } else if (currentTab === 'projects') {
+        if (selectedProjectId) {
+          renderProjectDetailTab(area, actionBar, selectedProjectId);
+        } else {
+          updateHeaderUI('프로젝트', '시드 챌린지 관리', false);
+          renderProjectsListTab(area, actionBar);
+        }
+      } else if (currentTab === 'stats') {
+        actionBar.innerHTML = '';
+        actionBar.classList.add('hidden');
+        if (selectedStatsCategory) {
+          updateHeaderUI(selectedStatsCategory + ' 분석', '카테고리 전용 성과', true, window.exitCategoryStats);
+          renderCategoryStatsDetail(area, selectedStatsCategory);
+        } else {
+          updateHeaderUI('통계 & 분석', '성과 지표 및 차트', false);
+          renderStatsTab(area);
+        }
+      } else if (currentTab === 'settings') {
+        updateHeaderUI('설정', '데이터 및 환경', false);
+        actionBar.innerHTML = '';
+        actionBar.classList.add('hidden');
+        renderSettingsTab(area);
+      }
+    }
+
+    window.setRecordFilter = function(cat) {
+      recordFilterCategory = cat;
+      renderCurrentTab();
+    };
+
+    function renderRecordsTab(container, actionBar) {
+      actionBar.classList.remove('hidden');
+
+      actionBar.innerHTML = `
+        <button onclick="window.openNewRecordModal()" class="w-full py-3.5 bg-blue-600 hover:bg-blue-500 active:scale-[0.98] text-white font-bold rounded-2xl shadow-lg flex items-center justify-center space-x-2 text-sm transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+          <span>새로운 기록 추가하기</span>
+        </button>
+      `;
+
+      let totalInvested = 0;
+      let totalReturn = 0;
+      let pendingCount = 0;
+
+      records.forEach(r => {
+        totalInvested += r.investAmount;
+        if (r.status === 'WIN') totalReturn += (r.returnAmount || 0);
+        if (r.status === 'PENDING') pendingCount++;
+      });
+      const netProfit = totalReturn - (records.filter(r => r.status !== 'PENDING').reduce((acc, c) => acc + c.investAmount, 0));
+
+      const filteredRecords = recordFilterCategory === 'ALL' 
+        ? records 
+        : records.filter(r => r.category === recordFilterCategory);
+
+      container.innerHTML = `
+        <div class="${isLightMode ? 'bg-white border-neutral-200 shadow-sm' : 'bg-neutral-900/90 border-neutral-800'} rounded-3xl p-4 border space-y-3">
+          <div class="flex justify-between items-center text-xs">
+            <span class="text-neutral-400 font-medium">총 순손익 (정산 완료 기준)</span>
+            ${pendingCount > 0 ? `<span class="bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full text-[10px] font-bold">진행중 ${pendingCount}건</span>` : ''}
+          </div>
+          <div class="flex items-baseline space-x-2">
+            <span class="text-2xl font-black font-mono tracking-tight ${netProfit > 0 ? 'text-emerald-400' : (netProfit < 0 ? 'text-rose-400' : 'text-neutral-300')}">
+              ${netProfit > 0 ? '+' : ''}${netProfit.toLocaleString()}원
+            </span>
+          </div>
+          <div class="grid grid-cols-2 gap-2 pt-2 border-t ${isLightMode ? 'border-neutral-100 text-neutral-600' : 'border-neutral-800 text-neutral-400'} text-xs">
+            <div>총 투입: <span class="font-mono font-bold ${isLightMode ? 'text-neutral-900' : 'text-neutral-200'}">${totalInvested.toLocaleString()}원</span></div>
+            <div>총 회수: <span class="font-mono font-bold text-emerald-400">${totalReturn.toLocaleString()}원</span></div>
+          </div>
+        </div>
+
+        <div class="flex space-x-1.5 overflow-x-auto pb-1 custom-scroll text-xs">
+          ${['ALL', '승무패', '언옵', '핸디'].map(cat => `
+            <button onclick="window.setRecordFilter('${cat}')" class="px-3.5 py-1.5 rounded-full font-semibold transition ${recordFilterCategory === cat ? 'bg-blue-600 text-white shadow-sm' : (isLightMode ? 'bg-white text-neutral-600 border border-neutral-200' : 'bg-neutral-900 text-neutral-400 border border-neutral-800')}">
+              ${cat === 'ALL' ? '전체 보기' : cat}
+            </button>
+          `).join('')}
+        </div>
+
+        <div class="space-y-2.5">
+          ${filteredRecords.length === 0 ? `
+            <div class="text-center py-10 text-neutral-500 text-xs">
+              기록이 없습니다.<br>하단의 <b>[새로운 기록 추가하기]</b>를 눌러 등록해보세요.
+            </div>
+          ` : filteredRecords.map(r => {
+            const project = projects.find(p => p.id === r.projectId);
+            let statusBadge = '';
+            let profitDisplay = '';
+
+            if (r.status === 'PENDING') {
+              statusBadge = `<span class="bg-amber-500/15 text-amber-400 border border-amber-500/30 text-[10px] font-bold px-2 py-0.5 rounded-full animate-pulse">대기중 (정산하기)</span>`;
+              profitDisplay = `<span class="text-xs text-amber-400 font-mono">진행 중</span>`;
+            } else if (r.status === 'WIN') {
+              const profit = (r.returnAmount || 0) - r.investAmount;
+              statusBadge = `<span class="bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold px-2 py-0.5 rounded-full">적중 🎯</span>`;
+              profitDisplay = `<span class="text-xs font-mono font-bold text-emerald-400">+${profit.toLocaleString()}원</span>`;
+            } else {
+              statusBadge = `<span class="bg-rose-500/15 text-rose-400 border border-rose-500/30 text-[10px] font-bold px-2 py-0.5 rounded-full">미적중 ❌</span>`;
+              profitDisplay = `<span class="text-xs font-mono font-bold text-rose-400">-${r.investAmount.toLocaleString()}원</span>`;
+            }
+
+            return `
+              <div onclick="window.openSettleModal(${r.id})" class="cursor-pointer active:scale-[0.98] transition ${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900/80 hover:bg-neutral-900 border-neutral-800/90'} p-3.5 rounded-2xl border space-y-2 shadow-sm">
+                <div class="flex justify-between items-center">
+                  <div class="flex items-center space-x-2">
+                    <span class="text-[11px] font-bold px-2 py-0.5 rounded-lg ${getCategoryColorClass(r.category)}">${r.category}</span>
+                    ${project ? `<span class="text-[9px] bg-purple-500/15 text-purple-400 border border-purple-500/30 px-1.5 py-0.5 rounded font-medium truncate max-w-[110px]">${project.name}</span>` : ''}
+                  </div>
+                  ${statusBadge}
+                </div>
+
+                <div class="flex justify-between items-baseline pt-1">
+                  <div>
+                    <div class="text-sm font-bold font-mono ${isLightMode ? 'text-neutral-900' : 'text-white'}">
+                      투입 ${r.investAmount.toLocaleString()}원
+                    </div>
+                    ${r.status === 'WIN' ? `<div class="text-[11px] text-neutral-400">회수 ${r.returnAmount.toLocaleString()}원</div>` : ''}
+                  </div>
+                  <div class="text-right">
+                    ${profitDisplay}
+                  </div>
+                </div>
+
+                ${r.memo ? `<div class="text-xs text-neutral-400 truncate">${r.memo}</div>` : ''}
+
+                <div class="flex justify-between items-center pt-1 border-t ${isLightMode ? 'border-neutral-100' : 'border-neutral-800/60'} text-[10px] text-neutral-500">
+                  <span>최초 기록: ${r.createdAt}</span>
+                  <span class="text-blue-400 font-medium">상세/정산 ></span>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+    }
+
+    function getCategoryColorClass(cat) {
+      if (cat === '승무패') return 'bg-blue-500/20 text-blue-400 border border-blue-500/30';
+      if (cat === '언옵') return 'bg-amber-500/20 text-amber-400 border border-amber-500/30';
+      if (cat === '핸디') return 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30';
+      return 'bg-neutral-800 text-neutral-300';
+    }
+
+    function updateProjectsStatus() {
+      projects.forEach(p => {
+        const projRecords = records.filter(r => r.projectId === p.id);
+        let netProfit = 0;
+        projRecords.forEach(r => {
+          if (r.status === 'WIN') netProfit += ((r.returnAmount || 0) - r.investAmount);
+          if (r.status === 'LOSE') netProfit -= r.investAmount;
+        });
+
+        const currentBalance = p.initialSeed + netProfit;
+
+        if (currentBalance >= p.targetAmount) {
+          p.status = 'SUCCESS';
+        } else if (currentBalance <= 0) {
+          p.status = 'FAILED';
+        } else {
+          p.status = 'ACTIVE';
+        }
+      });
+    }
+
+    window.selectProject = function(projectId) {
+      selectedProjectId = projectId;
+      renderCurrentTab();
+    };
+
+    window.exitProjectDetail = function() {
+      selectedProjectId = null;
+      renderCurrentTab();
+    };
+
+    function renderProjectsListTab(container, actionBar) {
+      updateProjectsStatus();
+      actionBar.classList.add('hidden');
+
+      container.innerHTML = `
+        <div class="flex justify-between items-center">
+          <span class="text-xs font-semibold text-neutral-400">참여 중인 챌린지 (${projects.length})</span>
+          <button onclick="window.openNewProjectModal()" class="text-xs bg-blue-600 hover:bg-blue-500 text-white font-semibold px-3 py-1.5 rounded-xl shadow-sm transition active:scale-95">
+            + 새 프로젝트
+          </button>
+        </div>
+
+        <div class="space-y-3.5">
+          ${projects.length === 0 ? `
+            <div class="text-center py-12 text-neutral-500 text-xs">
+              생성된 프로젝트가 없습니다.<br>
+              상단의 <b>[+ 새 프로젝트]</b>를 눌러 새로운 챌린지를 시작해보세요!
+            </div>
+          ` : projects.map(p => {
+            const projRecords = records.filter(r => r.projectId === p.id);
+            let totalReturn = 0;
+            let winCount = 0;
+            let settledCount = 0;
+
+            projRecords.forEach(r => {
+              if (r.status === 'WIN') {
+                totalReturn += (r.returnAmount || 0);
+                winCount++;
+                settledCount++;
+              } else if (r.status === 'LOSE') {
+                settledCount++;
+              }
+            });
+
+            const netProfit = totalReturn - (projRecords.filter(r => r.status !== 'PENDING').reduce((a, c) => a + c.investAmount, 0));
+            const currentBalance = p.initialSeed + netProfit;
+            const progressPercent = Math.min(100, Math.max(0, Math.round((currentBalance / p.targetAmount) * 100)));
+            const winRate = settledCount > 0 ? Math.round((winCount / settledCount) * 100) : 0;
+
+            return `
+              <div onclick="window.selectProject('${p.id}')" class="cursor-pointer active:scale-[0.98] transition ${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900 border-neutral-800 hover:border-neutral-700'} rounded-3xl p-4 border space-y-3 shadow-sm group">
+                
+                <div class="flex justify-between items-start">
+                  <div>
+                    <h3 class="text-sm font-bold ${isLightMode ? 'text-neutral-900' : 'text-white'} group-hover:text-blue-400 transition">${p.name}</h3>
+                    <span class="text-[10px] text-neutral-400">시작일: ${p.createdAt}</span>
+                  </div>
+                  <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${p.status === 'ACTIVE' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' : (p.status === 'SUCCESS' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-400 border border-rose-500/30')}">
+                    ${p.status === 'ACTIVE' ? '진행 중' : (p.status === 'SUCCESS' ? '성공 🏆' : '실패 ⚠️')}
+                  </span>
+                </div>
+
+                <div class="p-3 ${isLightMode ? 'bg-neutral-50 border-neutral-200' : 'bg-neutral-950/60 border-neutral-800/80'} rounded-2xl border space-y-2">
+                  <div class="flex justify-between items-baseline">
+                    <span class="text-xs text-neutral-400">현재 잔고</span>
+                    <span class="text-lg font-black font-mono ${currentBalance >= p.initialSeed ? 'text-emerald-400' : 'text-rose-400'}">
+                      ${currentBalance.toLocaleString()}원
+                    </span>
+                  </div>
+
+                  <div class="space-y-1">
+                    <div class="flex justify-between text-[10px] text-neutral-400 font-mono">
+                      <span>초기 ${p.initialSeed.toLocaleString()}원</span>
+                      <span>달성률 ${progressPercent}%</span>
+                      <span>목표 ${p.targetAmount.toLocaleString()}원</span>
+                    </div>
+                    <div class="w-full h-2 bg-neutral-800 rounded-full overflow-hidden p-0.5">
+                      <div class="h-full bg-gradient-to-r from-blue-500 to-emerald-400 rounded-full" style="width: ${progressPercent}%"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="flex justify-between items-center text-xs text-neutral-400 pt-0.5">
+                  <div class="flex space-x-3 text-[11px]">
+                    <span>기록 <b class="text-white font-mono">${projRecords.length}</b>건</span>
+                    <span>승률 <b class="text-white font-mono">${winRate}%</b></span>
+                    <span>순손익 <b class="font-mono ${netProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${netProfit > 0 ? '+' : ''}${netProfit.toLocaleString()}원</b></span>
+                  </div>
+                  <span class="text-blue-400 font-semibold text-xs flex items-center">
+                    기록 보기
+                    <svg class="w-3.5 h-3.5 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                  </span>
+                </div>
+
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+    }
+
+    function renderProjectDetailTab(container, actionBar, projId) {
+      updateProjectsStatus();
+      const p = projects.find(item => item.id === projId);
+      if (!p) {
+        selectedProjectId = null;
+        renderCurrentTab();
+        return;
+      }
+
+      updateHeaderUI(p.name, '프로젝트 상세 및 전용 기록', true);
+      actionBar.classList.remove('hidden');
+
+      const projRecords = records.filter(r => r.projectId === p.id);
+      let totalInvest = 0;
+      let totalReturn = 0;
+      let winCount = 0;
+      let settledCount = 0;
+
+      projRecords.forEach(r => {
+        totalInvest += r.investAmount;
+        if (r.status === 'WIN') {
+          totalReturn += (r.returnAmount || 0);
+          winCount++;
+          settledCount++;
+        } else if (r.status === 'LOSE') {
+          settledCount++;
+        }
+      });
+
+      const netProfit = totalReturn - (projRecords.filter(r => r.status !== 'PENDING').reduce((a, c) => a + c.investAmount, 0));
+      const currentBalance = p.initialSeed + netProfit;
+      const progressPercent = Math.min(100, Math.max(0, Math.round((currentBalance / p.targetAmount) * 100)));
+      const winRate = settledCount > 0 ? Math.round((winCount / settledCount) * 100) : 0;
+      const isLocked = (p.status === 'SUCCESS' || p.status === 'FAILED');
+
+      if (isLocked) {
+        actionBar.innerHTML = `
+          <button disabled class="w-full py-3.5 bg-neutral-800 text-neutral-500 font-bold rounded-2xl text-xs cursor-not-allowed flex items-center justify-center space-x-1.5 shadow-inner">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+            <span>프로젝트가 종료되어 더 이상 기록할 수 없습니다</span>
+          </button>
+        `;
+      } else {
+        actionBar.innerHTML = `
+          <button onclick="window.openNewRecordModalForProject('${p.id}')" class="w-full py-3.5 bg-blue-600 hover:bg-blue-500 active:scale-[0.98] text-white font-bold rounded-2xl shadow-lg flex items-center justify-center space-x-2 text-sm transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+            <span>이 프로젝트에 기록하기</span>
+          </button>
+        `;
+      }
+
+      let statusBanner = '';
+      if (p.status === 'SUCCESS') {
+        statusBanner = `
+          <div class="p-3 bg-emerald-500/20 border border-emerald-500/40 rounded-2xl flex items-center space-x-2 text-emerald-400">
+            <span class="text-xl">🏆</span>
+            <div class="text-xs font-bold leading-snug">목표 금액 달성 완료! 프로젝트가 성공으로 종료되었습니다.</div>
+          </div>
+        `;
+      } else if (p.status === 'FAILED') {
+        statusBanner = `
+          <div class="p-3 bg-rose-500/20 border border-rose-500/40 rounded-2xl flex items-center space-x-2 text-rose-400">
+            <span class="text-xl">⚠️</span>
+            <div class="text-xs font-bold leading-snug">초기 시드금을 모두 소진하여 프로젝트가 종료되었습니다.</div>
+          </div>
+        `;
+      }
+
+      container.innerHTML = `
+        ${statusBanner}
+
+        <div class="${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900 border-neutral-800'} rounded-3xl p-4 border space-y-3 shadow-sm">
+          <div class="flex justify-between items-baseline">
+            <span class="text-xs text-neutral-400">현재 잔고</span>
+            <span class="text-2xl font-black font-mono ${currentBalance >= p.initialSeed ? 'text-emerald-400' : 'text-rose-400'}">
+              ${currentBalance.toLocaleString()}원
+            </span>
+          </div>
+
+          <div class="space-y-1">
+            <div class="flex justify-between text-[11px] text-neutral-400 font-mono">
+              <span>초기 ${p.initialSeed.toLocaleString()}원</span>
+              <span class="font-bold text-white">${progressPercent}% 달성</span>
+              <span>목표 ${p.targetAmount.toLocaleString()}원</span>
+            </div>
+            <div class="w-full h-2.5 bg-neutral-800 rounded-full overflow-hidden p-0.5">
+              <div class="h-full bg-gradient-to-r from-blue-500 to-emerald-400 rounded-full transition-all duration-500" style="width: ${progressPercent}%"></div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-3 gap-2 text-center text-xs pt-1 border-t ${isLightMode ? 'border-neutral-100' : 'border-neutral-800'}">
+            <div class="p-2 ${isLightMode ? 'bg-neutral-100' : 'bg-neutral-800/40'} rounded-xl">
+              <div class="text-[10px] text-neutral-400">승률</div>
+              <div class="font-bold font-mono ${isLightMode ? 'text-neutral-900' : 'text-white'} mt-0.5">${winRate}%</div>
+            </div>
+            <div class="p-2 ${isLightMode ? 'bg-neutral-100' : 'bg-neutral-800/40'} rounded-xl">
+              <div class="text-[10px] text-neutral-400">순수익</div>
+              <div class="font-bold font-mono mt-0.5 ${netProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'}">
+                ${netProfit > 0 ? '+' : ''}${netProfit.toLocaleString()}원
+              </div>
+            </div>
+            <div class="p-2 ${isLightMode ? 'bg-neutral-100' : 'bg-neutral-800/40'} rounded-xl">
+              <div class="text-[10px] text-neutral-400">기록 건수</div>
+              <div class="font-bold font-mono ${isLightMode ? 'text-neutral-900' : 'text-white'} mt-0.5">${projRecords.length}건</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-2 pt-1">
+          <div class="flex justify-between items-center px-1">
+            <span class="text-xs font-bold ${isLightMode ? 'text-neutral-900' : 'text-white'}">프로젝트 전용 기록 (${projRecords.length})</span>
+            <span class="text-[10px] text-neutral-400">터치하여 정산</span>
+          </div>
+
+          ${projRecords.length === 0 ? `
+            <div class="text-center py-10 text-neutral-500 text-xs ${isLightMode ? 'bg-white' : 'bg-neutral-900/40'} rounded-2xl border ${isLightMode ? 'border-neutral-200' : 'border-neutral-800'}">
+              아직 프로젝트에 기록된 내용이 없습니다.<br>
+              하단의 <b>[이 프로젝트에 기록하기]</b> 버튼으로 추가해보세요.
+            </div>
+          ` : projRecords.map(r => {
+            let statusBadge = '';
+            let profitDisplay = '';
+
+            if (r.status === 'PENDING') {
+              statusBadge = `<span class="bg-amber-500/15 text-amber-400 border border-amber-500/30 text-[10px] font-bold px-2 py-0.5 rounded-full animate-pulse">대기중</span>`;
+              profitDisplay = `<span class="text-xs text-amber-400 font-mono">진행 중</span>`;
+            } else if (r.status === 'WIN') {
+              const profit = (r.returnAmount || 0) - r.investAmount;
+              statusBadge = `<span class="bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold px-2 py-0.5 rounded-full">적중 🎯</span>`;
+              profitDisplay = `<span class="text-xs font-mono font-bold text-emerald-400">+${profit.toLocaleString()}원</span>`;
+            } else {
+              statusBadge = `<span class="bg-rose-500/15 text-rose-400 border border-rose-500/30 text-[10px] font-bold px-2 py-0.5 rounded-full">미적중 ❌</span>`;
+              profitDisplay = `<span class="text-xs font-mono font-bold text-rose-400">-${r.investAmount.toLocaleString()}원</span>`;
+            }
+
+            return `
+              <div onclick="window.openSettleModal(${r.id})" class="cursor-pointer active:scale-[0.98] transition ${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900/80 hover:bg-neutral-900 border-neutral-800/90'} p-3.5 rounded-2xl border space-y-2 shadow-sm">
+                <div class="flex justify-between items-center">
+                  <span class="text-[11px] font-bold px-2 py-0.5 rounded-lg ${getCategoryColorClass(r.category)}">${r.category}</span>
+                  ${statusBadge}
+                </div>
+
+                <div class="flex justify-between items-baseline pt-1">
+                  <div>
+                    <div class="text-sm font-bold font-mono ${isLightMode ? 'text-neutral-900' : 'text-white'}">
+                      투입 ${r.investAmount.toLocaleString()}원
+                    </div>
+                    ${r.status === 'WIN' ? `<div class="text-[11px] text-neutral-400">회수 ${r.returnAmount.toLocaleString()}원</div>` : ''}
+                  </div>
+                  <div class="text-right">
+                    ${profitDisplay}
+                  </div>
+                </div>
+
+                ${r.memo ? `<div class="text-xs text-neutral-400 truncate">${r.memo}</div>` : ''}
+
+                <div class="flex justify-between items-center pt-1 border-t ${isLightMode ? 'border-neutral-100' : 'border-neutral-800/60'} text-[10px] text-neutral-500">
+                  <span>${r.createdAt}</span>
+                  <span class="text-blue-400 font-medium">상세/정산 ></span>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+    }
+
+    window.setStatsPeriod = function(period) {
+      statsPeriod = period;
+      renderCurrentTab();
+    };
+
+    window.toggleIncludeProjects = function() {
+      includeProjectsInStats = !includeProjectsInStats;
+      renderCurrentTab();
+      showToast(includeProjectsInStats ? '프로젝트 기록 포함됨' : '프로젝트 기록 제외됨');
+    };
+
+    function renderStatsTab(container) {
+      let targetRecords = includeProjectsInStats 
+        ? records 
+        : records.filter(r => !r.projectId);
+
+      const now = new Date();
+      if (statsPeriod === 'daily') {
+        const todayStr = `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')}`;
+        targetRecords = targetRecords.filter(r => r.createdAt.startsWith(todayStr));
+      } else if (statsPeriod === 'monthly') {
+        const monthStr = `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}`;
+        targetRecords = targetRecords.filter(r => r.createdAt.startsWith(monthStr));
+      } else if (statsPeriod === 'yearly') {
+        const yearStr = `${now.getFullYear()}`;
+        targetRecords = targetRecords.filter(r => r.createdAt.startsWith(yearStr));
+      }
+
+      let totalInvested = 0;
+      let totalReturned = 0;
+      let winCount = 0;
+      let loseCount = 0;
+      let pendingCount = 0;
+
+      targetRecords.forEach(r => {
+        totalInvested += r.investAmount;
+        if (r.status === 'WIN') {
+          totalReturned += (r.returnAmount || 0);
+          winCount++;
+        } else if (r.status === 'LOSE') {
+          loseCount++;
+        } else {
+          pendingCount++;
+        }
+      });
+
+      const settledCount = winCount + loseCount;
+      const winRate = settledCount > 0 ? Math.round((winCount / settledCount) * 100) : 0;
+      const settledInvested = targetRecords.filter(r => r.status !== 'PENDING').reduce((acc, c) => acc + c.investAmount, 0);
+      const netProfit = totalReturned - settledInvested;
+      const roi = settledInvested > 0 ? Math.round((netProfit / settledInvested) * 100) : 0;
+
+      const categories = ['승무패', '언옵', '핸디'];
+      const catStats = categories.map(cat => {
+        const catRecs = targetRecords.filter(r => r.category === cat);
+        let cInvest = 0;
+        let cReturn = 0;
+        let cWin = 0;
+        let cLose = 0;
+        catRecs.forEach(r => {
+          cInvest += r.investAmount;
+          if (r.status === 'WIN') {
+            cReturn += (r.returnAmount || 0);
+            cWin++;
+          } else if (r.status === 'LOSE') {
+            cLose++;
+          }
+        });
+        const cSettled = cWin + cLose;
+        const cWinRate = cSettled > 0 ? Math.round((cWin / cSettled) * 100) : 0;
+        const cProfit = cReturn - (catRecs.filter(r => r.status !== 'PENDING').reduce((a, c) => a + c.investAmount, 0));
+        return {
+          category: cat,
+          invest: cInvest,
+          returnAmount: cReturn,
+          profit: cProfit,
+          winRate: cWinRate,
+          count: catRecs.length
+        };
+      });
+
+      let runningProfit = 0;
+      const chartPoints = [0];
+      targetRecords.slice().reverse().forEach(r => {
+        if (r.status === 'WIN') {
+          runningProfit += ((r.returnAmount || 0) - r.investAmount);
+          chartPoints.push(runningProfit);
+        } else if (r.status === 'LOSE') {
+          runningProfit -= r.investAmount;
+          chartPoints.push(runningProfit);
+        }
+      });
+
+      let svgGraphHtml = '';
+      if (chartPoints.length > 1) {
+        const minVal = Math.min(0, ...chartPoints);
+        const maxVal = Math.max(1000, ...chartPoints);
+        const range = (maxVal - minVal) || 1;
+        const width = 310;
+        const height = 90;
+
+        const points = chartPoints.map((val, idx) => {
+          const x = (idx / (chartPoints.length - 1)) * width;
+          const y = height - ((val - minVal) / range) * (height - 20) - 10;
+          return `${x.toFixed(1)},${y.toFixed(1)}`;
+        }).join(' ');
+
+        svgGraphHtml = `
+          <svg viewBox="0 0 ${width} ${height}" class="w-full h-24 overflow-visible">
+            <polyline fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" points="${points}" />
+            ${chartPoints.map((val, idx) => {
+              const x = (idx / (chartPoints.length - 1)) * width;
+              const y = height - ((val - minVal) / range) * (height - 20) - 10;
+              return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3" fill="#10b981" />`;
+            }).join('')}
+          </svg>
+        `;
+      } else {
+        svgGraphHtml = `<div class="h-20 flex items-center justify-center text-xs text-neutral-500">정산된 기록이 쌓이면 손익 곡선이 나타납니다.</div>`;
+      }
+
+      container.innerHTML = `
+        <div class="p-1 bg-neutral-900 rounded-2xl flex border border-neutral-800 text-xs">
+          ${[
+            { id: 'daily', label: '일별' },
+            { id: 'monthly', label: '월별' },
+            { id: 'yearly', label: '년별' },
+            { id: 'all', label: '전체' }
+          ].map(p => `
+            <button onclick="window.setStatsPeriod('${p.id}')" class="flex-1 py-1.5 rounded-xl font-semibold transition ${statsPeriod === p.id ? 'bg-neutral-800 text-white shadow-sm' : 'text-neutral-400 hover:text-neutral-200'}">
+              ${p.label}
+            </button>
+          `).join('')}
+        </div>
+
+        <div class="flex justify-between items-center px-1">
+          <span class="text-xs text-neutral-400 font-medium">프로젝트 기록 포함</span>
+          <button onclick="window.toggleIncludeProjects()" class="w-11 h-6 rounded-full transition-colors p-0.5 flex items-center ${includeProjectsInStats ? 'bg-blue-600 justify-end' : 'bg-neutral-800 justify-start'}">
+            <div class="w-5 h-5 rounded-full bg-white shadow-md"></div>
+          </button>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2.5">
+          <div class="${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900/90 border-neutral-800'} border p-3.5 rounded-2xl space-y-1">
+            <span class="text-[10px] text-neutral-400 font-medium">승률 (적중률)</span>
+            <div class="text-2xl font-black font-mono ${isLightMode ? 'text-neutral-900' : 'text-white'}">${winRate}%</div>
+            <div class="text-[10px] text-neutral-400">${winCount}적중 / ${loseCount}미적중</div>
+          </div>
+          <div class="${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900/90 border-neutral-800'} border p-3.5 rounded-2xl space-y-1">
+            <span class="text-[10px] text-neutral-400 font-medium">순손익 (수익률)</span>
+            <div class="text-2xl font-black font-mono ${netProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'}">
+              ${netProfit > 0 ? '+' : ''}${netProfit.toLocaleString()}원
+            </div>
+            <div class="text-[10px] text-neutral-400 font-mono">ROI: ${roi}%</div>
+          </div>
+          <div class="${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900/90 border-neutral-800'} border p-3.5 rounded-2xl space-y-1">
+            <span class="text-[10px] text-neutral-400 font-medium">총 투자금액</span>
+            <div class="text-lg font-bold font-mono ${isLightMode ? 'text-neutral-800' : 'text-neutral-200'}">${totalInvested.toLocaleString()}원</div>
+            <div class="text-[10px] text-neutral-400">대기: ${pendingCount}건</div>
+          </div>
+          <div class="${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900/90 border-neutral-800'} border p-3.5 rounded-2xl space-y-1">
+            <span class="text-[10px] text-neutral-400 font-medium">총 출금(회수)금액</span>
+            <div class="text-lg font-bold font-mono text-emerald-400">${totalReturned.toLocaleString()}원</div>
+            <div class="text-[10px] text-neutral-400">환급 완료 기준</div>
+          </div>
+        </div>
+
+        <div class="${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900/90 border-neutral-800'} border p-4 rounded-3xl space-y-2">
+          <div class="flex justify-between items-center text-xs">
+            <span class="font-bold ${isLightMode ? 'text-neutral-900' : 'text-white'}">누적 손익 추이 그래프</span>
+            <span class="text-[10px] text-emerald-400 font-mono">최종: ${netProfit.toLocaleString()}원</span>
+          </div>
+          <div class="pt-2">
+            ${svgGraphHtml}
+          </div>
+        </div>
+
+        <div class="space-y-2 pt-1">
+          <div class="flex justify-between items-center px-1">
+            <span class="text-xs font-bold ${isLightMode ? 'text-neutral-900' : 'text-white'}">카테고리별 성과 (터치하여 상세 분석)</span>
+            <span class="text-[10px] text-blue-400">클릭하여 필터 ></span>
+          </div>
+          <div class="space-y-2.5">
+            ${catStats.map(c => `
+              <div onclick="window.selectStatsCategory('${c.category}')" class="cursor-pointer active:scale-[0.98] transition ${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900/80 hover:bg-neutral-900 border-neutral-800 hover:border-neutral-700'} border p-3.5 rounded-2xl space-y-2 shadow-sm group">
+                <div class="flex justify-between items-center">
+                  <span class="text-xs font-bold px-2.5 py-0.5 rounded-lg ${getCategoryColorClass(c.category)}">${c.category}</span>
+                  <span class="text-xs font-mono font-bold ${c.profit >= 0 ? 'text-emerald-400' : 'text-rose-400'}">
+                    ${c.profit > 0 ? '+' : ''}${c.profit.toLocaleString()}원
+                  </span>
+                </div>
+
+                <div class="space-y-1">
+                  <div class="flex justify-between text-[11px] text-neutral-400">
+                    <span>적중률 ${c.winRate}% (${c.count}건)</span>
+                    <span class="font-mono">투입: ${c.invest.toLocaleString()}원</span>
+                  </div>
+                  <div class="w-full h-1.5 bg-neutral-800 rounded-full overflow-hidden">
+                    <div class="h-full bg-blue-500 rounded-full" style="width: ${c.winRate}%"></div>
+                  </div>
+                </div>
+
+                <div class="flex justify-between items-center pt-1 border-t ${isLightMode ? 'border-neutral-100' : 'border-neutral-800/60'} text-[11px]">
+                  <span class="text-neutral-500 font-mono">회수: ${c.returnAmount.toLocaleString()}원</span>
+                  <span class="text-blue-400 font-semibold flex items-center group-hover:underline">
+                    ${c.category} 상세 분석 & 기록 보기
+                    <svg class="w-3.5 h-3.5 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                  </span>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    window.selectStatsCategory = function(cat) {
+      selectedStatsCategory = cat;
+      renderCurrentTab();
+    };
+
+    window.exitCategoryStats = function() {
+      selectedStatsCategory = null;
+      renderCurrentTab();
+    };
+
+    function renderCategoryStatsDetail(container, category) {
+      let catRecords = includeProjectsInStats 
+        ? records.filter(r => r.category === category)
+        : records.filter(r => r.category === category && !r.projectId);
+
+      const now = new Date();
+      if (statsPeriod === 'daily') {
+        const todayStr = `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')}`;
+        catRecords = catRecords.filter(r => r.createdAt.startsWith(todayStr));
+      } else if (statsPeriod === 'monthly') {
+        const monthStr = `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}`;
+        catRecords = catRecords.filter(r => r.createdAt.startsWith(monthStr));
+      } else if (statsPeriod === 'yearly') {
+        const yearStr = `${now.getFullYear()}`;
+        catRecords = catRecords.filter(r => r.createdAt.startsWith(yearStr));
+      }
+
+      let totalInvested = 0;
+      let totalReturned = 0;
+      let winCount = 0;
+      let loseCount = 0;
+      let pendingCount = 0;
+
+      catRecords.forEach(r => {
+        totalInvested += r.investAmount;
+        if (r.status === 'WIN') {
+          totalReturned += (r.returnAmount || 0);
+          winCount++;
+        } else if (r.status === 'LOSE') {
+          loseCount++;
+        } else {
+          pendingCount++;
+        }
+      });
+
+      const settledCount = winCount + loseCount;
+      const winRate = settledCount > 0 ? Math.round((winCount / settledCount) * 100) : 0;
+      const settledInvested = catRecords.filter(r => r.status !== 'PENDING').reduce((acc, c) => acc + c.investAmount, 0);
+      const netProfit = totalReturned - settledInvested;
+      const roi = settledInvested > 0 ? Math.round((netProfit / settledInvested) * 100) : 0;
+
+      let runningProfit = 0;
+      const chartPoints = [0];
+      catRecords.slice().reverse().forEach(r => {
+        if (r.status === 'WIN') {
+          runningProfit += ((r.returnAmount || 0) - r.investAmount);
+          chartPoints.push(runningProfit);
+        } else if (r.status === 'LOSE') {
+          runningProfit -= r.investAmount;
+          chartPoints.push(runningProfit);
+        }
+      });
+
+      let svgGraphHtml = '';
+      if (chartPoints.length > 1) {
+        const minVal = Math.min(0, ...chartPoints);
+        const maxVal = Math.max(1000, ...chartPoints);
+        const range = (maxVal - minVal) || 1;
+        const width = 310;
+        const height = 90;
+
+        const points = chartPoints.map((val, idx) => {
+          const x = (idx / (chartPoints.length - 1)) * width;
+          const y = height - ((val - minVal) / range) * (height - 20) - 10;
+          return `${x.toFixed(1)},${y.toFixed(1)}`;
+        }).join(' ');
+
+        svgGraphHtml = `
+          <svg viewBox="0 0 ${width} ${height}" class="w-full h-24 overflow-visible">
+            <polyline fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" points="${points}" />
+            ${chartPoints.map((val, idx) => {
+              const x = (idx / (chartPoints.length - 1)) * width;
+              const y = height - ((val - minVal) / range) * (height - 20) - 10;
+              return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3" fill="#10b981" />`;
+            }).join('')}
+          </svg>
+        `;
+      } else {
+        svgGraphHtml = `<div class="h-20 flex items-center justify-center text-xs text-neutral-500">${category} 정산 기록이 쌓이면 손익 곡선이 나타납니다.</div>`;
+      }
+
+      container.innerHTML = `
+        <div class="flex justify-between items-center px-1">
+          <div class="flex space-x-1.5">
+            ${['승무패', '언옵', '핸디'].map(cat => `
+              <button onclick="window.selectStatsCategory('${cat}')" class="px-3 py-1 rounded-xl text-xs font-bold transition ${selectedStatsCategory === cat ? 'bg-blue-600 text-white shadow-sm' : (isLightMode ? 'bg-white text-neutral-600 border border-neutral-200' : 'bg-neutral-900 text-neutral-400 border border-neutral-800')}">
+                ${cat}
+              </button>
+            `).join('')}
+          </div>
+          <button onclick="window.exitCategoryStats()" class="text-xs text-blue-400 font-semibold hover:underline">
+            전체 통계 보기
+          </button>
+        </div>
+
+        <div class="p-1 bg-neutral-900 rounded-2xl flex border border-neutral-800 text-xs">
+          ${[
+            { id: 'daily', label: '일별' },
+            { id: 'monthly', label: '월별' },
+            { id: 'yearly', label: '년별' },
+            { id: 'all', label: '전체' }
+          ].map(p => `
+            <button onclick="window.setStatsPeriod('${p.id}')" class="flex-1 py-1.5 rounded-xl font-semibold transition ${statsPeriod === p.id ? 'bg-neutral-800 text-white shadow-sm' : 'text-neutral-400 hover:text-neutral-200'}">
+              ${p.label}
+            </button>
+          `).join('')}
+        </div>
+
+        <div class="flex justify-between items-center px-1">
+          <span class="text-xs text-neutral-400 font-medium">${category} 기록에 프로젝트 포함</span>
+          <button onclick="window.toggleIncludeProjects()" class="w-11 h-6 rounded-full transition-colors p-0.5 flex items-center ${includeProjectsInStats ? 'bg-blue-600 justify-end' : 'bg-neutral-800 justify-start'}">
+            <div class="w-5 h-5 rounded-full bg-white shadow-md"></div>
+          </button>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2.5">
+          <div class="${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900/90 border-neutral-800'} border p-3.5 rounded-2xl space-y-1">
+            <span class="text-[10px] text-neutral-400 font-medium">${category} 적중률</span>
+            <div class="text-2xl font-black font-mono ${isLightMode ? 'text-neutral-900' : 'text-white'}">${winRate}%</div>
+            <div class="text-[10px] text-neutral-400">${winCount}적중 / ${loseCount}미적중</div>
+          </div>
+          <div class="${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900/90 border-neutral-800'} border p-3.5 rounded-2xl space-y-1">
+            <span class="text-[10px] text-neutral-400 font-medium">${category} 순손익</span>
+            <div class="text-2xl font-black font-mono ${netProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'}">
+              ${netProfit > 0 ? '+' : ''}${netProfit.toLocaleString()}원
+            </div>
+            <div class="text-[10px] text-neutral-400 font-mono">ROI: ${roi}%</div>
+          </div>
+          <div class="${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900/90 border-neutral-800'} border p-3.5 rounded-2xl space-y-1">
+            <span class="text-[10px] text-neutral-400 font-medium">총 투자금액</span>
+            <div class="text-lg font-bold font-mono ${isLightMode ? 'text-neutral-800' : 'text-neutral-200'}">${totalInvested.toLocaleString()}원</div>
+            <div class="text-[10px] text-neutral-400">대기: ${pendingCount}건</div>
+          </div>
+          <div class="${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900/90 border-neutral-800'} border p-3.5 rounded-2xl space-y-1">
+            <span class="text-[10px] text-neutral-400 font-medium">총 출금(회수)금액</span>
+            <div class="text-lg font-bold font-mono text-emerald-400">${totalReturned.toLocaleString()}원</div>
+            <div class="text-[10px] text-neutral-400">환급 완료 기준</div>
+          </div>
+        </div>
+
+        <div class="${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900/90 border-neutral-800'} border p-4 rounded-3xl space-y-2">
+          <div class="flex justify-between items-center text-xs">
+            <span class="font-bold ${isLightMode ? 'text-neutral-900' : 'text-white'}">[${category}] 누적 손익 추이</span>
+            <span class="text-[10px] text-emerald-400 font-mono">최종: ${netProfit.toLocaleString()}원</span>
+          </div>
+          <div class="pt-2">
+            ${svgGraphHtml}
+          </div>
+        </div>
+
+        <div class="space-y-2 pt-1">
+          <div class="flex justify-between items-center px-1">
+            <span class="text-xs font-bold ${isLightMode ? 'text-neutral-900' : 'text-white'}">[${category}] 기록 내역 (${catRecords.length}건)</span>
+            <span class="text-[10px] text-neutral-400">터치하여 정산/수정</span>
+          </div>
+
+          ${catRecords.length === 0 ? `
+            <div class="text-center py-10 text-neutral-500 text-xs ${isLightMode ? 'bg-white' : 'bg-neutral-900/40'} rounded-2xl border ${isLightMode ? 'border-neutral-200' : 'border-neutral-800'}">
+              선택된 기간에 [${category}] 기록이 없습니다.
+            </div>
+          ` : catRecords.map(r => {
+            const project = projects.find(p => p.id === r.projectId);
+            let statusBadge = '';
+            let profitDisplay = '';
+
+            if (r.status === 'PENDING') {
+              statusBadge = `<span class="bg-amber-500/15 text-amber-400 border border-amber-500/30 text-[10px] font-bold px-2 py-0.5 rounded-full animate-pulse">대기중</span>`;
+              profitDisplay = `<span class="text-xs text-amber-400 font-mono">진행 중</span>`;
+            } else if (r.status === 'WIN') {
+              const profit = (r.returnAmount || 0) - r.investAmount;
+              statusBadge = `<span class="bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold px-2 py-0.5 rounded-full">적중 🎯</span>`;
+              profitDisplay = `<span class="text-xs font-mono font-bold text-emerald-400">+${profit.toLocaleString()}원</span>`;
+            } else {
+              statusBadge = `<span class="bg-rose-500/15 text-rose-400 border border-rose-500/30 text-[10px] font-bold px-2 py-0.5 rounded-full">미적중 ❌</span>`;
+              profitDisplay = `<span class="text-xs font-mono font-bold text-rose-400">-${r.investAmount.toLocaleString()}원</span>`;
+            }
+
+            return `
+              <div onclick="window.openSettleModal(${r.id})" class="cursor-pointer active:scale-[0.98] transition ${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900/80 hover:bg-neutral-900 border-neutral-800/90'} p-3.5 rounded-2xl border space-y-2 shadow-sm">
+                <div class="flex justify-between items-center">
+                  <span class="text-[11px] font-bold px-2 py-0.5 rounded-lg ${getCategoryColorClass(r.category)}">${r.category}</span>
+                  ${project ? `<span class="text-[9px] bg-purple-500/15 text-purple-400 border border-purple-500/30 px-1.5 py-0.5 rounded font-medium truncate max-w-[110px]">${project.name}</span>` : ''}
+                  ${statusBadge}
+                </div>
+
+                <div class="flex justify-between items-baseline pt-1">
+                  <div>
+                    <div class="text-sm font-bold font-mono ${isLightMode ? 'text-neutral-900' : 'text-white'}">
+                      투입 ${r.investAmount.toLocaleString()}원
+                    </div>
+                    ${r.status === 'WIN' ? `<div class="text-[11px] text-neutral-400">회수 ${r.returnAmount.toLocaleString()}원</div>` : ''}
+                  </div>
+                  <div class="text-right">
+                    ${profitDisplay}
+                  </div>
+                </div>
+
+                ${r.memo ? `<div class="text-xs text-neutral-400 truncate">${r.memo}</div>` : ''}
+
+                <div class="flex justify-between items-center pt-1 border-t ${isLightMode ? 'border-neutral-100' : 'border-neutral-800/60'} text-[10px] text-neutral-500">
+                  <span>${r.createdAt}</span>
+                  <span class="text-blue-400 font-medium">상세/정산 ></span>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      `;
+    }
+
+    function renderSettingsTab(container) {
+      container.innerHTML = `
+        <div class="space-y-4">
+          <div class="${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900 border-neutral-800'} border p-4 rounded-3xl flex items-center space-x-3">
+            <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-neutral-800 via-neutral-900 to-black border border-neutral-700 flex items-center justify-center">
+              <span class="text-2xl font-black italic bg-gradient-to-b from-white to-neutral-400 bg-clip-text text-transparent">J</span>
+            </div>
+            <div>
+              <h2 class="text-base font-bold ${isLightMode ? 'text-neutral-900' : 'text-white'}">J (제이)</h2>
+              <p class="text-[11px] text-neutral-400">iOS 네이티브 감성의 베팅 & 시드 관리 PWA</p>
+              <div class="text-[10px] text-emerald-400 font-mono mt-0.5">● 오프라인 스토리지 영구 보존</div>
+            </div>
+          </div>
+
+          <div class="${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900 border-neutral-800'} border rounded-3xl p-4 space-y-3">
+            <h3 class="text-xs font-bold ${isLightMode ? 'text-neutral-800' : 'text-neutral-300'}">데이터 백업 & 복원</h3>
+            <p class="text-[11px] text-neutral-400 leading-relaxed">
+              아이폰 업데이트나 기기 변경 시에도 데이터를 안전하게 지킬 수 있도록 JSON 파일 백업 및 복원을 제공합니다.
+            </p>
+            <div class="grid grid-cols-2 gap-2 pt-1">
+              <button onclick="exportDataJson()" class="py-2.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 font-semibold rounded-xl text-xs transition active:scale-95">
+                📥 데이터 백업(다운로드)
+              </button>
+              <label class="py-2.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 font-semibold rounded-xl text-xs transition active:scale-95 text-center cursor-pointer flex items-center justify-center">
+                📤 데이터 불러오기
+                <input type="file" id="importFileInput" onchange="importDataJson(event)" accept=".json" class="hidden" />
+              </label>
+            </div>
+          </div>
+
+          <div class="${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900 border-neutral-800'} border rounded-3xl p-4 space-y-2 text-xs text-neutral-300">
+            <div class="font-bold ${isLightMode ? 'text-neutral-900' : 'text-white'}">📱 아이폰 홈 화면 설치 방법</div>
+            <ol class="list-decimal list-inside space-y-1.5 text-[11px] text-neutral-400">
+              <li>아이폰 <span class="font-medium ${isLightMode ? 'text-neutral-900' : 'text-white'}">Safari 브라우저</span>로 접속</li>
+              <li>하단 중앙의 <span class="text-blue-400 font-medium">[공유 (네모+화살표)]</span> 아이콘 터치</li>
+              <li>메뉴에서 <span class="font-medium ${isLightMode ? 'text-neutral-900' : 'text-white'}">[홈 화면에 추가]</span> 선택</li>
+              <li>홈 화면에 생성된 <span class="font-bold ${isLightMode ? 'text-neutral-900' : 'text-white'}">'J'</span> 아이콘으로 실행!</li>
+            </ol>
+          </div>
+
+          <div class="pt-2">
+            <button onclick="resetAllData()" class="w-full py-3 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-semibold rounded-2xl text-xs transition border border-rose-500/30">
+              모든 데이터 초기화 (주의)
+            </button>
+          </div>
+        </div>
+      `;
+    }
+
+    function exportDataJson() {
+      const data = { records, projects, exportedAt: new Date().toISOString() };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `J_app_backup_${new Date().toISOString().slice(0,10)}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    function importDataJson(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          if (parsed.records && parsed.projects) {
+            records = parsed.records;
+            projects = parsed.projects;
+            saveState();
+            renderCurrentTab();
+            alert('성공적으로 데이터를 복원했습니다!');
+          } else {
+            alert('올바르지 않은 백업 파일 형식입니다.');
+          }
+        } catch (err) {
+          alert('파일을 읽는 중 오류가 발생했습니다.');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function resetAllData() {
+      if (confirm('정말로 모든 기록과 프로젝트를 초기화하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
+        records = [];
+        projects = [];
+        saveState();
+        renderCurrentTab();
+      }
+    }
+
+    let currentSettleRecordId = null;
+    let selectedSettleType = 'WIN';
+
+    window.openSettleModal = function(recordId) {
+      const rec = records.find(r => r.id === recordId);
+      if (!rec) return;
+
+      currentSettleRecordId = recordId;
+      document.getElementById('settleCategoryBadge').textContent = rec.category;
+      document.getElementById('settleSummaryText').textContent = `투입 금액: ${rec.investAmount.toLocaleString()}원 (${rec.createdAt})`;
+      
+      const modal = document.getElementById('settleModal');
+      modal.classList.remove('hidden');
+
+      if (rec.status === 'WIN') {
+        selectSettleType('WIN');
+        document.getElementById('winReturnInput').value = rec.returnAmount || '';
+        document.getElementById('btnResetPending').classList.remove('hidden');
+      } else if (rec.status === 'LOSE') {
+        selectSettleType('LOSE');
+        document.getElementById('btnResetPending').classList.remove('hidden');
+      } else {
+        selectSettleType('WIN');
+        document.getElementById('winReturnInput').value = '';
+        document.getElementById('btnResetPending').classList.add('hidden');
+      }
+
+      updateExpectedProfit();
+    };
+
+    window.closeSettleModal = function() {
+      document.getElementById('settleModal').classList.add('hidden');
+      currentSettleRecordId = null;
+    };
+
+    function selectSettleType(type) {
+      selectedSettleType = type;
+      const btnWin = document.getElementById('btnSettleWin');
+      const btnLose = document.getElementById('btnSettleLose');
+      const winArea = document.getElementById('winAmountArea');
+
+      if (type === 'WIN') {
+        btnWin.className = 'py-3 rounded-2xl bg-emerald-500/25 border-2 border-emerald-500 flex flex-col items-center space-y-1 transition';
+        btnLose.className = 'py-3 rounded-2xl bg-rose-500/10 border border-neutral-700 hover:bg-rose-500/20 flex flex-col items-center space-y-1 transition';
+        winArea.classList.remove('hidden');
+      } else {
+        btnLose.className = 'py-3 rounded-2xl bg-rose-500/25 border-2 border-rose-500 flex flex-col items-center space-y-1 transition';
+        btnWin.className = 'py-3 rounded-2xl bg-emerald-500/10 border border-neutral-700 hover:bg-emerald-500/20 flex flex-col items-center space-y-1 transition';
+        winArea.classList.add('hidden');
+      }
+      updateExpectedProfit();
+    }
+
+    document.getElementById('winReturnInput')?.addEventListener('input', updateExpectedProfit);
+
+    function updateExpectedProfit() {
+      const rec = records.find(r => r.id === currentSettleRecordId);
+      if (!rec) return;
+
+      const pEl = document.getElementById('expectedProfitText');
+      if (selectedSettleType === 'WIN') {
+        const retVal = Number(document.getElementById('winReturnInput').value) || 0;
+        const profit = retVal - rec.investAmount;
+        pEl.textContent = `예상 순손익: ${profit >= 0 ? '+' : ''}${profit.toLocaleString()}원`;
+        pEl.className = `text-[11px] font-medium ${profit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+      } else {
+        pEl.textContent = `예상 순손익: -${rec.investAmount.toLocaleString()}원 (전액 손실)`;
+        pEl.className = 'text-[11px] font-medium text-rose-400';
+      }
+    }
+
+    function confirmSettlement() {
+      const rec = records.find(r => r.id === currentSettleRecordId);
+      if (!rec) return;
+
+      if (selectedSettleType === 'WIN') {
+        const retVal = Number(document.getElementById('winReturnInput').value);
+        if (isNaN(retVal) || retVal <= 0) {
+          showToast('적중 시 출금(회수) 금액을 입력해주세요.');
+          return;
+        }
+        rec.status = 'WIN';
+        rec.returnAmount = retVal;
+      } else {
+        rec.status = 'LOSE';
+        rec.returnAmount = 0;
+      }
+
+      saveState();
+      window.closeSettleModal();
+      renderCurrentTab();
+    }
+
+    function resetToPending() {
+      const rec = records.find(r => r.id === currentSettleRecordId);
+      if (!rec) return;
+      rec.status = 'PENDING';
+      rec.returnAmount = null;
+      saveState();
+      window.closeSettleModal();
+      renderCurrentTab();
+    }
+
+    let selectedCategory = '승무패';
+
+    window.openNewRecordModal = function() {
+      populateProjectSelect();
+      document.getElementById('inputInvestAmount').value = '';
+      document.getElementById('inputRecordMemo').value = '';
+      document.getElementById('recordModalHeaderTitle').textContent = '새로운 기록 작성';
+      document.getElementById('recordProjectContainer').classList.remove('hidden');
+      document.getElementById('selectRecordProject').value = '';
+      window.selectCategory('승무패');
+      document.getElementById('newRecordModal').classList.remove('hidden');
+    };
+
+    window.openNewRecordModalForProject = function(projectId) {
+      populateProjectSelect();
+      document.getElementById('inputInvestAmount').value = '';
+      document.getElementById('inputRecordMemo').value = '';
+      const p = projects.find(item => item.id === projectId);
+      document.getElementById('recordModalHeaderTitle').textContent = p ? `[${p.name}] 기록 작성` : '프로젝트 기록 작성';
+      document.getElementById('recordProjectContainer').classList.add('hidden');
+      document.getElementById('selectRecordProject').value = projectId;
+      window.selectCategory('승무패');
+      document.getElementById('newRecordModal').classList.remove('hidden');
+    };
+
+    window.closeNewRecordModal = function() {
+      document.getElementById('newRecordModal').classList.add('hidden');
+    };
+
+    window.selectCategory = function(cat) {
+      selectedCategory = cat;
+      const btns = document.querySelectorAll('.category-btn');
+      btns.forEach(b => {
+        if (b.textContent === cat) {
+          b.className = 'category-btn py-2 rounded-xl text-xs font-semibold bg-blue-600 text-white border border-blue-500';
+        } else {
+          b.className = 'category-btn py-2 rounded-xl text-xs font-semibold bg-neutral-800 text-neutral-300 border border-neutral-700';
+        }
+      });
+    };
+
+    window.addQuickAmount = function(amount) {
+      const input = document.getElementById('inputInvestAmount');
+      const cur = Number(input.value) || 0;
+      input.value = cur + amount;
+    };
+
+    function populateProjectSelect() {
+      const select = document.getElementById('selectRecordProject');
+      select.innerHTML = '<option value="">일반 기록 (프로젝트 미연결)</option>';
+      projects.filter(p => p.status === 'ACTIVE').forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = `🎯 ${p.name}`;
+        select.appendChild(opt);
+      });
+    }
+
+    function saveNewRecord() {
+      const amount = Number(document.getElementById('inputInvestAmount').value);
+      if (!amount || amount <= 0) {
+        showToast('올바른 투입 금액을 입력해주세요.');
+        return;
+      }
+
+      const memo = document.getElementById('inputRecordMemo').value.trim();
+      const projId = document.getElementById('selectRecordProject').value;
+
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, '0');
+      const d = String(now.getDate()).padStart(2, '0');
+      const hh = String(now.getHours()).padStart(2, '0');
+      const mm = String(now.getMinutes()).padStart(2, '0');
+      const ss = String(now.getSeconds()).padStart(2, '0');
+      const createdAt = `${y}.${m}.${d} ${hh}:${mm}:${ss}`;
+
+      const newRec = {
+        id: Date.now(),
+        investAmount: amount,
+        returnAmount: null,
+        category: selectedCategory,
+        status: 'PENDING',
+        memo: memo,
+        createdAt: createdAt,
+        projectId: projId
+      };
+
+      records.unshift(newRec);
+      saveState();
+      window.closeNewRecordModal();
+      renderCurrentTab();
+    }
+
+    window.openNewProjectModal = function() {
+      document.getElementById('inputProjectName').value = '';
+      document.getElementById('inputProjectInitial').value = '';
+      document.getElementById('inputProjectTarget').value = '';
+      document.getElementById('newProjectModal').classList.remove('hidden');
+    };
+
+    window.closeNewProjectModal = function() {
+      document.getElementById('newProjectModal').classList.add('hidden');
+    };
+
+    function saveNewProject() {
+      const name = document.getElementById('inputProjectName').value.trim();
+      const initial = Number(document.getElementById('inputProjectInitial').value);
+      const target = Number(document.getElementById('inputProjectTarget').value);
+
+      if (!name) {
+        showToast('프로젝트 이름을 입력해주세요.');
+        return;
+      }
+      if (!initial || initial <= 0) {
+        showToast('초기 시드금액을 올바르게 입력해주세요.');
+        return;
+      }
+      if (!target || target <= initial) {
+        showToast('목표 달성금액은 초기금보다 커야 합니다.');
+        return;
+      }
+
+      const now = new Date();
+      const y = now.getFullYear();
+      const m = String(now.getMonth() + 1).padStart(2, '0');
+      const d = String(now.getDate()).padStart(2, '0');
+      const hh = String(now.getHours()).padStart(2, '0');
+      const mm = String(now.getMinutes()).padStart(2, '0');
+      const ss = String(now.getSeconds()).padStart(2, '0');
+
+      const newProj = {
+        id: 'proj-' + Date.now(),
+        name: name,
+        initialSeed: initial,
+        targetAmount: target,
+        createdAt: `${y}.${m}.${d} ${hh}:${mm}:${ss}`,
+        status: 'ACTIVE'
+      };
+
+      projects.unshift(newProj);
+      saveState();
+      window.closeNewProjectModal();
+      selectedProjectId = newProj.id;
+      if (currentTab !== 'projects') {
+        window.switchTab('projects');
+      } else {
+        renderCurrentTab();
+      }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('btnSettleWin')?.addEventListener('click', () => selectSettleType('WIN'));
+      document.getElementById('btnSettleLose')?.addEventListener('click', () => selectSettleType('LOSE'));
+      document.getElementById('btnSubmitSettle')?.addEventListener('click', confirmSettlement);
+      document.getElementById('btnResetPending')?.addEventListener('click', resetToPending);
+      document.getElementById('btnSaveNewRecord')?.addEventListener('click', saveNewRecord);
+      document.getElementById('btnSaveNewProject')?.addEventListener('click', saveNewProject);
+      applyThemeUI();
+      renderCurrentTab();
+    });
+
+    applyThemeUI();
+    renderCurrentTab();
+  </script>
+</body>
+</html>
