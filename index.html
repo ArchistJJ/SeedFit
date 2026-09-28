@@ -219,6 +219,8 @@
           프로젝트 시작하기
         </button>
       </div>
+    </div>
+
     <!-- Mental Care & Cool-down Modal (마인드셋 & 쿨다운 케어) -->
     <div id="mentalCareModal" class="absolute inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-end justify-center p-0 transition-opacity">
       <div class="w-full bg-neutral-900 border-t border-neutral-800 rounded-t-[32px] p-6 pb-safe space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto custom-scroll">
@@ -541,23 +543,60 @@
     }
 
     function calculateLossStreak() {
+      // 1. 내 전체 평균 투자 금액 동적 계산
+      const validInvests = records.filter(r => r.investAmount && r.investAmount > 0);
+      const avgInvest = validInvests.length > 0 
+        ? Math.round(validInvests.reduce((sum, r) => sum + r.investAmount, 0) / validInvests.length)
+        : 30000;
+
+      // 2. 정산 완료된 기록 (최신순)
       const settled = records
         .filter(r => r.status === 'WIN' || r.status === 'LOSE')
         .sort((a, b) => new Date(b.createdAt.replace(/\./g, '/')) - new Date(a.createdAt.replace(/\./g, '/')));
 
       let consecutiveLosses = 0;
-      let lossAmount = 0;
+      let streakLossAmount = 0;
 
       for (const rec of settled) {
         if (rec.status === 'LOSE') {
           consecutiveLosses++;
-          lossAmount += rec.investAmount;
+          streakLossAmount += rec.investAmount;
         } else {
           break;
         }
       }
 
-      return { consecutiveLosses, lossAmount };
+      // 3. 최근 기록들 패턴 분석
+      const lastRec = settled[0];
+      const recent5 = settled.slice(0, 5);
+      const recent5LossCount = recent5.filter(r => r.status === 'LOSE').length;
+      const recent5NetProfit = recent5.reduce((sum, r) => {
+        return sum + (r.status === 'WIN' ? (r.returnAmount || 0) - r.investAmount : -r.investAmount);
+      }, 0);
+
+      // 트리거 조건 판정:
+      // A. 3연패 도달 (연패는 3연패 기준)
+      const is3Streak = (consecutiveLosses >= 3);
+      // B. 연속 손실액이 내 평균 투자금의 2.5배 이상 (평소보다 비정상적으로 큰 연속 손실)
+      const isHeavyLossStreak = (consecutiveLosses >= 2 && streakLossAmount >= avgInvest * 2.5);
+      // C. 최근 경기에서 평소 평균 투자금의 2배 이상을 베팅했다가 미적중 (추격 마틴게일 베팅 감지)
+      const isChasingLoss = (lastRec && lastRec.status === 'LOSE' && lastRec.investAmount >= avgInvest * 2);
+      // D. 최근 5경기 중 4경기 이상 미적중이면서 손실 누적
+      const isRecentPatternCollapse = (recent5.length >= 4 && recent5LossCount >= 4 && recent5NetProfit <= -avgInvest * 2);
+
+      const isTriggered = is3Streak || isHeavyLossStreak || isChasingLoss || isRecentPatternCollapse;
+
+      return {
+        consecutiveLosses,
+        streakLossAmount,
+        avgInvest,
+        isTriggered,
+        is3Streak,
+        isHeavyLossStreak,
+        isChasingLoss,
+        isRecentPatternCollapse,
+        lastInvestAmount: lastRec ? lastRec.investAmount : 0
+      };
     }
 
     window.openMentalCareModal = function(data = {}) {
@@ -567,16 +606,22 @@
 
       if (data.manual) {
         if (badge) badge.textContent = '🧘 멘탈 관리 및 평정심 모드';
-        if (sub) sub.textContent = '베팅 전 감정을 배제하고 차분한 이성으로 확률과 리스크를 점검하세요.';
-      } else if (streak.consecutiveLosses >= 3) {
-        if (badge) badge.textContent = `⚠️ 최근 ${streak.consecutiveLosses}연패 지속 감지 (-${streak.lossAmount.toLocaleString()}원)`;
-        if (sub) sub.textContent = `연패가 지속될 때는 뇌에서 분노와 만회 심리가 생겨 손실을 더 키우기 쉽습니다. 지금 멈추는 것이 최선의 선택입니다.`;
-      } else if (streak.lossAmount >= mentalCareSettings.lossAmountThreshold) {
-        if (badge) badge.textContent = `🚨 누적 손실 ${streak.lossAmount.toLocaleString()}원 경고`;
-        if (sub) sub.textContent = `손실 규모가 커졌습니다. 무리한 금액 증액(마틴게일)을 절대 멈추고 쿨다운 시간을 가지세요.`;
+        if (sub) sub.textContent = `베팅 전 감정을 배제하고 차분한 이성으로 확률과 리스크를 점검하세요. (현재 내 평균 투자금: ${streak.avgInvest.toLocaleString()}원)`;
+      } else if (streak.is3Streak) {
+        if (badge) badge.textContent = `⚠️ 3연패 지속 감지 (연속 -${streak.streakLossAmount.toLocaleString()}원)`;
+        if (sub) sub.textContent = `최근 3회 연속 미적중되었습니다. (평균 투자금 ${streak.avgInvest.toLocaleString()}원 대비 연속 손실 ${streak.streakLossAmount.toLocaleString()}원) 연패 시 뇌는 조급함으로 무리한 베팅을 유발합니다. 지금 멈추는 것이 가장 현명합니다.`;
+      } else if (streak.isChasingLoss) {
+        if (badge) badge.textContent = `🚨 평소 평균 대비 과다 베팅 손실 감지`;
+        if (sub) sub.textContent = `평소 평균 투자금(${streak.avgInvest.toLocaleString()}원)의 ${(streak.lastInvestAmount / streak.avgInvest).toFixed(1)}배에 달하는 ${streak.lastInvestAmount.toLocaleString()}원이 손실되었습니다. 조급한 추격 베팅을 즉시 멈추세요.`;
+      } else if (streak.isHeavyLossStreak) {
+        if (badge) badge.textContent = `⚠️ 평균 투자금 대비 누적 손실 급증`;
+        if (sub) sub.textContent = `최근 연속 손실액(${streak.streakLossAmount.toLocaleString()}원)이 평소 평균 투자금(${streak.avgInvest.toLocaleString()}원)의 ${(streak.streakLossAmount / streak.avgInvest).toFixed(1)}배에 달합니다. 쿨다운이 절실한 시점입니다.`;
+      } else if (streak.isRecentPatternCollapse) {
+        if (badge) badge.textContent = `⚠️ 최근 경기 페이스 붕괴 감지`;
+        if (sub) sub.textContent = `최근 경기들에서 지속적인 손실이 발생하고 있습니다. 흐름이 좋지 않을 때는 쉬어가는 것이 시드를 지키는 최고의 전략입니다.`;
       } else {
         if (badge) badge.textContent = '🧘 멘탈 케어 & 마인드셋';
-        if (sub) sub.textContent = '장기적인 플러스 ROI를 위해 가장 중요한 것은 철저한 멘탈과 자금 관리입니다.';
+        if (sub) sub.textContent = `장기적인 플러스 ROI를 위해 가장 중요한 것은 철저한 멘탈과 자금 관리입니다. (내 평균 투자금: ${streak.avgInvest.toLocaleString()}원)`;
       }
 
       stopBreathingExercise();
@@ -603,20 +648,6 @@
       showToast(mentalCareSettings.enabled ? '멘탈 케어 알림 활성화' : '멘탈 케어 알림 비활성화');
     };
 
-    window.setLossStreakThreshold = function(cnt) {
-      mentalCareSettings.lossStreakThreshold = cnt;
-      safeStorage.set(STORAGE_KEY_MENTAL_SETTINGS, JSON.stringify(mentalCareSettings));
-      renderCurrentTab();
-      showToast(`연패 감지 기준: ${cnt}연패로 변경`);
-    };
-
-    window.setLossAmountThreshold = function(amt) {
-      mentalCareSettings.lossAmountThreshold = amt;
-      safeStorage.set(STORAGE_KEY_MENTAL_SETTINGS, JSON.stringify(mentalCareSettings));
-      renderCurrentTab();
-      showToast(`손실 감지 기준: ${(amt/10000)}만 원으로 변경`);
-    };
-
     function getMentalCareBannerHtml() {
       const now = Date.now();
       if (cooldownEndTime && cooldownEndTime > now) {
@@ -640,7 +671,10 @@
 
       if (mentalCareSettings.enabled) {
         const streak = calculateLossStreak();
-        if (streak.consecutiveLosses >= mentalCareSettings.lossStreakThreshold || streak.lossAmount >= mentalCareSettings.lossAmountThreshold) {
+        if (streak.isTriggered) {
+          const reasonTitle = streak.is3Streak 
+            ? `${streak.consecutiveLosses}연패 지속 중` 
+            : (streak.isChasingLoss ? '과다 베팅 손실 위험' : '평균 대비 손실 위험');
           return `
             <div onclick="window.openMentalCareModal()" class="cursor-pointer p-3.5 bg-gradient-to-r from-rose-500/15 via-amber-500/10 to-rose-500/15 border border-rose-500/30 rounded-2xl flex items-center justify-between text-xs transition hover:opacity-90 active:scale-[0.98] shadow-sm mb-3">
               <div class="flex items-center space-x-2.5">
@@ -648,9 +682,9 @@
                 <div>
                   <div class="font-bold text-rose-400 flex items-center space-x-1.5">
                     <span>마인드 케어 활성화</span>
-                    <span class="text-[10px] bg-rose-500/20 text-rose-300 border border-rose-500/40 px-1.5 py-0.5 rounded-full">${streak.consecutiveLosses}연패 중 (-${streak.lossAmount.toLocaleString()}원)</span>
+                    <span class="text-[10px] bg-rose-500/20 text-rose-300 border border-rose-500/40 px-1.5 py-0.5 rounded-full font-mono">${reasonTitle} (-${streak.streakLossAmount.toLocaleString()}원)</span>
                   </div>
-                  <div class="text-[10px] text-neutral-400 mt-0.5">추격 베팅 경계! 탭하여 호흡 가이드 및 쿨다운 보기</div>
+                  <div class="text-[10px] text-neutral-400 mt-0.5">평균 투자금(${streak.avgInvest.toLocaleString()}원) 분석 기준 경고! 탭하여 쿨다운 보기</div>
                 </div>
               </div>
               <span class="text-rose-400 font-bold text-xs">가이드 ></span>
@@ -1629,6 +1663,7 @@
     }
 
     function renderSettingsTab(container) {
+      const streak = calculateLossStreak();
       container.innerHTML = `
         <div class="space-y-4">
           <div class="${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900 border-neutral-800'} border p-4 rounded-3xl flex items-center space-x-3">
@@ -1657,26 +1692,31 @@
               연패가 지속되거나 손실이 커질 때 뇌동·추격 베팅을 차단하고 평정심을 유지할 수 있도록 안정 가이드와 쿨다운을 제공합니다.
             </p>
 
-            <div class="space-y-2.5 pt-1 border-t ${isLightMode ? 'border-neutral-100' : 'border-neutral-800'}">
-              <div class="flex justify-between items-center text-xs">
+            <div class="space-y-2 pt-2 border-t ${isLightMode ? 'border-neutral-100' : 'border-neutral-800'} text-xs">
+              <div class="flex justify-between items-center py-1">
                 <span class="text-neutral-400">연패 감지 기준</span>
-                <div class="flex space-x-1">
-                  ${[2, 3, 4, 5].map(cnt => `
-                    <button onclick="window.setLossStreakThreshold(${cnt})" class="px-2 py-1 rounded-lg text-[11px] font-bold transition ${mentalCareSettings.lossStreakThreshold === cnt ? 'bg-amber-500 text-black shadow-sm' : (isLightMode ? 'bg-neutral-100 text-neutral-600' : 'bg-neutral-800 text-neutral-400')}">
-                      ${cnt}연패
-                    </button>
-                  `).join('')}
-                </div>
+                <span class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                  3연패 시 즉시 감지
+                </span>
               </div>
 
-              <div class="flex justify-between items-center text-xs pt-1">
-                <span class="text-neutral-400">손실 감지 기준</span>
-                <div class="flex space-x-1">
-                  ${[50000, 100000, 200000, 300000].map(amt => `
-                    <button onclick="window.setLossAmountThreshold(${amt})" class="px-1.5 py-1 rounded-lg text-[10px] font-bold transition ${mentalCareSettings.lossAmountThreshold === amt ? 'bg-amber-500 text-black shadow-sm' : (isLightMode ? 'bg-neutral-100 text-neutral-600' : 'bg-neutral-800 text-neutral-400')}">
-                      ${(amt / 10000)}만
-                    </button>
-                  `).join('')}
+              <div class="flex justify-between items-center py-1">
+                <span class="text-neutral-400">내 평균 투자금</span>
+                <span class="font-mono font-bold ${isLightMode ? 'text-neutral-800' : 'text-white'}">
+                  ${streak.avgInvest.toLocaleString()}원
+                </span>
+              </div>
+
+              <div class="p-2.5 rounded-xl ${isLightMode ? 'bg-neutral-50 border border-neutral-200' : 'bg-neutral-950/60 border border-neutral-800/80'} text-[11px] space-y-1.5 text-neutral-400">
+                <div class="font-semibold ${isLightMode ? 'text-neutral-700' : 'text-neutral-300'} flex items-center space-x-1">
+                  <span>💡</span>
+                  <span>최근 기록 기반 스마트 감지 조건:</span>
+                </div>
+                <div class="pl-4 space-y-1 text-[10px] leading-tight">
+                  <div>• 3회 연속 미적중(3연패) 발생 시</div>
+                  <div>• 평균 대비 2.5배 이상 연속 손실 발생 시</div>
+                  <div>• 평균 대비 2배 이상 단일 추격베팅 실패 시</div>
+                  <div>• 최근 5경기 중 4경기 이상 손실 페이스 붕괴 시</div>
                 </div>
               </div>
             </div>
@@ -1861,7 +1901,7 @@
 
       if (rec.status === 'LOSE' && mentalCareSettings.enabled) {
         const streak = calculateLossStreak();
-        if (streak.consecutiveLosses >= mentalCareSettings.lossStreakThreshold || streak.lossAmount >= mentalCareSettings.lossAmountThreshold) {
+        if (streak.isTriggered) {
           setTimeout(() => {
             window.openMentalCareModal(streak);
           }, 350);
