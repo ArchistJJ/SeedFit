@@ -1755,27 +1755,27 @@
 
         <!-- KPI 4분할 그리드 (현재 선택된 조건 기준 실시간 반영) -->
         <div class="grid grid-cols-2 gap-2.5">
-          <div class="${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900/90 border-neutral-800'} border p-3.5 rounded-2xl space-y-1 shadow-sm">
+          <div class="${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900/90 border-neutral-800'} border p-3 rounded-2xl space-y-1 shadow-sm overflow-hidden">
             <span class="text-[10px] text-neutral-400 font-medium">승률 (적중률)</span>
-            <div class="text-2xl font-black font-mono ${isLightMode ? 'text-neutral-900' : 'text-white'}">${winRate}%</div>
-            <div class="text-[10px] text-neutral-400">${winCount}적중 / ${loseCount}미적중</div>
+            <div class="text-xl font-black font-mono ${isLightMode ? 'text-neutral-900' : 'text-white'}">${winRate}%</div>
+            <div class="text-[10px] text-neutral-400 truncate">${winCount}적중 / ${loseCount}미적중</div>
           </div>
-          <div class="${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900/90 border-neutral-800'} border p-3.5 rounded-2xl space-y-1 shadow-sm">
+          <div class="${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900/90 border-neutral-800'} border p-3 rounded-2xl space-y-1 shadow-sm overflow-hidden">
             <span class="text-[10px] text-neutral-400 font-medium">순손익 (수익률)</span>
-            <div class="text-2xl font-black font-mono ${netProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'}">
+            <div class="text-base sm:text-lg font-bold font-mono tracking-tight whitespace-nowrap truncate ${netProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'}">
               ${netProfit > 0 ? '+' : ''}${netProfit.toLocaleString()}원
             </div>
-            <div class="text-[10px] text-neutral-400 font-mono">ROI: ${roi}%</div>
+            <div class="text-[10px] text-neutral-400 font-mono truncate">ROI: ${roi}%</div>
           </div>
-          <div class="${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900/90 border-neutral-800'} border p-3.5 rounded-2xl space-y-1 shadow-sm">
+          <div class="${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900/90 border-neutral-800'} border p-3 rounded-2xl space-y-1 shadow-sm overflow-hidden">
             <span class="text-[10px] text-neutral-400 font-medium">총 투자금액</span>
-            <div class="text-lg font-bold font-mono ${isLightMode ? 'text-neutral-800' : 'text-neutral-200'}">${totalInvested.toLocaleString()}원</div>
-            <div class="text-[10px] text-neutral-400">대기: ${pendingCount}건</div>
+            <div class="text-base sm:text-lg font-bold font-mono tracking-tight whitespace-nowrap truncate ${isLightMode ? 'text-neutral-800' : 'text-neutral-200'}">${totalInvested.toLocaleString()}원</div>
+            <div class="text-[10px] text-neutral-400 truncate">대기: ${pendingCount}건</div>
           </div>
-          <div class="${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900/90 border-neutral-800'} border p-3.5 rounded-2xl space-y-1 shadow-sm">
+          <div class="${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900/90 border-neutral-800'} border p-3 rounded-2xl space-y-1 shadow-sm overflow-hidden">
             <span class="text-[10px] text-neutral-400 font-medium">총 출금(회수)금액</span>
-            <div class="text-lg font-bold font-mono text-emerald-400">${totalReturned.toLocaleString()}원</div>
-            <div class="text-[10px] text-neutral-400">환급 완료 기준</div>
+            <div class="text-base sm:text-lg font-bold font-mono tracking-tight whitespace-nowrap truncate text-emerald-400">${totalReturned.toLocaleString()}원</div>
+            <div class="text-[10px] text-neutral-400 truncate">환급 완료 기준</div>
           </div>
         </div>
 
