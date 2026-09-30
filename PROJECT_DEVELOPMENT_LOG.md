@@ -1,5 +1,26 @@
 # 프로젝트 개발 로그 (PROJECT DEVELOPMENT LOG)
 
+## [2026-09-30] v1.2.4 사파리 홈화면 데이터 이전 기능 제거 및 설정 탭 상단 소개 카드 정리
+
+### 1. 요구사항 및 구현 내역
+1. **사파리 홈화면 데이터 이전 기능 완전 제거**:
+   - `dataTransferModal` 모달 UI, 기록 탭 상단 데이터 복구 배너, 설정 탭 내 `사파리 ↔ 홈화면 데이터 이전` 카드 완전 삭제.
+   - 관련 스크립트 함수(`openDataTransferModal`, `copyDataToClipboard`, `importDataFromClipboard`, `deepScanOldData`, `checkUrlTransfer` 등) 깔끔하게 정리.
+2. **설정 탭 상단 소개 카드 제거**:
+   - 설정 탭 상단에 노출되던 'SeedFit 스마트 시드 머니 & 베팅 자금 관리 PWA' 소개 카드 블록을 제거하여 미니멀하고 직관적인 레이아웃으로 개편.
+3. **버전 승격**:
+   - `CURRENT_APP_VERSION = 'v1.2.4'` 및 `seedfit-cache-v1.2.4`로 승격.
+
+### 2. 반영 파일
+- `index.html`: 데이터 이전 모달, 배너, 함수, 설정 탭 상단 소개 카드 제거 및 버전 `v1.2.4` 승격.
+- `sw.js`: `seedfit-cache-v1.2.4` 갱신.
+- `package.json`: 버전 `1.2.4` 갱신.
+- `PROJECT_DEVELOPMENT_LOG.md`: 작업 로그 기록.
+
+### 3. 검증
+- 자바스크립트 문법 검사 100% 무결 통과.
+- Git 커밋 및 GitHub Pages 배포 완료.
+
 ## [2026-09-30] v1.2.3 영문 브랜드명 'SeedFit' 공식화 및 기본 샘플 데이터 완전 삭제 (Clean State)
 
 ### 1. 요구사항 및 구현 내역

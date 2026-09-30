@@ -372,54 +372,6 @@
       </div>
     </div>
 
-    <!-- Data Transfer Modal (사파리 ↔ 홈화면 앱 원클릭 데이터 이전 모달) -->
-    <div id="dataTransferModal" class="absolute inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-end justify-center">
-      <div class="w-full bg-neutral-900 border-t border-neutral-800 rounded-t-[28px] p-5 pb-safe space-y-4 shadow-2xl max-h-[85vh] flex flex-col">
-        <div class="w-10 h-1 bg-neutral-700 rounded-full mx-auto shrink-0"></div>
-        
-        <div class="flex justify-between items-center shrink-0">
-          <div>
-            <h3 class="text-base font-bold text-white flex items-center space-x-1.5">
-              <span>📱</span>
-              <span>데이터 간편 이전 & 동기화</span>
-            </h3>
-            <p class="text-[11px] text-neutral-400">사파리 브라우저와 홈 화면 앱 간에 기록을 1초 만에 옮깁니다.</p>
-          </div>
-          <button onclick="window.closeDataTransferModal()" class="text-neutral-400 text-xs p-1">닫기</button>
-        </div>
-
-        <div class="p-3 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-xs text-blue-300 leading-relaxed shrink-0">
-          <strong>💡 이전 방법:</strong><br>
-          1. 기존 사파리(또는 이전 앱)에서 <b>[내 데이터 전체 복사]</b>를 누릅니다.<br>
-          2. 새로 만든 홈 화면 SeedFit 앱을 켜고 아래 입력창에 <b>[붙여넣기]</b> 후 <b>[복원하기]</b>를 누르면 즉시 이전됩니다!
-        </div>
-
-        <div class="space-y-1.5 flex-1 flex flex-col min-h-[140px]">
-          <div class="flex justify-between items-center">
-            <label class="text-xs font-semibold text-neutral-300">데이터 텍스트 (JSON)</label>
-            <button type="button" onclick="window.pasteFromClipboardToInput()" class="text-[11px] text-blue-400 hover:text-blue-300 font-medium">📋 클립보드 붙여넣기</button>
-          </div>
-          <textarea id="dataTransferTextarea" placeholder="여기에 백업 데이터를 붙여넣거나, [내 데이터 전체 복사]를 눌러 코드를 복사하세요." class="w-full flex-1 bg-neutral-800 border border-neutral-700 rounded-xl p-3 text-[11px] font-mono text-neutral-200 placeholder-neutral-500 focus:outline-none focus:border-blue-500 resize-none"></textarea>
-        </div>
-
-        <div class="space-y-2 shrink-0 pt-1">
-          <div class="grid grid-cols-2 gap-2">
-            <button type="button" onclick="window.copyCurrentDataToTransferBox()" class="py-3 bg-neutral-800 hover:bg-neutral-700 text-white font-semibold rounded-xl text-xs transition border border-neutral-700 active:scale-95 flex items-center justify-center space-x-1">
-              <span>📋</span>
-              <span>내 데이터 전체 복사</span>
-            </button>
-            <button type="button" onclick="window.applyDataTransferFromTextarea()" class="py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-xs transition shadow-lg active:scale-95 flex items-center justify-center space-x-1">
-              <span>⚡</span>
-              <span>데이터 지금 복원하기</span>
-            </button>
-          </div>
-          <button type="button" onclick="window.closeDataTransferModal()" class="w-full py-2 text-neutral-400 font-medium text-xs">
-            취소
-          </button>
-        </div>
-      </div>
-    </div>
-
     <!-- Bottom Navigation Bar -->
     <nav id="bottomTabBar" class="shrink-0 pb-safe pt-1 glass-dark border-t border-neutral-800/80 flex justify-around items-center px-2 z-30 select-none">
       <button onclick="window.switchTab('records')" id="nav-records" class="flex flex-col items-center text-blue-500 transition py-1">
@@ -473,7 +425,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.2.3').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.2.4').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -516,7 +468,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.2.3';
+    const CURRENT_APP_VERSION = 'v1.2.4';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');
@@ -545,13 +497,9 @@
 
     let records = [];
     let projects = [];
-    let isFreshInstall = false;
 
     try {
       const rawR = safeStorage.get(STORAGE_KEY_RECORDS) || safeStorage.get(LEGACY_STORAGE_KEY_RECORDS);
-      if (!rawR) {
-        isFreshInstall = true;
-      }
       records = rawR ? JSON.parse(rawR) : DEFAULT_RECORDS;
 
       // 만약 과거 초기 샘플 데이터(101~104)만 들어있는 경우 깨끗하게 비움
@@ -587,39 +535,6 @@
       records = DEFAULT_RECORDS;
       projects = DEFAULT_PROJECTS;
     }
-
-    let hasDismissedTransferBanner = safeStorage.get('SEEDFIT_DISMISSED_TRANSFER_BANNER') === 'true';
-    window.dismissTransferBanner = function() {
-      hasDismissedTransferBanner = true;
-      safeStorage.set('SEEDFIT_DISMISSED_TRANSFER_BANNER', 'true');
-      renderCurrentTab();
-    };
-
-    function checkUrlTransfer() {
-      try {
-        const hash = window.location.hash;
-        if (hash && hash.startsWith('#transfer=')) {
-          const encoded = hash.substring(10);
-          const jsonStr = decodeURIComponent(encoded);
-          const parsed = JSON.parse(jsonStr);
-          const targetRecords = parsed.records || (Array.isArray(parsed) ? parsed : null);
-          const targetProjects = parsed.projects || [];
-          if (targetRecords && Array.isArray(targetRecords)) {
-            if (confirm(`전달받은 SeedFit 데이터(기록 ${targetRecords.length}건, 프로젝트 ${targetProjects.length}개)를 복원하시겠습니까?`)) {
-              records = targetRecords;
-              if (targetProjects.length > 0) projects = targetProjects;
-              if (parsed.mentalCareSettings) mentalCareSettings = Object.assign(mentalCareSettings, parsed.mentalCareSettings);
-              saveState();
-              history.replaceState(null, '', window.location.pathname);
-              alert('성공적으로 데이터를 복원했습니다!');
-            }
-          }
-        }
-      } catch (e) {
-        console.warn('URL transfer failed:', e);
-      }
-    }
-    checkUrlTransfer();
 
     function saveState() {
       const recordsJson = JSON.stringify(records);
@@ -1104,33 +1019,8 @@
       const mentalBanner = getMentalCareBannerHtml();
       const isAnyFilterActive = (recordFilterCategory !== 'ALL' || recordFilterFold !== 'ALL');
 
-      const transferBanner = (!hasDismissedTransferBanner && isFreshInstall) ? `
-        <div class="${isLightMode ? 'bg-blue-50 border-blue-200' : 'bg-gradient-to-r from-blue-900/30 to-indigo-900/30 border-blue-500/30'} p-3.5 rounded-2xl border flex items-start justify-between space-x-3 text-xs shadow-sm">
-          <div class="space-y-1.5 flex-1">
-            <div class="flex items-center space-x-1.5 font-bold ${isLightMode ? 'text-blue-900' : 'text-blue-300'}">
-              <span>📱</span>
-              <span>기존 사파리 기록을 가져오시겠습니까?</span>
-            </div>
-            <p class="text-[11px] ${isLightMode ? 'text-neutral-600' : 'text-neutral-300'} leading-snug">
-              iOS는 사파리 브라우저와 새로 추가한 홈 화면 앱 저장소가 분리되어 있습니다. 기존 사파리에서 [데이터 복사] 후 여기서 [클립보드 복원]을 누르면 1초 만에 연결됩니다.
-            </p>
-            <div class="pt-1 flex items-center space-x-2">
-              <button onclick="window.importDataFromClipboard()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold text-[11px] shadow-sm transition active:scale-95 flex items-center space-x-1">
-                <span>📥</span>
-                <span>클립보드에서 가져오기</span>
-              </button>
-              <button onclick="window.openDataTransferModal()" class="px-2.5 py-1.5 ${isLightMode ? 'bg-neutral-200 hover:bg-neutral-300 text-neutral-800' : 'bg-neutral-800 hover:bg-neutral-700 text-neutral-300'} rounded-xl font-medium text-[11px] transition">
-                직접 입력
-              </button>
-            </div>
-          </div>
-          <button onclick="window.dismissTransferBanner()" class="text-neutral-400 hover:text-neutral-200 p-1 text-xs shrink-0" title="배너 닫기">✕</button>
-        </div>
-      ` : '';
-
       container.innerHTML = `
         ${mentalBanner}
-        ${transferBanner}
         <div class="${isLightMode ? 'bg-white border-neutral-200 shadow-sm' : 'bg-neutral-900/90 border-neutral-800'} rounded-3xl p-4 border space-y-3">
           <div class="flex justify-between items-center text-xs">
             <span class="text-neutral-400 font-medium">총 순손익 (정산 완료 기준)</span>
@@ -2021,15 +1911,6 @@
       const streak = calculateLossStreak();
       container.innerHTML = `
         <div class="space-y-4">
-          <div class="${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900 border-neutral-800'} border p-4 rounded-3xl flex items-center space-x-3.5">
-            <img src="apple-touch-icon.png" class="w-12 h-12 rounded-2xl shadow-md border border-neutral-700/80 object-cover shrink-0" alt="SeedFit">
-            <div>
-              <h2 class="text-base font-bold ${isLightMode ? 'text-neutral-900' : 'text-white'}">SeedFit</h2>
-              <p class="text-[11px] text-neutral-400">스마트 시드 머니 & 베팅 자금 관리 PWA</p>
-              <div class="text-[10px] text-emerald-400 font-mono mt-0.5">● 오프라인 로컬 데이터 영구 보존</div>
-            </div>
-          </div>
-
           <!-- Mental Care Settings Card -->
           <div class="${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900 border-neutral-800'} border rounded-3xl p-4 space-y-3">
             <div class="flex justify-between items-center">
@@ -2082,40 +1963,6 @@
             </div>
           </div>
 
-          <!-- Safari ↔ 홈화면 앱 원클릭 데이터 동기화 -->
-          <div class="${isLightMode ? 'bg-white border-blue-200 shadow-sm' : 'bg-neutral-900 border-blue-900/40'} border rounded-3xl p-4 space-y-3">
-            <div class="flex items-center justify-between">
-              <h3 class="text-xs font-bold ${isLightMode ? 'text-neutral-900' : 'text-white'} flex items-center space-x-1.5">
-                <span>📱</span>
-                <span>사파리 ↔ 홈화면 데이터 이전</span>
-              </h3>
-              <span class="text-[10px] text-blue-400 font-bold bg-blue-500/15 border border-blue-500/30 px-2 py-0.5 rounded-full">1초 동기화</span>
-            </div>
-            <p class="text-[11px] text-neutral-400 leading-relaxed">
-              아이폰 보안 특성상 Safari 브라우저와 새로 추가한 홈 화면 앱의 저장소가 서로 분리되어 있습니다. 기존에 쓰던 기록이 홈 화면 앱에서 안 보이면 아래 <b>[데이터 복사]</b> 후 새 앱에서 <b>[클립보드 복원]</b>을 누르세요.
-            </p>
-            <div class="grid grid-cols-2 gap-2 pt-1">
-              <button onclick="window.copyDataToClipboard()" class="py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-xs transition active:scale-95 shadow-md flex items-center justify-center space-x-1">
-                <span>📋</span>
-                <span>데이터 전체 복사</span>
-              </button>
-              <button onclick="window.importDataFromClipboard()" class="py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs transition active:scale-95 shadow-md flex items-center justify-center space-x-1">
-                <span>📥</span>
-                <span>클립보드 복원</span>
-              </button>
-            </div>
-            <div class="pt-0.5 space-y-1.5">
-              <button onclick="window.openDataTransferModal()" class="w-full py-2 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 font-semibold rounded-xl text-xs transition border border-neutral-700/80 active:scale-95 flex items-center justify-center space-x-1.5">
-                <span>✍️</span>
-                <span>직접 텍스트로 복사 / 붙여넣기 창 열기</span>
-              </button>
-              <button onclick="window.deepScanOldData()" class="w-full py-2 bg-neutral-800/60 hover:bg-neutral-700 text-amber-300 font-semibold rounded-xl text-[11px] transition border border-amber-500/20 active:scale-95 flex items-center justify-center space-x-1.5">
-                <span>🔍</span>
-                <span>기기 내 숨은 이전 데이터 정밀 스캔 (복구 시도)</span>
-              </button>
-            </div>
-          </div>
-
           <div class="${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900 border-neutral-800'} border rounded-3xl p-4 space-y-3">
             <h3 class="text-xs font-bold ${isLightMode ? 'text-neutral-800' : 'text-neutral-300'}">파일 영구 백업 & 복원 (JSON)</h3>
             <p class="text-[11px] text-neutral-400 leading-relaxed">
@@ -2164,213 +2011,6 @@
         </div>
       `;
     }
-
-    window.openDataTransferModal = function() {
-      const modal = document.getElementById('dataTransferModal');
-      if (modal) {
-        modal.classList.remove('hidden');
-        const payload = {
-          app: 'SeedFit',
-          version: CURRENT_APP_VERSION,
-          exportedAt: new Date().toISOString(),
-          records,
-          projects,
-          mentalCareSettings
-        };
-        const textarea = document.getElementById('dataTransferTextarea');
-        if (textarea && (!textarea.value || textarea.value.trim() === '')) {
-          textarea.value = JSON.stringify(payload, null, 2);
-        }
-      }
-    };
-
-    window.closeDataTransferModal = function() {
-      const modal = document.getElementById('dataTransferModal');
-      if (modal) modal.classList.add('hidden');
-    };
-
-    window.copyCurrentDataToTransferBox = function() {
-      const payload = {
-        app: 'SeedFit',
-        version: CURRENT_APP_VERSION,
-        exportedAt: new Date().toISOString(),
-        records,
-        projects,
-        mentalCareSettings
-      };
-      const jsonStr = JSON.stringify(payload);
-      const textarea = document.getElementById('dataTransferTextarea');
-      if (textarea) textarea.value = jsonStr;
-      
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(jsonStr).then(() => {
-          showToast('내 데이터가 클립보드에 복사되었습니다!');
-        }).catch(() => {
-          showToast('입력창의 데이터를 전체 복사하세요.');
-        });
-      } else {
-        showToast('입력창의 데이터를 전체 복사하세요.');
-      }
-    };
-
-    window.pasteFromClipboardToInput = async function() {
-      try {
-        if (navigator.clipboard && navigator.clipboard.readText) {
-          const text = await navigator.clipboard.readText();
-          if (text) {
-            const textarea = document.getElementById('dataTransferTextarea');
-            if (textarea) textarea.value = text;
-            showToast('클립보드 내용을 붙여넣었습니다.');
-            return;
-          }
-        }
-      } catch (e) {
-        console.warn(e);
-      }
-      showToast('입력창을 길게 눌러 직접 붙여넣기를 해주세요.');
-      document.getElementById('dataTransferTextarea')?.focus();
-    };
-
-    window.applyDataTransferFromTextarea = function() {
-      const textarea = document.getElementById('dataTransferTextarea');
-      if (!textarea || !textarea.value.trim()) {
-        alert('복원할 데이터 텍스트를 입력해주세요.');
-        return;
-      }
-      try {
-        const parsed = JSON.parse(textarea.value.trim());
-        const targetRecords = parsed.records || (Array.isArray(parsed) ? parsed : null);
-        const targetProjects = parsed.projects || [];
-        if (targetRecords && Array.isArray(targetRecords)) {
-          records = targetRecords;
-          if (Array.isArray(targetProjects) && targetProjects.length > 0) {
-            projects = targetProjects;
-          }
-          if (parsed.mentalCareSettings) {
-            mentalCareSettings = Object.assign(mentalCareSettings, parsed.mentalCareSettings);
-          }
-          saveState();
-          window.closeDataTransferModal();
-          renderCurrentTab();
-          alert(`성공적으로 데이터를 복원했습니다!\n기록: ${records.length}건, 프로젝트: ${projects.length}개`);
-        } else {
-          alert('올바른 SeedFit 데이터 포맷이 아닙니다.');
-        }
-      } catch (e) {
-        alert('데이터 형식이 올바르지 않습니다. JSON 형식을 확인해주세요.');
-      }
-    };
-
-    window.copyDataToClipboard = function() {
-      const payload = {
-        app: 'SeedFit',
-        version: CURRENT_APP_VERSION,
-        exportedAt: new Date().toISOString(),
-        records,
-        projects,
-        mentalCareSettings
-      };
-      const jsonStr = JSON.stringify(payload);
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(jsonStr).then(() => {
-          alert(`✅ 현재 모든 데이터(기록 ${records.length}건)가 클립보드에 복사되었습니다!\n\n이제 새로 추가한 홈 화면의 [SeedFit] 앱을 실행하신 후, 설정 탭에서 [클립보드 복원] 버튼을 누르시면 즉시 연결됩니다.`);
-        }).catch(() => {
-          window.openDataTransferModal();
-        });
-      } else {
-        window.openDataTransferModal();
-      }
-    };
-
-    window.importDataFromClipboard = async function() {
-      let text = '';
-      try {
-        if (navigator.clipboard && navigator.clipboard.readText) {
-          text = await navigator.clipboard.readText();
-        }
-      } catch (e) {
-        console.warn('Clipboard read permission:', e);
-      }
-
-      if (!text || text.trim() === '') {
-        window.openDataTransferModal();
-        showToast('클립보드 권한 제한: 텍스트 창에 직접 붙여넣어 주세요.');
-        return;
-      }
-
-      try {
-        const parsed = JSON.parse(text.trim());
-        const targetRecords = parsed.records || (Array.isArray(parsed) ? parsed : null);
-        const targetProjects = parsed.projects || [];
-        if (targetRecords && Array.isArray(targetRecords)) {
-          if (confirm(`클립보드에서 ${targetRecords.length}건의 기록을 발견했습니다.\n데이터를 복원하시겠습니까?`)) {
-            records = targetRecords;
-            if (Array.isArray(targetProjects) && targetProjects.length > 0) {
-              projects = targetProjects;
-            }
-            if (parsed.mentalCareSettings) {
-              mentalCareSettings = Object.assign(mentalCareSettings, parsed.mentalCareSettings);
-            }
-            saveState();
-            renderCurrentTab();
-            alert('🎉 성공적으로 데이터를 복원했습니다!');
-          }
-        } else {
-          window.openDataTransferModal();
-          showToast('클립보드 내용이 SeedFit 데이터가 아닙니다.');
-        }
-      } catch (e) {
-        window.openDataTransferModal();
-      }
-    };
-
-    window.deepScanOldData = function() {
-      let candidateRecords = null;
-      let candidateProjects = null;
-      let scannedCount = 0;
-
-      try {
-        for (let i = 0; i < localStorage.length; i++) {
-          const k = localStorage.key(i);
-          scannedCount++;
-          const val = localStorage.getItem(k);
-          if (!val) continue;
-
-          try {
-            const parsed = JSON.parse(val);
-            if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].investAmount !== undefined) {
-              if (!candidateRecords || parsed.length > candidateRecords.length) {
-                candidateRecords = parsed;
-              }
-            }
-            if (parsed && parsed.records && Array.isArray(parsed.records)) {
-              if (!candidateRecords || parsed.records.length > candidateRecords.length) {
-                candidateRecords = parsed.records;
-              }
-              if (parsed.projects && Array.isArray(parsed.projects)) {
-                candidateProjects = parsed.projects;
-              }
-            }
-          } catch(e) {}
-        }
-      } catch (err) {
-        console.warn('Deep scan error:', err);
-      }
-
-      if (candidateRecords && candidateRecords.length > 0) {
-        if (confirm(`🔍 기기 저장소에서 ${candidateRecords.length}건의 기존 기록을 발견했습니다!\n이 데이터를 복원하시겠습니까?`)) {
-          records = candidateRecords;
-          if (candidateProjects && candidateProjects.length > 0) {
-            projects = candidateProjects;
-          }
-          saveState();
-          renderCurrentTab();
-          alert('🎉 성공적으로 데이터를 복구했습니다!');
-        }
-      } else {
-        alert(`기기 내부 로컬 저장소를 스캔했으나 기존 기록을 찾지 못했습니다.\n\n(확인된 저장소 키: ${scannedCount}개)\n\n만약 이전에 [파일 다운로드] 백업을 하신 적이 있다면, 아이폰 [파일] 앱의 '다운로드' 폴더에서 백업 파일을 찾아 [파일 불러오기]를 시도해주세요.`);
-      }
-    };
 
     function exportDataJson() {
       const data = { records, projects, mentalCareSettings, exportedAt: new Date().toISOString() };
