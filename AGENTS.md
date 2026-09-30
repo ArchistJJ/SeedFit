@@ -1,7 +1,7 @@
 # Agent Instructions & Project Guideline
 
 ## 1. 프로젝트 개요
-- **프로젝트 명**: J (기록 및 통계 관리 PWA 어플)
+- **프로젝트 명**: 시드핏 (SeedFit - 스마트 시드 & 베팅 자금 관리 PWA)
 - **플랫폼**: 모바일 웹앱 (iOS Safari PWA 최적화)
 - **주요 기능**:
   - 투입 금액, 카테고리(승무패, 언옵, 핸디 등) 기록

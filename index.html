@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="J">
+  <meta name="apple-mobile-web-app-title" content="시드핏">
   <meta name="theme-color" content="#000000">
-  <title>J</title>
+  <title>시드핏 (SeedFit) - 스마트 시드 & 베팅 자금 관리</title>
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="manifest" href="manifest.json">
   <script src="https://cdn.tailwindcss.com"></script>
@@ -88,9 +88,7 @@
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
         </button>
 
-        <div id="headerAppIcon" class="w-8 h-8 rounded-xl bg-gradient-to-br from-neutral-800 via-neutral-900 to-black border border-neutral-700/80 flex items-center justify-center shadow-sm">
-          <span class="text-base font-black italic bg-gradient-to-b from-white via-neutral-200 to-neutral-400 bg-clip-text text-transparent">J</span>
-        </div>
+        <img id="headerAppIcon" src="apple-touch-icon.png" class="w-8 h-8 rounded-xl object-cover shadow-sm border border-neutral-700/80" alt="SeedFit">
         <div>
           <h1 id="screenTitle" class="text-base font-bold text-white tracking-tight leading-none">기록</h1>
           <span id="screenSubtitle" class="text-[10px] text-neutral-400 font-medium">실시간 현황</span>
@@ -470,7 +468,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.0.15';
+    const CURRENT_APP_VERSION = 'v1.2.0';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');
@@ -551,14 +549,16 @@
       }
     ];
 
-    const STORAGE_KEY_RECORDS = 'J_APP_RECORDS_V1';
-    const STORAGE_KEY_PROJECTS = 'J_APP_PROJECTS_V1';
+    const STORAGE_KEY_RECORDS = 'SEEDFIT_RECORDS_V1';
+    const STORAGE_KEY_PROJECTS = 'SEEDFIT_PROJECTS_V1';
+    const LEGACY_STORAGE_KEY_RECORDS = 'J_APP_RECORDS_V1';
+    const LEGACY_STORAGE_KEY_PROJECTS = 'J_APP_PROJECTS_V1';
 
     let records = [];
     let projects = [];
 
     try {
-      const rawR = safeStorage.get(STORAGE_KEY_RECORDS);
+      const rawR = safeStorage.get(STORAGE_KEY_RECORDS) || safeStorage.get(LEGACY_STORAGE_KEY_RECORDS);
       records = rawR ? JSON.parse(rawR) : DEFAULT_RECORDS;
       // 호환성 보장: fold, expectedReturn 및 category 마이그레이션 (언옵, 핸디 -> 언옵&핸디)
       records.forEach(r => {
@@ -570,7 +570,7 @@
           r.expectedReturn = (r.returnAmount && r.returnAmount > 0) ? r.returnAmount : Math.round(r.investAmount * 1.9);
         }
       });
-      const rawP = safeStorage.get(STORAGE_KEY_PROJECTS);
+      const rawP = safeStorage.get(STORAGE_KEY_PROJECTS) || safeStorage.get(LEGACY_STORAGE_KEY_PROJECTS);
       projects = rawP ? JSON.parse(rawP) : DEFAULT_PROJECTS;
     } catch(e) {
       records = DEFAULT_RECORDS;
@@ -578,13 +578,18 @@
     }
 
     function saveState() {
-      safeStorage.set(STORAGE_KEY_RECORDS, JSON.stringify(records));
-      safeStorage.set(STORAGE_KEY_PROJECTS, JSON.stringify(projects));
+      const recordsJson = JSON.stringify(records);
+      const projectsJson = JSON.stringify(projects);
+      safeStorage.set(STORAGE_KEY_RECORDS, recordsJson);
+      safeStorage.set(STORAGE_KEY_PROJECTS, projectsJson);
+      // 레거시 백업 유지
+      safeStorage.set(LEGACY_STORAGE_KEY_RECORDS, recordsJson);
+      safeStorage.set(LEGACY_STORAGE_KEY_PROJECTS, projectsJson);
       updateProjectsStatus();
     }
 
-    const STORAGE_KEY_MENTAL_SETTINGS = 'J_APP_MENTAL_SETTINGS_V1';
-    const STORAGE_KEY_COOLDOWN_UNTIL = 'J_APP_COOLDOWN_UNTIL';
+    const STORAGE_KEY_MENTAL_SETTINGS = 'SEEDFIT_MENTAL_SETTINGS_V1';
+    const STORAGE_KEY_COOLDOWN_UNTIL = 'SEEDFIT_COOLDOWN_UNTIL';
 
     let mentalCareSettings = {
       enabled: true,
@@ -592,7 +597,7 @@
       lossAmountThreshold: 100000
     };
     try {
-      const rawM = safeStorage.get(STORAGE_KEY_MENTAL_SETTINGS);
+      const rawM = safeStorage.get(STORAGE_KEY_MENTAL_SETTINGS) || safeStorage.get('J_APP_MENTAL_SETTINGS_V1');
       if (rawM) {
         mentalCareSettings = Object.assign(mentalCareSettings, JSON.parse(rawM));
       }
@@ -600,7 +605,7 @@
 
     let cooldownEndTime = 0;
     try {
-      const rawC = safeStorage.get(STORAGE_KEY_COOLDOWN_UNTIL);
+      const rawC = safeStorage.get(STORAGE_KEY_COOLDOWN_UNTIL) || safeStorage.get('J_APP_COOLDOWN_UNTIL');
       if (rawC) {
         cooldownEndTime = Number(rawC) || 0;
       }
@@ -846,10 +851,10 @@
       return '';
     }
 
-    const STORAGE_KEY_THEME = 'J_APP_THEME_V2';
+    const STORAGE_KEY_THEME = 'SEEDFIT_THEME_V2';
     let isLightMode = false; // 기본적으로 블랙(다크) 테마
     try {
-      const savedTheme = safeStorage.get(STORAGE_KEY_THEME);
+      const savedTheme = safeStorage.get(STORAGE_KEY_THEME) || safeStorage.get('J_APP_THEME_V2');
       if (savedTheme !== null) {
         isLightMode = (savedTheme === 'light');
       }
@@ -1947,14 +1952,12 @@
       const streak = calculateLossStreak();
       container.innerHTML = `
         <div class="space-y-4">
-          <div class="${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900 border-neutral-800'} border p-4 rounded-3xl flex items-center space-x-3">
-            <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-neutral-800 via-neutral-900 to-black border border-neutral-700 flex items-center justify-center">
-              <span class="text-2xl font-black italic bg-gradient-to-b from-white to-neutral-400 bg-clip-text text-transparent">J</span>
-            </div>
+          <div class="${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900 border-neutral-800'} border p-4 rounded-3xl flex items-center space-x-3.5">
+            <img src="apple-touch-icon.png" class="w-12 h-12 rounded-2xl shadow-md border border-neutral-700/80 object-cover shrink-0" alt="SeedFit">
             <div>
-              <h2 class="text-base font-bold ${isLightMode ? 'text-neutral-900' : 'text-white'}">J (제이)</h2>
-              <p class="text-[11px] text-neutral-400">iOS 네이티브 감성의 베팅 & 시드 관리 PWA</p>
-              <div class="text-[10px] text-emerald-400 font-mono mt-0.5">● 오프라인 스토리지 영구 보존</div>
+              <h2 class="text-base font-bold ${isLightMode ? 'text-neutral-900' : 'text-white'}">시드핏 (SeedFit)</h2>
+              <p class="text-[11px] text-neutral-400">스마트 시드 머니 & 베팅 자금 관리 PWA</p>
+              <div class="text-[10px] text-emerald-400 font-mono mt-0.5">● 오프라인 로컬 데이터 영구 보존</div>
             </div>
           </div>
 
@@ -2032,7 +2035,7 @@
               <li>아이폰 <span class="font-medium ${isLightMode ? 'text-neutral-900' : 'text-white'}">Safari 브라우저</span>로 접속</li>
               <li>하단 중앙의 <span class="text-blue-400 font-medium">[공유 (네모+화살표)]</span> 아이콘 터치</li>
               <li>메뉴에서 <span class="font-medium ${isLightMode ? 'text-neutral-900' : 'text-white'}">[홈 화면에 추가]</span> 선택</li>
-              <li>홈 화면에 생성된 <span class="font-bold ${isLightMode ? 'text-neutral-900' : 'text-white'}">'J'</span> 아이콘으로 실행!</li>
+              <li>홈 화면에 생성된 <span class="font-bold ${isLightMode ? 'text-neutral-900' : 'text-white'}">'시드핏'</span> 아이콘으로 실행!</li>
             </ol>
           </div>
 

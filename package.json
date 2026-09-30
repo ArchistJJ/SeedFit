@@ -1,7 +1,7 @@
 {
-  "name": "j-betting-tracker-pwa",
-  "version": "1.0.0",
-  "description": "J - iOS Native Style Betting & Bankroll Tracker PWA",
+  "name": "seedfit-pwa",
+  "version": "1.2.0",
+  "description": "SeedFit (시드핏) - iOS Native Style Sports Bankroll & Seed Tracker PWA",
   "scripts": {
     "start": "npx serve -l 5173"
   },
