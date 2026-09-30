@@ -799,17 +799,17 @@
         const remMin = Math.max(1, Math.ceil((cooldownEndTime - now) / 60000));
         return `
           <div onclick="window.openMentalCareModal({ manual: true })" class="cursor-pointer p-3.5 bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-amber-500/15 border border-amber-500/30 rounded-2xl flex items-center justify-between text-xs transition hover:opacity-90 active:scale-[0.98] shadow-sm mb-3">
-            <div class="flex items-center space-x-2.5">
-              <span class="text-xl animate-pulse">🧘</span>
-              <div>
-                <div class="font-bold text-amber-400 flex items-center space-x-1.5">
-                  <span>30분 쿨다운 휴식 중</span>
-                  <span class="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/40 px-1.5 py-0.5 rounded-full font-mono">약 ${remMin}분 남음</span>
+            <div class="flex items-center space-x-3 min-w-0 flex-1 mr-2">
+              <span class="text-2xl animate-pulse shrink-0">🧘</span>
+              <div class="min-w-0 flex-1 space-y-1">
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <span class="font-bold text-amber-400 text-xs">쿨다운 휴식 중</span>
+                  <span class="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded-full font-mono font-bold whitespace-nowrap">약 ${remMin}분 남음</span>
                 </div>
-                <div class="text-[10px] text-neutral-400 mt-0.5">뇌동 베팅을 멈추고 산책이나 휴식을 취하세요</div>
+                <div class="text-[11px] text-neutral-400 truncate">뇌동 베팅을 멈추고 심호흡이나 산책을 취하세요</div>
               </div>
             </div>
-            <span class="text-amber-400 font-bold text-xs">가이드 ></span>
+            <span class="shrink-0 text-amber-400 font-bold text-xs bg-amber-500/10 px-2.5 py-1.5 rounded-xl border border-amber-500/20">가이드 ></span>
           </div>
         `;
       }
@@ -822,17 +822,21 @@
             : (streak.isChasingLoss ? '과다 베팅 손실 위험' : '평균 대비 손실 위험');
           return `
             <div onclick="window.openMentalCareModal()" class="cursor-pointer p-3.5 bg-gradient-to-r from-rose-500/15 via-amber-500/10 to-rose-500/15 border border-rose-500/30 rounded-2xl flex items-center justify-between text-xs transition hover:opacity-90 active:scale-[0.98] shadow-sm mb-3">
-              <div class="flex items-center space-x-2.5">
-                <span class="text-xl">🧘</span>
-                <div>
-                  <div class="font-bold text-rose-400 flex items-center space-x-1.5">
-                    <span>마인드 케어 활성화</span>
-                    <span class="text-[10px] bg-rose-500/20 text-rose-300 border border-rose-500/40 px-1.5 py-0.5 rounded-full font-mono">${reasonTitle} (-${streak.streakLossAmount.toLocaleString()}원)</span>
+              <div class="flex items-center space-x-3 min-w-0 flex-1 mr-2">
+                <span class="text-2xl shrink-0">🧘</span>
+                <div class="min-w-0 flex-1 space-y-1">
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <span class="font-bold text-rose-400 text-xs">마인드 케어</span>
+                    <span class="text-[10px] bg-rose-500/20 text-rose-300 border border-rose-500/40 px-2 py-0.5 rounded-full font-mono font-bold whitespace-nowrap">${reasonTitle}</span>
                   </div>
-                  <div class="text-[10px] text-neutral-400 mt-0.5">평균 투자금(${streak.avgInvest.toLocaleString()}원) 분석 기준 경고! 탭하여 쿨다운 보기</div>
+                  <div class="text-[11px] text-neutral-300 flex items-center gap-1 font-mono truncate">
+                    <span>연속 손실:</span>
+                    <strong class="text-rose-400 font-bold">-${streak.streakLossAmount.toLocaleString()}원</strong>
+                    <span class="text-neutral-500 text-[10px] font-sans ml-1">· 탭하여 쿨다운</span>
+                  </div>
                 </div>
               </div>
-              <span class="text-rose-400 font-bold text-xs">가이드 ></span>
+              <span class="shrink-0 text-rose-400 font-bold text-xs bg-rose-500/10 px-2.5 py-1.5 rounded-xl border border-rose-500/20">보기 ></span>
             </div>
           `;
         }
