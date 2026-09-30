@@ -676,7 +676,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.4.1').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.4.2').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -883,8 +883,8 @@
       }
     };
 
-    // 기본 연동 API 키 (추후 발급 시 직접 입력 가능한 전역 기본값 자리)
-    const DEFAULT_KAKAO_KEY = '';
+    // 기본 연동 API 키 (사용자 등록 공식 카카오 JavaScript 키)
+    const DEFAULT_KAKAO_KEY = '6db8d38ab0666c416edf0b3b81eb8b42';
     const DEFAULT_GOOGLE_CLIENT_ID = '';
 
     // 카카오톡 간편 로그인 핸들러
@@ -1078,7 +1078,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.4.1';
+    const CURRENT_APP_VERSION = 'v1.4.2';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');
