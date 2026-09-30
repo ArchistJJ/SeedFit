@@ -473,7 +473,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.2.1').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.2.2').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -516,7 +516,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.2.1';
+    const CURRENT_APP_VERSION = 'v1.2.2';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');
@@ -2145,10 +2145,14 @@
                 <span>클립보드 복원</span>
               </button>
             </div>
-            <div class="pt-0.5">
+            <div class="pt-0.5 space-y-1.5">
               <button onclick="window.openDataTransferModal()" class="w-full py-2 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 font-semibold rounded-xl text-xs transition border border-neutral-700/80 active:scale-95 flex items-center justify-center space-x-1.5">
                 <span>✍️</span>
                 <span>직접 텍스트로 복사 / 붙여넣기 창 열기</span>
+              </button>
+              <button onclick="window.deepScanOldData()" class="w-full py-2 bg-neutral-800/60 hover:bg-neutral-700 text-amber-300 font-semibold rounded-xl text-[11px] transition border border-amber-500/20 active:scale-95 flex items-center justify-center space-x-1.5">
+                <span>🔍</span>
+                <span>기기 내 숨은 이전 데이터 정밀 스캔 (복구 시도)</span>
               </button>
             </div>
           </div>
@@ -2358,6 +2362,54 @@
         }
       } catch (e) {
         window.openDataTransferModal();
+      }
+    };
+
+    window.deepScanOldData = function() {
+      let candidateRecords = null;
+      let candidateProjects = null;
+      let scannedCount = 0;
+
+      try {
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          scannedCount++;
+          const val = localStorage.getItem(k);
+          if (!val) continue;
+
+          try {
+            const parsed = JSON.parse(val);
+            if (Array.isArray(parsed) && parsed.length > 0 && parsed[0].investAmount !== undefined) {
+              if (!candidateRecords || parsed.length > candidateRecords.length) {
+                candidateRecords = parsed;
+              }
+            }
+            if (parsed && parsed.records && Array.isArray(parsed.records)) {
+              if (!candidateRecords || parsed.records.length > candidateRecords.length) {
+                candidateRecords = parsed.records;
+              }
+              if (parsed.projects && Array.isArray(parsed.projects)) {
+                candidateProjects = parsed.projects;
+              }
+            }
+          } catch(e) {}
+        }
+      } catch (err) {
+        console.warn('Deep scan error:', err);
+      }
+
+      if (candidateRecords && candidateRecords.length > 0) {
+        if (confirm(`🔍 기기 저장소에서 ${candidateRecords.length}건의 기존 기록을 발견했습니다!\n이 데이터를 복원하시겠습니까?`)) {
+          records = candidateRecords;
+          if (candidateProjects && candidateProjects.length > 0) {
+            projects = candidateProjects;
+          }
+          saveState();
+          renderCurrentTab();
+          alert('🎉 성공적으로 데이터를 복구했습니다!');
+        }
+      } else {
+        alert(`기기 내부 로컬 저장소를 스캔했으나 기존 기록을 찾지 못했습니다.\n\n(확인된 저장소 키: ${scannedCount}개)\n\n만약 이전에 [파일 다운로드] 백업을 하신 적이 있다면, 아이폰 [파일] 앱의 '다운로드' 폴더에서 백업 파일을 찾아 [파일 불러오기]를 시도해주세요.`);
       }
     };
 
