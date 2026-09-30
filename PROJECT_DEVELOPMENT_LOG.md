@@ -1,5 +1,28 @@
 # 프로젝트 개발 로그 (PROJECT DEVELOPMENT LOG)
 
+## [2026-09-30] v1.2.3 영문 브랜드명 'SeedFit' 공식화 및 기본 샘플 데이터 완전 삭제 (Clean State)
+
+### 1. 요구사항 및 구현 내역
+1. **영문 브랜드 네임 'SeedFit' 일원화**:
+   - 앱 타이틀, 메타 태그(`apple-mobile-web-app-title`), PWA `manifest.json`, 설정 탭 브랜드 헤더, 가이드 안내 문구의 한글 '시드핏'을 영문 **SeedFit**으로 일원화.
+   - PWA 홈 화면 추가 시 앱 명칭을 영문 `SeedFit`으로 표시.
+2. **기본 샘플 데이터 완전 제거 (Empty Clean State)**:
+   - `DEFAULT_RECORDS = []`, `DEFAULT_PROJECTS = []`로 변경하여 신규 사용자 또는 초기화 시 샘플 기록(101~104번) 없이 깨끗한 상태로 시작되도록 구현.
+   - 기존에 샘플 데이터만 로드되어 있던 기기도 자동으로 깨끗하게 정리되도록 마이그레이션 로직 추가.
+3. **버전 승격**:
+   - `CURRENT_APP_VERSION = 'v1.2.3'` 및 `seedfit-cache-v1.2.3`으로 승격.
+
+### 2. 반영 파일
+- `manifest.json`: `name`, `short_name`, `description` 영문 SeedFit 갱신.
+- `package.json`: 버전 `1.2.3` 갱신.
+- `index.html`: `DEFAULT_RECORDS`, `DEFAULT_PROJECTS` 빈 배열 처리, 영문 SeedFit 표기 일괄 갱신, 버전 `v1.2.3` 승격.
+- `sw.js`: `seedfit-cache-v1.2.3` 갱신.
+- `PROJECT_DEVELOPMENT_LOG.md`: 작업 로그 기록.
+
+### 3. 검증
+- 자바스크립트 구문 문법 검사 100% 무결 통과.
+- Git 커밋 및 GitHub Pages 배포 완료.
+
 ## [2026-09-30] v1.2.2 iOS 홈 화면 구버전 앱 삭제 후 재설치 상황 대응 및 기기 저장소 딥 스캔(정밀 복구) 기능 추가
 
 ### 1. 요구사항 및 문제 원인 규명
