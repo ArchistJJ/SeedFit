@@ -1,5 +1,33 @@
 # 프로젝트 개발 로그 (PROJECT DEVELOPMENT LOG)
 
+## [2026-09-30] v1.4.4 카카오 로그인 팝업 SDK 교체, 앱 내 API키 UI 완전 삭제, 게스트 모드 재실행 플로우 개선
+
+### 1. 요구사항 및 기획 의도
+1. **카카오 연동 시 API 키 입력 모달이 뜨는 현상 해결**:
+   - 카카오 SDK v2에서 더 이상 지원하지 않던 `Kakao.Auth.login` 함수로 인해 catch 블록으로 빠져 폴백 모달이 뜨던 문제를 분석.
+   - 공식 팝업 로그인이 지원되는 안정적인 표준 Kakao SDK(`https://developers.kakao.com/sdk/js/kakao.min.js`)로 교체하고 `initKakaoSdk`로 선제적 초기화 적용.
+2. **앱 내 API 키 관련 문구 및 버튼 전면 영구 삭제**:
+   - API 키는 일반 사용자가 입력하거나 설정하는 대상이 아니며 개발자가 전역 설정하는 값이므로, `authKeyConfigModal` 모달 마크업 및 관련 함수(`openAuthKeyModal`, `closeAuthKeyModal`, `saveAuthKeys`, `useDemoAccount`), 설정 탭 내 `[🔑 API 키]` 버튼과 `API 연동 키 관리` 블록을 100% 완전 삭제.
+3. **게스트 모드 수명 주기(Session Lifecycle) 리팩토링**:
+   - 실제로 카카오나 구글로 로그인한 유저는 앱을 껐다 켜도 0초 만에 메인 화면으로 자동 진입(영구 보존).
+   - 반면 **게스트 모드로 이용한 유저는 앱을 종료하고 다시 켤 경우 로그인 온보딩 화면(`authOnboardingView`)이 먼저 다시 노출**되도록 `sessionStorage` 기반 세션 상태(`SEEDFIT_GUEST_SESSION`)로 정밀 분기.
+
+### 2. 구현 내역
+1. **`index.html`**:
+   - 카카오 SDK 스크립트 태그를 `https://developers.kakao.com/sdk/js/kakao.min.js`로 교체.
+   - `initKakaoSdk()` 함수 구현 및 `DOMContentLoaded` 및 페이지 로드 시 선제 실행.
+   - `authKeyConfigModal` HTML 및 모달 열기/닫기/저장/데모계정 함수 영구 삭제.
+   - 설정 탭(`renderSettingsTab`)의 프로필 카드에서 API 키 버튼 및 관리 메뉴 영구 삭제.
+   - `checkAppEntryFlow` 및 `skipAuthAndUseGuest`를 `sessionStorage.getItem('SEEDFIT_GUEST_SESSION')` 기반으로 리팩토링: 로그인 유저는 무조건 즉시 진입, 게스트 유저는 새 세션마다 로그인 유도 화면 선노출.
+   - `CURRENT_APP_VERSION = 'v1.4.4'`, `sw.js?v=1.4.4` 적용.
+2. **`sw.js` & `package.json`**:
+   - `CACHE_NAME = 'seedfit-cache-v1.4.4'`, 버전 `1.4.4` 동기화.
+
+### 3. 검증
+- `node` 인라인 스크립트 문법 검사 100% 통과 (119,221자 무결).
+- Secret 노출 여부 점검: `GOCSPX` 등 민감정보 검색 결과 0건(로컬 격리 준수).
+- Git 커밋 및 GitHub 원격 저장소 배포 완료.
+
 ## [2026-09-30] v1.4.3 구글 OAuth Client ID 등록 및 보안 자격증명 로컬 격리 보관
 
 ### 1. 요구사항 및 기획 의도

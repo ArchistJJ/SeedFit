@@ -11,8 +11,8 @@
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="manifest" href="manifest.json">
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Kakao JavaScript SDK -->
-  <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js"></script>
+  <!-- Kakao Official JavaScript SDK (Popup Login Supported) -->
+  <script src="https://developers.kakao.com/sdk/js/kakao.min.js"></script>
   <!-- Google Identity Services SDK -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <style>
@@ -571,57 +571,6 @@
       </div>
     </div>
 
-    <!-- Auth Key Configuration Modal (API 키 설정 모달) -->
-    <div id="authKeyConfigModal" class="absolute inset-0 bg-black/75 backdrop-blur-md z-50 hidden flex items-end justify-center">
-      <div class="w-full bg-neutral-900 border-t border-neutral-800 rounded-t-[28px] p-5 pb-safe space-y-4 shadow-2xl max-w-md">
-        <div class="w-10 h-1 bg-neutral-700 rounded-full mx-auto"></div>
-        
-        <div class="flex justify-between items-center">
-          <div>
-            <h3 class="text-base font-bold text-white flex items-center space-x-1.5">
-              <span>🔑</span>
-              <span>간편 로그인 API 키 설정</span>
-            </h3>
-            <p class="text-[11px] text-neutral-400">카카오 및 구글 개발자 콘솔에서 발급받은 키를 등록합니다.</p>
-          </div>
-          <button onclick="window.closeAuthKeyModal()" class="text-neutral-400 text-xs py-1 px-2 hover:text-white">닫기</button>
-        </div>
-
-        <div class="space-y-3 text-xs">
-          <div class="space-y-1.5">
-            <div class="flex justify-between items-center">
-              <label class="font-semibold text-neutral-300 flex items-center space-x-1">
-                <span class="text-[#FEE500]">●</span>
-                <span>카카오 JavaScript 키</span>
-              </label>
-              <span class="text-[10px] text-neutral-500">Kakao Developers</span>
-            </div>
-            <input type="text" id="inputKakaoKey" placeholder="예: 7a8b9c... (JavaScript 키)" class="w-full bg-neutral-800 border border-neutral-700 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-amber-400 font-mono" />
-          </div>
-
-          <div class="space-y-1.5">
-            <div class="flex justify-between items-center">
-              <label class="font-semibold text-neutral-300 flex items-center space-x-1">
-                <span class="text-blue-400">●</span>
-                <span>구글 OAuth Client ID</span>
-              </label>
-              <span class="text-[10px] text-neutral-500">Google Cloud Console</span>
-            </div>
-            <input type="text" id="inputGoogleClientId" placeholder="예: 12345...apps.googleusercontent.com" class="w-full bg-neutral-800 border border-neutral-700 rounded-xl px-3.5 py-2.5 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-blue-500 font-mono" />
-          </div>
-        </div>
-
-        <div class="space-y-2 pt-1">
-          <button onclick="window.saveAuthKeys()" class="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl text-xs shadow-lg transition active:scale-95">
-            API 설정 저장하기
-          </button>
-          <button onclick="window.useDemoAccount()" class="w-full py-2.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 font-semibold rounded-xl text-xs transition active:scale-95 flex items-center justify-center space-x-1.5">
-            <span>⚡</span>
-            <span>테스트용 데모 계정으로 즉시 체험하기</span>
-          </button>
-        </div>
-      </div>
-    </div>
 
     <!-- Bottom Navigation Bar -->
     <nav id="bottomTabBar" class="shrink-0 pb-safe pt-1 glass-dark border-t border-neutral-800/80 flex justify-around items-center px-2 z-30 select-none">
@@ -676,7 +625,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.4.3').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.4.4').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -730,17 +679,16 @@
       const landing = document.getElementById('installLandingView');
       const authView = document.getElementById('authOnboardingView');
       const authUser = getAuthUser();
-      const isGuest = safeStorage.get('SEEDFIT_GUEST_MODE') === 'true';
+      const isGuestSession = sessionStorage.getItem('SEEDFIT_GUEST_SESSION') === 'true';
 
-      // 0. [자동 로그인 보장] 사용자가 이미 로그인을 완료했거나 게스트 모드로 이용 중인 경우
-      //    -> 브라우저/홈화면 앱 재실행 시 로그인 랜딩창 없이 즉시 메인 앱으로 0초 자동 로그인 직행!
-      if (authUser || (isStandalone && isGuest)) {
+      // 1. [자동 로그인] 로그인 완료된 회원은 앱을 껐다 켜도 0초 만에 메인 화면 직행!
+      if (authUser) {
         if (landing) landing.classList.add('hidden');
         if (authView) authView.classList.add('hidden');
         return;
       }
 
-      // 1. 비로그인 상태에서 일반 웹 브라우저로 직접 접속한 경우 (홈 화면 앱이 아닌 경우)
+      // 2. 비로그인 상태에서 일반 웹 브라우저로 직접 접속한 경우 (홈 화면 앱이 아닌 경우)
       if (!isStandalone) {
         // 이번 세션에서 '웹 브라우저로 둘러보기'를 누르지 않았다면 설치 안내 랜딩 표시
         if (sessionStorage.getItem('SEEDFIT_SKIP_LANDING') !== 'true') {
@@ -760,11 +708,11 @@
         }
       }
 
-      // 2. 홈 화면 앱으로 실행되었거나, '웹 브라우저로 둘러보기'를 누른 경우:
+      // 3. 홈 화면 앱으로 실행되었거나, '웹 브라우저로 둘러보기'를 누른 경우:
       if (landing) landing.classList.add('hidden');
 
-      // 3. 로그인이 되어있지 않고, 게스트 모드도 선택하지 않은 최초 상태라면 -> 간편 로그인 온보딩 표시!
-      if (!authUser && !isGuest) {
+      // 4. [게스트 모드 처리] 비로그인 유저는 앱을 껐다가 다시 켜면(새 세션) 무조건 로그인 랜딩이 먼저 보임!
+      if (!isGuestSession) {
         if (authView) authView.classList.remove('hidden');
       } else {
         if (authView) authView.classList.add('hidden');
@@ -824,14 +772,14 @@
       checkAppEntryFlow();
     };
 
-    // 로그인하지 않고 이용 (게스트 모드 활성화)
+    // 로그인하지 않고 이용 (현재 세션 게스트 모드 활성화 - 앱 재실행 시 로그인 랜딩 재표시)
     window.skipAuthAndUseGuest = function() {
-      safeStorage.set('SEEDFIT_GUEST_MODE', 'true');
+      sessionStorage.setItem('SEEDFIT_GUEST_SESSION', 'true');
       const authView = document.getElementById('authOnboardingView');
       if (authView) {
         authView.classList.add('hidden');
       }
-      showToast('게스트 모드로 시작합니다. 설정에서 언제든 계정을 연동할 수 있습니다.');
+      showToast('게스트 모드로 시작합니다. 로그인하시면 데이터를 안전하게 보존할 수 있습니다.');
       if (currentTab === 'settings') {
         const area = document.getElementById('contentArea');
         if (area) renderSettingsTab(area);
@@ -887,66 +835,67 @@
     const DEFAULT_KAKAO_KEY = '6db8d38ab0666c416edf0b3b81eb8b42';
     const DEFAULT_GOOGLE_CLIENT_ID = '597094120304-lsk7gjn23rngsbfv16q1015gc7jbd5ch.apps.googleusercontent.com';
 
-    // 카카오톡 간편 로그인 핸들러
-    window.handleKakaoLogin = function() {
-      const kakaoKey = (safeStorage.get('SEEDFIT_KAKAO_KEY') || DEFAULT_KAKAO_KEY || '').trim();
-
-      // SDK 초기화 및 로그인 진행
-      if (kakaoKey && window.Kakao) {
+    function initKakaoSdk() {
+      if (window.Kakao && !Kakao.isInitialized()) {
         try {
-          if (!Kakao.isInitialized()) {
-            Kakao.init(kakaoKey);
-          }
-          Kakao.Auth.login({
-            success: function(authObj) {
-              Kakao.API.request({
-                url: '/v2/user/me',
-                success: function(res) {
-                  const kakaoAccount = res.kakao_account || {};
-                  const profile = kakaoAccount.profile || {};
-                  const user = {
-                    provider: 'kakao',
-                    id: String(res.id),
-                    name: profile.nickname || '카카오 사용자',
-                    email: kakaoAccount.email || '',
-                    avatar: profile.profile_image_url || '',
-                    loggedAt: new Date().toISOString()
-                  };
-                  setAuthUser(user);
-                },
-                fail: function(err) {
-                  console.error('Kakao user info fetch error:', err);
-                  alert('카카오 사용자 정보 조회 중 오류가 발생했습니다: ' + (err.msg || JSON.stringify(err)));
-                }
-              });
-            },
-            fail: function(err) {
-              console.error('Kakao login fail:', err);
-              alert('카카오 로그인 중 오류가 발생했습니다: ' + (err.error_description || JSON.stringify(err)));
-            }
-          });
-          return;
+          Kakao.init(DEFAULT_KAKAO_KEY);
         } catch (e) {
-          console.error('Kakao SDK error:', e);
+          console.warn('Kakao init warning:', e);
         }
       }
+    }
 
-      // 키가 아직 등록되지 않은 경우: 설정 안내 모달 표시
-      window.openAuthKeyModal('kakao');
+    // 카카오톡 간편 로그인 핸들러
+    window.handleKakaoLogin = function() {
+      if (!window.Kakao) {
+        showToast('카카오 서비스를 불러오는 중입니다. 잠시 후 다시 시도해 주세요.');
+        return;
+      }
+      try {
+        initKakaoSdk();
+        Kakao.Auth.login({
+          success: function(authObj) {
+            Kakao.API.request({
+              url: '/v2/user/me',
+              success: function(res) {
+                const kakaoAccount = res.kakao_account || {};
+                const profile = kakaoAccount.profile || {};
+                const user = {
+                  provider: 'kakao',
+                  id: String(res.id),
+                  name: profile.nickname || '카카오 사용자',
+                  email: kakaoAccount.email || '',
+                  avatar: profile.profile_image_url || '',
+                  loggedAt: new Date().toISOString()
+                };
+                setAuthUser(user);
+              },
+              fail: function(err) {
+                console.error('Kakao user info fetch error:', err);
+                showToast('카카오 계정 정보를 가져오지 못했습니다.');
+              }
+            });
+          },
+          fail: function(err) {
+            console.error('Kakao login fail:', err);
+            showToast('카카오 로그인이 취소되었거나 연결에 실패했습니다.');
+          }
+        });
+      } catch (e) {
+        console.error('Kakao login exception:', e);
+        showToast('카카오 로그인 중 오류가 발생했습니다.');
+      }
     };
 
     // Google 간편 로그인 핸들러
     window.handleGoogleLogin = function() {
-      const googleClientId = (safeStorage.get('SEEDFIT_GOOGLE_CLIENT_ID') || DEFAULT_GOOGLE_CLIENT_ID || '').trim();
-
-      if (googleClientId && window.google && google.accounts && google.accounts.oauth2) {
+      if (window.google && google.accounts && google.accounts.oauth2) {
         try {
           const client = google.accounts.oauth2.initTokenClient({
-            client_id: googleClientId,
+            client_id: DEFAULT_GOOGLE_CLIENT_ID,
             scope: 'https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email',
             callback: (tokenResponse) => {
               if (tokenResponse && tokenResponse.access_token) {
-                // 토큰으로 사용자 정보 가져오기
                 fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
                   headers: { Authorization: `Bearer ${tokenResponse.access_token}` }
                 })
@@ -964,65 +913,19 @@
                 })
                 .catch(err => {
                   console.error('Google user info error:', err);
-                  alert('구글 계정 정보를 가져오는 중 오류가 발생했습니다.');
+                  showToast('구글 계정 정보를 가져오는 중 오류가 발생했습니다.');
                 });
               }
             }
           });
           client.requestAccessToken();
-          return;
         } catch (e) {
           console.error('Google login error:', e);
+          showToast('구글 로그인 연결 중 오류가 발생했습니다.');
         }
+      } else {
+        showToast('구글 로그인 서비스를 준비 중입니다. 잠시 후 다시 시도해 주세요.');
       }
-
-      // 키가 아직 등록되지 않은 경우: 설정 안내 모달 표시
-      window.openAuthKeyModal('google');
-    };
-
-    // API 키 관리 모달 열기/닫기/저장
-    window.openAuthKeyModal = function(focusType) {
-      const modal = document.getElementById('authKeyConfigModal');
-      const inputK = document.getElementById('inputKakaoKey');
-      const inputG = document.getElementById('inputGoogleClientId');
-      if (inputK) inputK.value = safeStorage.get('SEEDFIT_KAKAO_KEY') || '';
-      if (inputG) inputG.value = safeStorage.get('SEEDFIT_GOOGLE_CLIENT_ID') || '';
-      if (modal) modal.classList.remove('hidden');
-      if (focusType === 'kakao' && inputK) setTimeout(() => inputK.focus(), 100);
-      if (focusType === 'google' && inputG) setTimeout(() => inputG.focus(), 100);
-    };
-
-    window.closeAuthKeyModal = function() {
-      const modal = document.getElementById('authKeyConfigModal');
-      if (modal) modal.classList.add('hidden');
-    };
-
-    window.saveAuthKeys = function() {
-      const inputK = document.getElementById('inputKakaoKey');
-      const inputG = document.getElementById('inputGoogleClientId');
-      if (inputK) safeStorage.set('SEEDFIT_KAKAO_KEY', inputK.value.trim());
-      if (inputG) safeStorage.set('SEEDFIT_GOOGLE_CLIENT_ID', inputG.value.trim());
-      window.closeAuthKeyModal();
-      showToast('API 키 설정이 안전하게 저장되었습니다.');
-      if (currentTab === 'settings') {
-        const area = document.getElementById('contentArea');
-        if (area) renderSettingsTab(area);
-      }
-    };
-
-    // 테스트용 데모 계정 로그인
-    window.useDemoAccount = function() {
-      const demoUser = {
-        provider: 'demo',
-        id: 'seedfit_demo_user',
-        name: 'SeedFit 체험 계정',
-        email: 'user@seedfit.app',
-        avatar: 'apple-touch-icon.png',
-        loggedAt: new Date().toISOString()
-      };
-      setAuthUser(demoUser);
-      window.closeAuthKeyModal();
-      showToast('테스트 계정으로 로그인되었습니다.');
     };
 
     // 앱 다운로드 링크 공유 기능 (네이티브 공유 및 클립보드 복사)
@@ -1078,7 +981,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.4.3';
+    const CURRENT_APP_VERSION = 'v1.4.4';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');
@@ -2568,11 +2471,7 @@
                 <button onclick="window.logoutSeedFit()" class="text-xs font-semibold text-neutral-400 hover:text-rose-400 py-1.5 px-3 rounded-xl bg-neutral-800/80 hover:bg-neutral-800 transition">
                   로그아웃
                 </button>
-              ` : `
-                <button onclick="window.openAuthKeyModal()" class="text-[11px] font-semibold text-blue-400 hover:text-blue-300 py-1.5 px-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20 transition">
-                  🔑 API 키
-                </button>
-              `}
+              ` : ''}
             </div>
 
             ${!authUser ? `
@@ -2590,14 +2489,7 @@
                   </button>
                 </div>
               </div>
-            ` : `
-              <div class="flex items-center justify-between text-[11px] pt-1 border-t ${isLightMode ? 'border-neutral-100' : 'border-neutral-800/80'}">
-                <span class="text-neutral-400">API 연동 키 관리</span>
-                <button onclick="window.openAuthKeyModal()" class="text-[11px] text-blue-400 hover:underline">
-                  설정 변경 →
-                </button>
-              </div>
-            `}
+            ` : ''}
           </div>
 
           <!-- Mental Care Settings Card -->
@@ -3175,11 +3067,13 @@
       applyThemeUI();
       renderCurrentTab();
       initInstallLandingGate();
+      initKakaoSdk();
     });
 
     applyThemeUI();
     renderCurrentTab();
     initInstallLandingGate();
+    initKakaoSdk();
   </script>
 </body>
 </html>
