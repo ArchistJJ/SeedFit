@@ -1,5 +1,29 @@
 # 프로젝트 개발 로그 (PROJECT DEVELOPMENT LOG)
 
+## [2026-09-30] v1.4.3 구글 OAuth Client ID 등록 및 보안 자격증명 로컬 격리 보관
+
+### 1. 요구사항 및 기획 의도
+1. **구글 OAuth Client ID 연동**:
+   - 사용자가 발급받은 Google OAuth Client ID(`597094120304-...`)를 `DEFAULT_GOOGLE_CLIENT_ID`에 등록하여 Google 간편 로그인 기능 공식 활성화.
+2. **1급 보안 비밀값(Client Secret)의 안전한 로컬 보관 및 원천 격리**:
+   - 구글 클라이언트 보안 비밀번호(`GOCSPX-...`)는 웹 프론트엔드에 노출되거나 Git 공개 저장소에 푸시되면 즉시 보안 위반(Secret Leak)이 발생하므로, `.gitignore`에 등록된 `AUTH_CREDENTIALS_LOCAL.md`에만 로컬 보관.
+   - 추후 Supabase Auth 백엔드 연동 시 그대로 복사하여 사용할 수 있도록 안전 가이드 작성.
+
+### 2. 구현 내역
+1. **`.gitignore` 보안 규칙 강화**:
+   - `AUTH_CREDENTIALS_LOCAL.md`, `.env`, `*.secret*` 규칙 추가로 비밀값 커밋 원천 차단.
+2. **`AUTH_CREDENTIALS_LOCAL.md` 생성**:
+   - 로컬 폴더에 카카오 JS 키, 구글 클라이언트 ID, 클라이언트 보안 비밀번호 및 Supabase 연동 가이드 보관.
+3. **`index.html` 설정**:
+   - `DEFAULT_GOOGLE_CLIENT_ID = '597094120304-lsk7gjn23rngsbfv16q1015gc7jbd5ch.apps.googleusercontent.com'` 등록.
+   - `CURRENT_APP_VERSION = 'v1.4.3'`, `seedfit-cache-v1.4.3`, `package.json 1.4.3` 승격.
+
+### 3. 검증
+- `git diff`를 통해 민감한 비밀번호가 소스 코드에 절대 포함되지 않음을 2중 검증 완료.
+- `git status`를 통해 `AUTH_CREDENTIALS_LOCAL.md`가 Git 추적에서 완벽히 배제됨을 확인.
+- `node --check` 인라인 스크립트 구문 검사 100% 무결 통과.
+- Git 커밋 및 GitHub 원격 저장소 푸시 완료.
+
 ## [2026-09-30] v1.4.2 공식 카카오 JavaScript 키 영구 반영 및 최신 카카오 로그인 설정 최적화
 
 ### 1. 요구사항 및 기획 의도

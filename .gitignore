@@ -2,3 +2,10 @@ node_modules/
 .DS_Store
 Thumbs.db
 *.log
+
+# Security & Secret Credentials (절대 Git 커밋/푸시 금지 - 로컬 전용 보안 파일)
+.env
+.env.*
+*.secret*
+AUTH_CREDENTIALS_LOCAL.md
+
