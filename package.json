@@ -1,6 +1,6 @@
 {
   "name": "seedfit-pwa",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "SeedFit (시드핏) - iOS Native Style Sports Bankroll & Seed Tracker PWA",
   "scripts": {
     "start": "npx serve -l 5173"
