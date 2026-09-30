@@ -73,6 +73,38 @@
       animation: calmingAppBreath 8s ease-in-out infinite !important;
       border: 2px solid rgba(245, 158, 11, 0.45) !important;
     }
+
+    /* ========================================================
+       화이트 테마(라이트 모드) 전용 노란색/골드/앰버 텍스트 가독성 최적화
+       - 밝은 화이트 배경에서 옅은 노란색(amber-300, amber-400)이 묻히지 않도록
+       - 시인성이 뛰어난 고대비 앰버 브라운(#b45309, #92400e) 및 맑은 배지 대비 자동 적용
+       ======================================================== */
+    body.light-theme .text-amber-400,
+    body.light-theme .text-amber-300,
+    body.light-theme .text-yellow-400,
+    body.light-theme .text-yellow-300 {
+      color: #b45309 !important; /* Tailwind amber-700: 고대비 텍스트 (대비비 5.5:1 이상) */
+      font-weight: 700;
+    }
+    body.light-theme .text-amber-500,
+    body.light-theme .text-yellow-500 {
+      color: #92400e !important; /* Tailwind amber-800: 더욱 선명한 텍스트 */
+      font-weight: 700;
+    }
+    body.light-theme .bg-amber-500\/10,
+    body.light-theme .bg-amber-500\/12,
+    body.light-theme .bg-amber-500\/15 {
+      background-color: #fef3c7 !important; /* amber-100 */
+    }
+    body.light-theme .bg-amber-500\/20 {
+      background-color: #fde68a !important; /* amber-200 */
+    }
+    body.light-theme .border-amber-500\/20,
+    body.light-theme .border-amber-500\/25,
+    body.light-theme .border-amber-500\/30,
+    body.light-theme .border-amber-500\/40 {
+      border-color: #f59e0b !important; /* amber-500 */
+    }
   </style>
 </head>
 <body class="bg-black text-neutral-100 min-h-screen h-[100dvh] flex flex-col justify-between overflow-hidden antialiased">
@@ -625,7 +657,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.4.4').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.4.5').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -981,7 +1013,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.4.4';
+    const CURRENT_APP_VERSION = 'v1.4.5';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');
@@ -1277,18 +1309,18 @@
       if (cooldownEndTime && cooldownEndTime > now) {
         const remMin = Math.max(1, Math.ceil((cooldownEndTime - now) / 60000));
         return `
-          <div onclick="window.openMentalCareModal({ manual: true })" class="cursor-pointer p-3.5 bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-amber-500/15 border border-amber-500/30 rounded-2xl flex items-center justify-between text-xs transition hover:opacity-90 active:scale-[0.98] shadow-sm mb-3">
+          <div onclick="window.openMentalCareModal({ manual: true })" class="cursor-pointer p-3.5 ${isLightMode ? 'bg-amber-50/90 border-amber-300' : 'bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-amber-500/15 border-amber-500/30'} border rounded-2xl flex items-center justify-between text-xs transition hover:opacity-90 active:scale-[0.98] shadow-sm mb-3">
             <div class="flex items-center space-x-3 min-w-0 flex-1 mr-2">
               <span class="text-2xl animate-pulse shrink-0">🧘</span>
               <div class="min-w-0 flex-1 space-y-1">
                 <div class="flex items-center gap-1.5 flex-wrap">
-                  <span class="font-bold text-amber-400 text-xs">쿨다운 휴식 중</span>
-                  <span class="text-[10px] bg-amber-500/20 text-amber-300 border border-amber-500/40 px-2 py-0.5 rounded-full font-mono font-bold whitespace-nowrap">약 ${remMin}분 남음</span>
+                  <span class="font-bold ${isLightMode ? 'text-amber-800' : 'text-amber-400'} text-xs">쿨다운 휴식 중</span>
+                  <span class="text-[10px] ${isLightMode ? 'bg-amber-100 text-amber-900 border-amber-300' : 'bg-amber-500/20 text-amber-300 border-amber-500/40'} border px-2 py-0.5 rounded-full font-mono font-bold whitespace-nowrap">약 ${remMin}분 남음</span>
                 </div>
-                <div class="text-[11px] text-neutral-400 truncate">뇌동 베팅을 멈추고 심호흡이나 산책을 취하세요</div>
+                <div class="text-[11px] ${isLightMode ? 'text-neutral-600' : 'text-neutral-400'} truncate">뇌동 베팅을 멈추고 심호흡이나 산책을 취하세요</div>
               </div>
             </div>
-            <span class="shrink-0 text-amber-400 font-bold text-xs bg-amber-500/10 px-2.5 py-1.5 rounded-xl border border-amber-500/20">가이드 ></span>
+            <span class="shrink-0 ${isLightMode ? 'text-amber-800 bg-amber-100 border-amber-300' : 'text-amber-400 bg-amber-500/10 border-amber-500/20'} font-bold text-xs px-2.5 py-1.5 rounded-xl border">가이드 ></span>
           </div>
         `;
       }
@@ -1350,7 +1382,7 @@
         header.className = "shrink-0 pt-safe px-5 pb-3 border-b border-neutral-200 flex items-center justify-between glass-light z-30 transition-colors";
         tabBar.className = "shrink-0 pb-safe pt-1 glass-light border-t border-neutral-200 flex justify-around items-center px-2 z-30 select-none";
         actionBar.className = "shrink-0 p-3 border-t border-neutral-200 glass-light z-20";
-        document.body.className = "bg-neutral-100 text-neutral-900 min-h-screen h-[100dvh] flex flex-col justify-between overflow-hidden antialiased";
+        document.body.className = "light-theme bg-neutral-100 text-neutral-900 min-h-screen h-[100dvh] flex flex-col justify-between overflow-hidden antialiased";
         document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#f5f5f5');
 
         if (titleEl) titleEl.className = "text-base font-bold text-neutral-900 tracking-tight leading-none";
@@ -1537,7 +1569,7 @@
         <div class="${isLightMode ? 'bg-white border-neutral-200 shadow-sm' : 'bg-neutral-900/90 border-neutral-800'} rounded-3xl p-4 border space-y-3">
           <div class="flex justify-between items-center text-xs">
             <span class="text-neutral-400 font-medium">총 순손익 (정산 완료 기준)</span>
-            ${pendingCount > 0 ? `<button onclick="window.setRecordFilter('PENDING')" class="bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 border border-amber-500/40 px-2.5 py-0.5 rounded-full text-[10px] font-bold cursor-pointer transition active:scale-95">대기중 ${pendingCount}건 (필터) ></button>` : ''}
+            ${pendingCount > 0 ? `<button onclick="window.setRecordFilter('PENDING')" class="${isLightMode ? 'bg-amber-100 hover:bg-amber-200 text-amber-800 border-amber-300' : 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 border-amber-500/40'} border px-2.5 py-0.5 rounded-full text-[10px] font-bold cursor-pointer transition active:scale-95">대기중 ${pendingCount}건 (필터) ></button>` : ''}
           </div>
           <div class="flex items-baseline space-x-2">
             <span class="text-2xl font-black font-mono tracking-tight ${netProfit > 0 ? 'text-emerald-400' : (netProfit < 0 ? 'text-rose-400' : 'text-neutral-300')}">
@@ -1603,8 +1635,8 @@
             let profitDisplay = '';
 
             if (r.status === 'PENDING') {
-              statusBadge = `<span class="bg-amber-500/15 text-amber-400 border border-amber-500/30 text-[10px] font-bold px-2 py-0.5 rounded-full animate-pulse">대기중 (정산하기)</span>`;
-              profitDisplay = `<span class="text-xs text-amber-400 font-mono">진행 중</span>`;
+              statusBadge = `<span class="${isLightMode ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-amber-500/15 text-amber-400 border-amber-500/30'} border text-[10px] font-bold px-2 py-0.5 rounded-full animate-pulse">대기중 (정산하기)</span>`;
+              profitDisplay = `<span class="text-xs ${isLightMode ? 'text-amber-800 font-bold' : 'text-amber-400'} font-mono">진행 중</span>`;
             } else if (r.status === 'WIN') {
               const profit = (r.returnAmount || 0) - r.investAmount;
               statusBadge = `<span class="bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold px-2 py-0.5 rounded-full">적중 🎯</span>`;
@@ -1909,8 +1941,8 @@
             let profitDisplay = '';
 
             if (r.status === 'PENDING') {
-              statusBadge = `<span class="bg-amber-500/15 text-amber-400 border border-amber-500/30 text-[10px] font-bold px-2 py-0.5 rounded-full animate-pulse">대기중</span>`;
-              profitDisplay = `<span class="text-xs text-amber-400 font-mono">진행 중</span>`;
+              statusBadge = `<span class="${isLightMode ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-amber-500/15 text-amber-400 border-amber-500/30'} border text-[10px] font-bold px-2 py-0.5 rounded-full animate-pulse">대기중</span>`;
+              profitDisplay = `<span class="text-xs ${isLightMode ? 'text-amber-800 font-bold' : 'text-amber-400'} font-mono">진행 중</span>`;
             } else if (r.status === 'WIN') {
               const profit = (r.returnAmount || 0) - r.investAmount;
               statusBadge = `<span class="bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold px-2 py-0.5 rounded-full">적중 🎯</span>`;
@@ -2189,14 +2221,14 @@
 
       container.innerHTML = `
         <!-- 기간 선택기 -->
-        <div class="p-1 bg-neutral-900 rounded-2xl flex border border-neutral-800 text-xs">
+        <div class="p-1 ${isLightMode ? 'bg-neutral-200/80 border-neutral-300' : 'bg-neutral-900 border-neutral-800'} rounded-2xl flex border text-xs">
           ${[
             { id: 'daily', label: '일별' },
             { id: 'monthly', label: '월별' },
             { id: 'yearly', label: '년별' },
             { id: 'all', label: '전체' }
           ].map(p => `
-            <button onclick="window.setStatsPeriod('${p.id}')" class="flex-1 py-1.5 rounded-xl font-semibold transition ${statsPeriod === p.id ? 'bg-neutral-800 text-white shadow-sm' : 'text-neutral-400 hover:text-neutral-200'}">
+            <button onclick="window.setStatsPeriod('${p.id}')" class="flex-1 py-1.5 rounded-xl font-semibold transition ${statsPeriod === p.id ? (isLightMode ? 'bg-white text-neutral-900 shadow-sm font-bold' : 'bg-neutral-800 text-white shadow-sm') : (isLightMode ? 'text-neutral-600 hover:text-neutral-900' : 'text-neutral-400 hover:text-neutral-200')}">
               ${p.label}
             </button>
           `).join('')}
@@ -2454,13 +2486,13 @@
                     <p class="text-[10px] text-neutral-400">${authUser.email || '클라우드 동기화 활성화됨'}</p>
                   </div>
                 ` : `
-                  <div class="w-10 h-10 rounded-full bg-amber-500/15 text-amber-400 flex items-center justify-center text-lg border border-amber-500/30">
+                  <div class="w-10 h-10 rounded-full ${isLightMode ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-amber-500/15 text-amber-400 border-amber-500/30'} flex items-center justify-center text-lg border">
                     👤
                   </div>
                   <div>
                     <h3 class="text-xs font-bold ${isLightMode ? 'text-neutral-900' : 'text-white'} flex items-center space-x-1.5">
                       <span>게스트 모드</span>
-                      <span class="text-[10px] px-1.5 py-0.2 rounded font-semibold bg-amber-500/20 text-amber-400">비로그인</span>
+                      <span class="text-[10px] px-1.5 py-0.2 rounded font-semibold ${isLightMode ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-amber-500/20 text-amber-400'}">비로그인</span>
                     </h3>
                     <p class="text-[10px] text-neutral-400">데이터가 기기 브라우저에만 저장 중입니다</p>
                   </div>
@@ -2476,8 +2508,8 @@
 
             ${!authUser ? `
               <!-- 게스트 모드일 때 간편 로그인 추천 배너 -->
-              <div class="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 space-y-2 text-left">
-                <p class="text-[11px] text-amber-300 leading-snug">
+              <div class="p-3 rounded-2xl ${isLightMode ? 'bg-amber-50 border-amber-300' : 'bg-amber-500/10 border-amber-500/20'} border space-y-2 text-left">
+                <p class="text-[11px] ${isLightMode ? 'text-amber-900 font-medium' : 'text-amber-300'} leading-snug">
                   ⚠️ <b>안내</b>: 로그인하지 않고 이용하시면 기기 변경이나 캐시 삭제 시 데이터가 날아갈 수 있습니다.
                 </p>
                 <div class="grid grid-cols-2 gap-2 pt-1">
@@ -2510,7 +2542,7 @@
             <div class="space-y-2 pt-2 border-t ${isLightMode ? 'border-neutral-100' : 'border-neutral-800'} text-xs">
               <div class="flex justify-between items-center py-1">
                 <span class="text-neutral-400">연패 감지 기준</span>
-                <span class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30">
+                <span class="px-2.5 py-1 rounded-lg text-[11px] font-bold ${isLightMode ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-amber-500/15 text-amber-400 border-amber-500/30'} border">
                   3연패 시 즉시 감지
                 </span>
               </div>
@@ -2537,7 +2569,7 @@
             </div>
 
             <div class="pt-1">
-              <button onclick="window.openMentalCareModal({ manual: true })" class="w-full py-2.5 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 font-semibold rounded-xl text-xs transition border border-amber-500/25 active:scale-95 flex items-center justify-center space-x-1.5">
+              <button onclick="window.openMentalCareModal({ manual: true })" class="w-full py-2.5 ${isLightMode ? 'bg-amber-100 hover:bg-amber-200 text-amber-800 border-amber-300' : 'bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border-amber-500/25'} font-semibold rounded-xl text-xs transition border active:scale-95 flex items-center justify-center space-x-1.5">
                 <span>🧘</span>
                 <span>멘탈 케어 & 호흡 가이드 직접 열기</span>
               </button>
