@@ -1,5 +1,36 @@
 # 프로젝트 개발 로그 (PROJECT DEVELOPMENT LOG)
 
+## [2026-10-01] v1.6.0 통계 분석 기간별 특정 일/월/년 선택 및 직관적 탐색(Date Navigator) 기능 추가
+
+### 1. 요구사항 및 기획 의도
+1. **일별/월별/년별 특정 일자/월/연도 선택 기능 요구**:
+   - 기존의 고정된 오늘/이번달/올해 통계 조회를 넘어, 사용자가 과거 특정 날짜나 월, 연도를 자유롭게 선택하여 당시의 투자 성과 및 승률, 손익 차트를 정밀 분석할 수 있도록 개선.
+2. **모바일 최적화 애플 순정 UI/UX 탐색 바 탑재**:
+   - 좌우 화살표 버튼(`<`, `>`)으로 전일/익일, 전월/익월, 전년/익년을 1초 만에 연속 탐색할 수 있는 네비게이션 제공.
+   - 중앙 라벨 터치 시 OS 네이티브 날짜 선택기(HTML5 Date/Month Picker 및 Year Dropdown)가 열려 특정 시점으로 즉각 점프 가능.
+   - 오늘/이번달/올해가 아닌 시점을 조회 중일 때 원터치로 현재 시점으로 복귀하는 '오늘로/이번 달로/올해로' 스마트 퀵 리셋 배지 탑재.
+
+### 2. 구현 내역
+1. **`index.html`**:
+   - 상태 변수 추가: `statsSelectedDate` ("YYYY-MM-DD"), `statsSelectedMonth` ("YYYY-MM"), `statsSelectedYear` ("YYYY")
+   - 탐색 및 선택 핸들러 구현:
+     - `window.navigateStatsDate(direction)`: `-1`(이전), `+1`(다음), `0`(오늘/이번달/올해 리셋) 처리
+     - `window.setCustomStatsDate(val)`: 사용자가 선택한 날짜로 갱신
+     - `window.setCustomStatsMonth(val)`: 사용자가 선택한 월로 갱신
+     - `window.setCustomStatsYear(val)`: 사용자가 선택한 연도로 갱신
+     - 중복 정의되어 있던 `window.setStatsPeriod` 정리
+   - `renderStatsTab`:
+     - 기간 필터링 로직을 `statsSelectedDate`, `statsSelectedMonth`, `statsSelectedYear` 기반으로 동적 필터링하도록 고도화
+     - 기간 선택기 아래에 애플 스타일의 `Date Navigator Card` 렌더링 (`daily`: 요일 및 '오늘' 배지, `monthly`: '이번 달' 배지, `yearly`: '올해' 배지 및 연도 드롭다운, `all`: 카드 숨김)
+   - 버전 승격: `CURRENT_APP_VERSION = 'v1.6.0'`, `sw.js?v=1.6.0` 적용
+2. **`sw.js` & `package.json`**:
+   - `seedfit-cache-v1.6.0`, 버전 `1.6.0` 동기화
+
+### 3. 검증
+- 인라인 자바스크립트 구문(Syntax) 유효성 검사 100% 무결 통과 (138,586자)
+- 금지 단어('스마트', '베팅', '배팅') 전수 검색 결과 잔여 0건 확인
+- 일별/월별/년별/전체 단위 테스트 및 날짜 연속 이동 시뮬레이션 전수 PASS
+
 ## [2026-10-01] v1.5.3 가상 사용자 E2E 전수 검증 및 데이터 격리/재설치 복원 무결성 고도화
 
 ### 1. 요구사항 및 기획 의도

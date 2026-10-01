@@ -653,7 +653,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.5.3').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.6.0').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -1130,7 +1130,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.5.3';
+    const CURRENT_APP_VERSION = 'v1.6.0';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');
@@ -1560,6 +1560,10 @@
     let selectedProjectId = null;
     let selectedStatsCategory = null;
     let statsPeriod = 'all';
+    const _initStatsNow = new Date();
+    let statsSelectedDate = `${_initStatsNow.getFullYear()}-${String(_initStatsNow.getMonth() + 1).padStart(2, '0')}-${String(_initStatsNow.getDate()).padStart(2, '0')}`;
+    let statsSelectedMonth = `${_initStatsNow.getFullYear()}-${String(_initStatsNow.getMonth() + 1).padStart(2, '0')}`;
+    let statsSelectedYear = `${_initStatsNow.getFullYear()}`;
     let includeProjectsInStats = true;
     let recordFilterCategory = 'ALL';
     let recordFilterFold = 'ALL';
@@ -2123,8 +2127,55 @@
       showToast(includeProjectsInStats ? '프로젝트 기록 포함됨' : '프로젝트 기록 제외됨');
     };
 
-    window.setStatsPeriod = function(period) {
-      statsPeriod = period;
+    window.navigateStatsDate = function(direction) {
+      const now = new Date();
+      const todayIsoStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      const thisMonthIsoStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+
+      if (statsPeriod === 'daily') {
+        if (direction === 0) {
+          statsSelectedDate = todayIsoStr;
+        } else {
+          const curVal = statsSelectedDate || todayIsoStr;
+          const [y, m, d] = curVal.split('-').map(Number);
+          const dt = new Date(y, m - 1, d);
+          dt.setDate(dt.getDate() + direction);
+          statsSelectedDate = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+        }
+      } else if (statsPeriod === 'monthly') {
+        if (direction === 0) {
+          statsSelectedMonth = thisMonthIsoStr;
+        } else {
+          const curVal = statsSelectedMonth || thisMonthIsoStr;
+          const [y, m] = curVal.split('-').map(Number);
+          const dt = new Date(y, m - 1 + direction, 1);
+          statsSelectedMonth = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}`;
+        }
+      } else if (statsPeriod === 'yearly') {
+        if (direction === 0) {
+          statsSelectedYear = `${now.getFullYear()}`;
+        } else {
+          statsSelectedYear = `${Number(statsSelectedYear || now.getFullYear()) + direction}`;
+        }
+      }
+      renderCurrentTab();
+    };
+
+    window.setCustomStatsDate = function(val) {
+      if (!val) return;
+      statsSelectedDate = val;
+      renderCurrentTab();
+    };
+
+    window.setCustomStatsMonth = function(val) {
+      if (!val) return;
+      statsSelectedMonth = val;
+      renderCurrentTab();
+    };
+
+    window.setCustomStatsYear = function(val) {
+      if (!val) return;
+      statsSelectedYear = String(val);
       renderCurrentTab();
     };
 
@@ -2189,15 +2240,19 @@
         : records.filter(r => !r.projectId);
 
       const now = new Date();
+      const todayFormattedStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      const thisMonthFormattedStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      const thisYearFormattedStr = `${now.getFullYear()}`;
+
       if (statsPeriod === 'daily') {
-        const todayStr = `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}.${String(now.getDate()).padStart(2,'0')}`;
-        periodRecords = periodRecords.filter(r => r.createdAt.startsWith(todayStr));
+        const targetDayStr = (statsSelectedDate || todayFormattedStr).replace(/-/g, '.');
+        periodRecords = periodRecords.filter(r => r.createdAt && r.createdAt.startsWith(targetDayStr));
       } else if (statsPeriod === 'monthly') {
-        const monthStr = `${now.getFullYear()}.${String(now.getMonth()+1).padStart(2,'0')}`;
-        periodRecords = periodRecords.filter(r => r.createdAt.startsWith(monthStr));
+        const targetMonthStr = (statsSelectedMonth || thisMonthFormattedStr).replace(/-/g, '.');
+        periodRecords = periodRecords.filter(r => r.createdAt && r.createdAt.startsWith(targetMonthStr));
       } else if (statsPeriod === 'yearly') {
-        const yearStr = `${now.getFullYear()}`;
-        periodRecords = periodRecords.filter(r => r.createdAt.startsWith(yearStr));
+        const targetYearStr = String(statsSelectedYear || thisYearFormattedStr);
+        periodRecords = periodRecords.filter(r => r.createdAt && r.createdAt.startsWith(targetYearStr));
       }
 
       // 2. 카테고리 1(유형) x 카테고리 2(폴더 수) 다차원 교차 필터링
@@ -2344,6 +2399,79 @@
         filterBadgeText = `전체 유형 [${statsFoldFilter}] 분석 통계`;
       }
 
+      // 기간 상세 탐색 라벨 및 배지 계산
+      let dateNavLabelHtml = '';
+      if (statsPeriod === 'daily') {
+        const [sy, sm, sd] = (statsSelectedDate || todayFormattedStr).split('-').map(Number);
+        const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
+        const selDateObj = new Date(sy, sm - 1, sd);
+        const dayOfWeek = dayNames[selDateObj.getDay()] || '';
+        const isToday = (statsSelectedDate === todayFormattedStr);
+        const displayDayStr = `${sy}.${String(sm).padStart(2, '0')}.${String(sd).padStart(2, '0')} (${dayOfWeek})`;
+
+        dateNavLabelHtml = `
+          <div class="flex items-center space-x-2">
+            <span class="text-sm font-bold tracking-tight ${isLightMode ? 'text-neutral-900' : 'text-white'}">
+              ${displayDayStr}
+            </span>
+            ${isToday ? `
+              <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold border border-emerald-500/30">오늘</span>
+            ` : `
+              <button onclick="event.stopPropagation(); window.navigateStatsDate(0);" class="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 font-bold border border-blue-500/30 hover:bg-blue-500/20 active:scale-95 transition">오늘로</button>
+            `}
+          </div>
+          <input type="date" value="${statsSelectedDate}" onchange="window.setCustomStatsDate(this.value)" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10" title="날짜 직접 선택" />
+        `;
+      } else if (statsPeriod === 'monthly') {
+        const [sy, sm] = (statsSelectedMonth || thisMonthFormattedStr).split('-').map(Number);
+        const isThisMonth = (statsSelectedMonth === thisMonthFormattedStr);
+        const displayMonthStr = `${sy}년 ${sm}월`;
+
+        dateNavLabelHtml = `
+          <div class="flex items-center space-x-2">
+            <span class="text-sm font-bold tracking-tight ${isLightMode ? 'text-neutral-900' : 'text-white'}">
+              ${displayMonthStr}
+            </span>
+            ${isThisMonth ? `
+              <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold border border-emerald-500/30">이번 달</span>
+            ` : `
+              <button onclick="event.stopPropagation(); window.navigateStatsDate(0);" class="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 font-bold border border-blue-500/30 hover:bg-blue-500/20 active:scale-95 transition">이번 달로</button>
+            `}
+          </div>
+          <input type="month" value="${statsSelectedMonth}" onchange="window.setCustomStatsMonth(this.value)" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10" title="월 직접 선택" />
+        `;
+      } else if (statsPeriod === 'yearly') {
+        const sy = String(statsSelectedYear || thisYearFormattedStr);
+        const isThisYear = (sy === thisYearFormattedStr);
+        const displayYearStr = `${sy}년`;
+
+        const existingYears = records.map(r => r.createdAt && r.createdAt.substring(0, 4)).filter(Boolean);
+        const nowY = now.getFullYear();
+        const yearOptions = Array.from(new Set([
+          ...existingYears,
+          String(nowY + 1),
+          String(nowY),
+          String(nowY - 1),
+          String(nowY - 2)
+        ])).sort((a, b) => Number(b) - Number(a));
+
+        dateNavLabelHtml = `
+          <div class="flex items-center space-x-2">
+            <span class="text-sm font-bold tracking-tight ${isLightMode ? 'text-neutral-900' : 'text-white'}">
+              ${displayYearStr}
+            </span>
+            ${isThisYear ? `
+              <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold border border-emerald-500/30">올해</span>
+            ` : `
+              <button onclick="event.stopPropagation(); window.navigateStatsDate(0);" class="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 font-bold border border-blue-500/30 hover:bg-blue-500/20 active:scale-95 transition">올해로</button>
+            `}
+          </div>
+          <select onchange="window.setCustomStatsYear(this.value)" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10" title="연도 직접 선택">
+            ${yearOptions.map(y => `<option value="${y}" ${y === sy ? 'selected' : ''}>${y}년</option>`).join('')}
+          </select>
+        `;
+      }
+
       container.innerHTML = `
         <!-- 기간 선택기 -->
         <div class="p-1 ${isLightMode ? 'bg-neutral-200/80 border-neutral-300' : 'bg-neutral-900 border-neutral-800'} rounded-2xl flex border text-xs">
@@ -2358,6 +2486,29 @@
             </button>
           `).join('')}
         </div>
+
+        ${statsPeriod !== 'all' ? `
+          <!-- 기간 상세 날짜/월/년 선택 및 이동 카드 -->
+          <div class="flex items-center justify-between px-3 py-2 rounded-2xl border ${isLightMode ? 'bg-white border-neutral-200/90 shadow-sm' : 'bg-neutral-900/90 border-neutral-800'}">
+            <!-- 이전 버튼 -->
+            <button onclick="window.navigateStatsDate(-1)" class="w-8 h-8 flex items-center justify-center rounded-xl transition ${isLightMode ? 'hover:bg-neutral-100 text-neutral-600 active:scale-90' : 'hover:bg-neutral-800 text-neutral-300 active:scale-90'}" title="이전">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+            </button>
+
+            <!-- 중앙 날짜 표시 및 터치 피커 -->
+            <div class="relative flex items-center justify-center py-1 px-3 rounded-xl transition cursor-pointer ${isLightMode ? 'hover:bg-neutral-100' : 'hover:bg-neutral-800/80'}">
+              <svg class="w-4 h-4 mr-1.5 ${isLightMode ? 'text-neutral-500' : 'text-neutral-400'}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+              </svg>
+              ${dateNavLabelHtml}
+            </div>
+
+            <!-- 다음 버튼 -->
+            <button onclick="window.navigateStatsDate(1)" class="w-8 h-8 flex items-center justify-center rounded-xl transition ${isLightMode ? 'hover:bg-neutral-100 text-neutral-600 active:scale-90' : 'hover:bg-neutral-800 text-neutral-300 active:scale-90'}" title="다음">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+            </button>
+          </div>
+        ` : ''}
 
         <!-- 프로젝트 포함 스위치 -->
         <div class="flex justify-between items-center px-1">
