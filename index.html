@@ -653,7 +653,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.6.0').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.6.1').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -1130,7 +1130,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.6.0';
+    const CURRENT_APP_VERSION = 'v1.6.1';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');
@@ -2399,50 +2399,37 @@
         filterBadgeText = `전체 유형 [${statsFoldFilter}] 분석 통계`;
       }
 
-      // 기간 상세 탐색 라벨 및 배지 계산
+      // 기간 상세 탐색 라벨 계산 (미니멀 텍스트 단독 표시)
       let dateNavLabelHtml = '';
       if (statsPeriod === 'daily') {
         const [sy, sm, sd] = (statsSelectedDate || todayFormattedStr).split('-').map(Number);
         const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
         const selDateObj = new Date(sy, sm - 1, sd);
         const dayOfWeek = dayNames[selDateObj.getDay()] || '';
-        const isToday = (statsSelectedDate === todayFormattedStr);
         const displayDayStr = `${sy}.${String(sm).padStart(2, '0')}.${String(sd).padStart(2, '0')} (${dayOfWeek})`;
 
         dateNavLabelHtml = `
-          <div class="flex items-center space-x-2">
+          <div class="flex items-center">
             <span class="text-sm font-bold tracking-tight ${isLightMode ? 'text-neutral-900' : 'text-white'}">
               ${displayDayStr}
             </span>
-            ${isToday ? `
-              <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold border border-emerald-500/30">오늘</span>
-            ` : `
-              <button onclick="event.stopPropagation(); window.navigateStatsDate(0);" class="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 font-bold border border-blue-500/30 hover:bg-blue-500/20 active:scale-95 transition">오늘로</button>
-            `}
           </div>
           <input type="date" value="${statsSelectedDate}" onchange="window.setCustomStatsDate(this.value)" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10" title="날짜 직접 선택" />
         `;
       } else if (statsPeriod === 'monthly') {
         const [sy, sm] = (statsSelectedMonth || thisMonthFormattedStr).split('-').map(Number);
-        const isThisMonth = (statsSelectedMonth === thisMonthFormattedStr);
         const displayMonthStr = `${sy}년 ${sm}월`;
 
         dateNavLabelHtml = `
-          <div class="flex items-center space-x-2">
+          <div class="flex items-center">
             <span class="text-sm font-bold tracking-tight ${isLightMode ? 'text-neutral-900' : 'text-white'}">
               ${displayMonthStr}
             </span>
-            ${isThisMonth ? `
-              <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold border border-emerald-500/30">이번 달</span>
-            ` : `
-              <button onclick="event.stopPropagation(); window.navigateStatsDate(0);" class="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 font-bold border border-blue-500/30 hover:bg-blue-500/20 active:scale-95 transition">이번 달로</button>
-            `}
           </div>
           <input type="month" value="${statsSelectedMonth}" onchange="window.setCustomStatsMonth(this.value)" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10" title="월 직접 선택" />
         `;
       } else if (statsPeriod === 'yearly') {
         const sy = String(statsSelectedYear || thisYearFormattedStr);
-        const isThisYear = (sy === thisYearFormattedStr);
         const displayYearStr = `${sy}년`;
 
         const existingYears = records.map(r => r.createdAt && r.createdAt.substring(0, 4)).filter(Boolean);
@@ -2456,15 +2443,10 @@
         ])).sort((a, b) => Number(b) - Number(a));
 
         dateNavLabelHtml = `
-          <div class="flex items-center space-x-2">
+          <div class="flex items-center">
             <span class="text-sm font-bold tracking-tight ${isLightMode ? 'text-neutral-900' : 'text-white'}">
               ${displayYearStr}
             </span>
-            ${isThisYear ? `
-              <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold border border-emerald-500/30">올해</span>
-            ` : `
-              <button onclick="event.stopPropagation(); window.navigateStatsDate(0);" class="text-[10px] px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 font-bold border border-blue-500/30 hover:bg-blue-500/20 active:scale-95 transition">올해로</button>
-            `}
           </div>
           <select onchange="window.setCustomStatsYear(this.value)" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10" title="연도 직접 선택">
             ${yearOptions.map(y => `<option value="${y}" ${y === sy ? 'selected' : ''}>${y}년</option>`).join('')}
