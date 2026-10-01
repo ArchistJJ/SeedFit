@@ -653,7 +653,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.6.1').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.6.2').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -1130,7 +1130,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.6.1';
+    const CURRENT_APP_VERSION = 'v1.6.2';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');
@@ -2414,7 +2414,7 @@
               ${displayDayStr}
             </span>
           </div>
-          <input type="date" value="${statsSelectedDate}" onchange="window.setCustomStatsDate(this.value)" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10" title="날짜 직접 선택" />
+          <input type="date" value="${statsSelectedDate}" onclick="if(this.showPicker){try{this.showPicker();}catch(e){}}" onchange="window.setCustomStatsDate(this.value)" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10" title="날짜 직접 선택" />
         `;
       } else if (statsPeriod === 'monthly') {
         const [sy, sm] = (statsSelectedMonth || thisMonthFormattedStr).split('-').map(Number);
@@ -2426,7 +2426,7 @@
               ${displayMonthStr}
             </span>
           </div>
-          <input type="month" value="${statsSelectedMonth}" onchange="window.setCustomStatsMonth(this.value)" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10" title="월 직접 선택" />
+          <input type="month" value="${statsSelectedMonth}" onclick="if(this.showPicker){try{this.showPicker();}catch(e){}}" onchange="window.setCustomStatsMonth(this.value)" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10" title="월 직접 선택" />
         `;
       } else if (statsPeriod === 'yearly') {
         const sy = String(statsSelectedYear || thisYearFormattedStr);
