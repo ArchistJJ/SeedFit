@@ -118,11 +118,8 @@
     <div class="relative z-10 space-y-6 pt-2">
       <!-- 상단 브랜드 로고 및 타이틀 -->
       <div class="text-center space-y-3">
-        <div class="relative inline-block">
+        <div class="inline-block">
           <img src="apple-touch-icon.png" class="w-20 h-20 mx-auto rounded-3xl shadow-2xl border border-neutral-700/80 object-cover" alt="SeedFit">
-          <div class="absolute -bottom-1 -right-1 bg-emerald-500 text-black text-[9px] font-black px-2 py-0.5 rounded-full shadow">
-            APP
-          </div>
         </div>
         <div>
           <h1 class="text-2xl font-black tracking-tight text-white flex items-center justify-center space-x-1.5">
@@ -239,11 +236,8 @@
     <div class="relative z-10 w-full my-auto py-4 space-y-6">
       <!-- 상단 브랜드 로고 및 소개 -->
       <div class="text-center space-y-3">
-        <div class="relative inline-block">
+        <div class="inline-block">
           <img src="apple-touch-icon.png" class="w-20 h-20 mx-auto rounded-3xl shadow-2xl border border-neutral-700/80 object-cover" alt="SeedFit">
-          <div class="absolute -bottom-1 -right-1 bg-gradient-to-r from-amber-500 to-emerald-500 text-black text-[9px] font-black px-2 py-0.5 rounded-full shadow">
-            LOGIN
-          </div>
         </div>
         <div>
           <h1 class="text-2xl font-black tracking-tight text-white flex items-center justify-center space-x-1.5">
@@ -657,7 +651,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.4.5').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.4.6').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -965,7 +959,7 @@
       const shareData = {
         title: 'SeedFit - 시드 머니 & 투자 자금 관리',
         text: '스마트 시드 머니 & 투자 자금 관리 PWA 웹앱 SeedFit을 홈 화면에 추가하고 시작해보세요!',
-        url: 'https://archistjj.github.io/j-app/'
+        url: 'https://archistjj.github.io/SeedFit/'
       };
       if (navigator.share) {
         try {
@@ -979,7 +973,7 @@
     };
 
     window.copyAppDownloadLink = function() {
-      const url = 'https://archistjj.github.io/j-app/';
+      const url = 'https://archistjj.github.io/SeedFit/';
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(url).then(() => {
           showToast('SeedFit 앱 링크가 클립보드에 복사되었습니다!');
@@ -1013,7 +1007,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.4.5';
+    const CURRENT_APP_VERSION = 'v1.4.6';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');
@@ -2329,13 +2323,13 @@
           </div>
         </div>
 
-        <!-- 🔥 3x3 교차 분석 매트릭스 (모든 경우의 수 한눈에 비교 및 터치 필터링) -->
+        <!-- 📊 카테고리별 교차분석 매트릭스 (한눈에 비교 및 터치 필터링) -->
         <div class="${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900/90 border-neutral-800'} border p-4 rounded-3xl space-y-3 shadow-sm">
           <div class="flex justify-between items-center">
             <div>
               <h3 class="text-xs font-bold ${isLightMode ? 'text-neutral-900' : 'text-white'} flex items-center space-x-1.5">
                 <span>📊</span>
-                <span>모든 경우의 수 교차 분석 (3×3 매트릭스)</span>
+                <span>카테고리별 교차분석</span>
               </h3>
               <p class="text-[10px] text-neutral-400 mt-0.5">셀을 터치하면 해당 조합 통계로 즉시 집중 전환됩니다.</p>
             </div>
@@ -2576,17 +2570,25 @@
             </div>
           </div>
 
-          <div class="${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900 border-neutral-800'} border rounded-3xl p-4 space-y-3">
-            <h3 class="text-xs font-bold ${isLightMode ? 'text-neutral-800' : 'text-neutral-300'}">파일 영구 백업 & 복원 (JSON)</h3>
+          <div class="${isLightMode ? 'bg-white border-neutral-200 shadow-sm' : 'bg-neutral-900 border-neutral-800'} border rounded-3xl p-4 space-y-3">
+            <div class="flex justify-between items-center">
+              <h3 class="text-xs font-bold ${isLightMode ? 'text-neutral-800' : 'text-neutral-300'} flex items-center space-x-1.5">
+                <span>💾</span>
+                <span>오프라인 수동 백업 & 복원 (JSON)</span>
+              </h3>
+              <span class="text-[10px] text-neutral-400 font-medium">로컬 소장용</span>
+            </div>
             <p class="text-[11px] text-neutral-400 leading-relaxed">
-              기기 변경이나 iOS 대규모 업데이트 시에도 안심할 수 있도록 파일로 저장하고 복구합니다.
+              추후 계정 로그인 기반 클라우드 자동 동기화(Supabase)가 지원될 예정입니다. 이 기능은 클라우드와 별개로 <b>내 기기에 별도 오프라인 백업 파일(.json)을 직접 안전하게 소장</b>하거나 다른 환경으로 이전할 때 사용합니다.
             </p>
             <div class="grid grid-cols-2 gap-2 pt-1">
-              <button onclick="exportDataJson()" class="py-2.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 font-semibold rounded-xl text-xs transition active:scale-95">
-                💾 파일 백업(다운로드)
+              <button onclick="exportDataJson()" class="py-2.5 ${isLightMode ? 'bg-neutral-100 hover:bg-neutral-200 text-neutral-800 border border-neutral-200' : 'bg-neutral-800 hover:bg-neutral-700 text-neutral-200'} font-semibold rounded-xl text-xs transition active:scale-95 flex items-center justify-center space-x-1">
+                <span>💾</span>
+                <span>파일 백업(다운로드)</span>
               </button>
-              <label class="py-2.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 font-semibold rounded-xl text-xs transition active:scale-95 text-center cursor-pointer flex items-center justify-center">
-                📁 파일 불러오기
+              <label class="py-2.5 ${isLightMode ? 'bg-neutral-100 hover:bg-neutral-200 text-neutral-800 border border-neutral-200' : 'bg-neutral-800 hover:bg-neutral-700 text-neutral-200'} font-semibold rounded-xl text-xs transition active:scale-95 text-center cursor-pointer flex items-center justify-center space-x-1">
+                <span>📁</span>
+                <span>파일 불러오기</span>
                 <input type="file" id="importFileInput" onchange="importDataJson(event)" accept=".json" class="hidden" />
               </label>
             </div>
@@ -2611,7 +2613,7 @@
             </button>
 
             <div class="flex items-center space-x-1.5 p-1.5 rounded-xl ${isLightMode ? 'bg-neutral-100' : 'bg-neutral-950/70'} border ${isLightMode ? 'border-neutral-200' : 'border-neutral-800'}">
-              <span class="text-[10px] text-neutral-400 font-mono flex-1 truncate px-2 select-all">https://archistjj.github.io/j-app/</span>
+              <span class="text-[10px] text-neutral-400 font-mono flex-1 truncate px-2 select-all">https://archistjj.github.io/SeedFit/</span>
               <button onclick="window.copyAppDownloadLink()" class="py-1 px-2.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 rounded-lg text-[10px] font-semibold shrink-0 transition active:scale-95">
                 링크 복사
               </button>
