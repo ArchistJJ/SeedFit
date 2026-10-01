@@ -1,5 +1,29 @@
 # 프로젝트 개발 로그 (PROJECT DEVELOPMENT LOG)
 
+## [2026-10-02] v1.7.0 공식 커스텀 도메인(seedfit.pro) 전면 연동 및 CNAME 배포
+
+### 1. 요구사항 및 기획 의도
+1. **공식 커스텀 도메인 `seedfit.pro` 도입**:
+   - 기존의 임시 서브패스 주소(`archistjj.github.io/SeedFit/`)에서 브랜드 아이덴티티와 신뢰도를 극대화한 독립 공식 도메인 **`https://seedfit.pro/`**로 전면 전환.
+   - PWA 홈 화면 추가, 앱 내 링크 복사, 네이티브 공유 메타데이터 일괄 갱신.
+2. **GitHub Pages CNAME 생성 및 DNS 연동 준비**:
+   - 루트 디렉터리에 `CNAME` 파일(`seedfit.pro`) 생성 및 자동 배포.
+
+### 2. 구현 내역
+1. **`CNAME`**:
+   - `seedfit.pro` 도메인 레코드 파일 생성
+2. **`index.html`**:
+   - `shareAppDownloadLink` 및 `copyAppDownloadLink` 기본 URL $\rightarrow$ `https://seedfit.pro/`
+   - 설정 탭 앱 공유 링크 표시 $\rightarrow$ `https://seedfit.pro/`
+   - `CURRENT_APP_VERSION = 'v1.7.0'`, `sw.js?v=1.7.0` 적용
+3. **`sw.js` & `package.json`**:
+   - `seedfit-cache-v1.7.0`, 버전 `1.7.0` 동기화
+
+### 3. 검증
+- 인라인 자바스크립트 문법 검사 100% 무결 통과 (137,453자)
+- 금지 단어('스마트', '베팅', '배팅') 전수 검색 결과 잔여 0건 확인
+- GitHub 원격 저장소(`main`) 배포 완료
+
 ## [2026-10-01] v1.6.4 데이터 부재 시 기본 평균 투자금(3만원 하드코딩) 제거 및 0원 정상화
 
 ### 1. 요구사항 및 기획 의도

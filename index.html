@@ -653,7 +653,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.6.4').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.7.0').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -1082,7 +1082,7 @@
       const shareData = {
         title: 'SeedFit - 시드 & 투자 자금 관리',
         text: '시드 & 투자 자금 관리 앱 SeedFit을 홈 화면에 추가하고 시작해보세요!',
-        url: 'https://archistjj.github.io/SeedFit/'
+        url: 'https://seedfit.pro/'
       };
       if (navigator.share) {
         try {
@@ -1096,7 +1096,7 @@
     };
 
     window.copyAppDownloadLink = function() {
-      const url = 'https://archistjj.github.io/SeedFit/';
+      const url = 'https://seedfit.pro/';
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(url).then(() => {
           showToast('SeedFit 앱 링크가 클립보드에 복사되었습니다!');
@@ -1130,7 +1130,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.6.4';
+    const CURRENT_APP_VERSION = 'v1.7.0';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');
@@ -2893,7 +2893,7 @@
             </button>
 
             <div class="flex items-center space-x-1.5 p-1.5 rounded-xl ${isLightMode ? 'bg-neutral-100' : 'bg-neutral-950/70'} border ${isLightMode ? 'border-neutral-200' : 'border-neutral-800'}">
-              <span class="text-[10px] text-neutral-400 font-mono flex-1 truncate px-2 select-all">https://archistjj.github.io/SeedFit/</span>
+              <span class="text-[10px] text-neutral-400 font-mono flex-1 truncate px-2 select-all">https://seedfit.pro/</span>
               <button onclick="window.copyAppDownloadLink()" class="py-1 px-2.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 rounded-lg text-[10px] font-semibold shrink-0 transition active:scale-95">
                 링크 복사
               </button>
