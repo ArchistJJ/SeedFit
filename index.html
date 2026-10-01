@@ -653,7 +653,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.5.0').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.5.1').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -1066,7 +1066,7 @@
     window.shareAppDownloadLink = async function() {
       const shareData = {
         title: 'SeedFit - 시드 머니 & 투자 자금 관리',
-        text: '스마트 시드 머니 & 투자 자금 관리 PWA 웹앱 SeedFit을 홈 화면에 추가하고 시작해보세요!',
+        text: '스마트 시드 머니 & 투자 자금 관리 앱 SeedFit을 홈 화면에 추가하고 시작해보세요!',
         url: 'https://archistjj.github.io/SeedFit/'
       };
       if (navigator.share) {
@@ -1115,7 +1115,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.5.0';
+    const CURRENT_APP_VERSION = 'v1.5.1';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');
@@ -2620,7 +2620,7 @@
               <div class="flex items-center justify-between text-[11px] pt-2.5 border-t ${isLightMode ? 'border-neutral-100' : 'border-neutral-800/80'}">
                 <div class="flex items-center space-x-1.5">
                   <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                  <span class="font-medium ${isLightMode ? 'text-neutral-700' : 'text-neutral-300'}">Supabase 클라우드 실시간 동기화됨</span>
+                  <span class="font-medium ${isLightMode ? 'text-neutral-700' : 'text-neutral-300'}">클라우드 실시간 동기화됨</span>
                 </div>
                 <button onclick="window.syncToCloud(true)" class="py-1 px-2.5 rounded-lg text-[10px] font-semibold ${isLightMode ? 'bg-neutral-100 hover:bg-neutral-200 text-neutral-700 border border-neutral-200' : 'bg-neutral-800 hover:bg-neutral-700 text-neutral-300'} transition active:scale-95 flex items-center space-x-1">
                   <span>☁️</span>
@@ -2730,7 +2730,7 @@
                 <span class="text-base">📤</span>
                 <span>앱 다운로드 링크 공유하기</span>
               </div>
-              <span class="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">PWA 웹앱</span>
+              <span class="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">공식 웹앱</span>
             </div>
             <p class="text-[11px] text-neutral-400 leading-relaxed">
               지인에게 SeedFit을 추천하거나 다른 기기에서도 간편하게 앱을 설치하고 이용할 수 있도록 링크를 공유합니다.
