@@ -1,5 +1,43 @@
 # 프로젝트 개발 로그 (PROJECT DEVELOPMENT LOG)
 
+## [2026-10-02] v1.7.1 클라우드 데이터베이스 RLS 보안 잠금 및 데이터 무단 접근 방어 구축
+
+### 1. 요구사항 및 기획 의도
+1. **클라우드 데이터베이스 행 단위 보안(Row Level Security / RLS) 강화**:
+   - 프론트엔드 공개 키(Anon Key)로 데이터베이스에 직접 접근하던 기존 구조에서 전체 행이 무제한 허용(`Allow all operations for anon`)되어 있던 보안 취약점 발견.
+   - 비인가 사용자의 대량 데이터 탈취(`SELECT *`), 타 사용자 데이터 위변조(`UPDATE`), 악의적인 전체 데이터베이스 삭제(`DELETE`)를 원천 차단하기 위해 엄격한 RLS 정책 수립.
+2. **단일 사용자 세션 헤더 검증 기반 RLS 정책 적용**:
+   - `anon` 사용자의 `DELETE` 권한을 완전 박탈하여 임의의 데이터베이스 삭제 공격 원천 차단.
+   - `SELECT`, `INSERT`, `UPDATE`는 오직 클라이언트가 전달한 단일 사용자 키(`x-seedfit-user`)와 레코드의 `user_id`가 100% 일치할 때만 인가되도록 PostgreSQL RLS 정책 개편.
+
+### 2. 구현 내역
+1. **PostgreSQL 데이터베이스 RLS 정책 재설계**:
+   - 기존의 허술한 전역 허용 정책(`Allow all operations for anon`) 완전 폐기.
+   - `seedfit_anon_select_policy`: `user_id = (current_setting('request.headers', true)::json->>'x-seedfit-user')`
+   - `seedfit_anon_insert_policy`: `WITH CHECK (user_id = (current_setting('request.headers', true)::json->>'x-seedfit-user'))`
+   - `seedfit_anon_update_policy`: `USING` 및 `WITH CHECK` 동일 적용
+   - `DELETE` 정책 미생성으로 `anon` 역할의 삭제 시도 100% 거부
+2. **`index.html`**:
+   - `getSupabase(targetUserKey)`: 현재 활성 로그인 사용자의 식별키를 기반으로 `x-seedfit-user` 전역 요청 헤더를 자동 주입하여 클라이언트 초기화.
+   - `syncToCloud`, `syncFromCloud`: 활성 사용자 식별키를 `getSupabase(userIdKey)`에 정확히 인계.
+   - `logoutSeedFit`: 로그아웃 시 메모리 내 `supabaseClient` 및 세션 키 즉시 초기화(`null`).
+   - `CURRENT_APP_VERSION = 'v1.7.1'`, `sw.js?v=1.7.1` 동기화
+3. **`sw.js` & `package.json`**:
+   - `seedfit-cache-v1.7.1`, 버전 `1.7.1` 갱신
+
+### 3. 검증
+- **보안 자동화 테스트 스위트(8개 시나리오) 100% 통과**:
+  1. 헤더 없는 악의적 INSERT 시도: HTTP 401 차단 완료
+  2. 불일치/위조 헤더 INSERT 시도: HTTP 401 차단 완료
+  3. 전체/타 사용자 DELETE 공격 시도: 0건 삭제(무효화) 확인
+  4. 전체 사용자 덤프(`SELECT *`) 시도: 빈 배열 `[]` 반환(정보 유출 0건)
+  5. 정당한 사용자 INSERT: 정상 성공 (201 Created)
+  6. 정당한 사용자 SELECT: 본인 데이터 정상 반환 (200 OK)
+  7. 타 사용자 계정으로 조회 시도: 빈 배열 `[]` 반환(열람 불가)
+  8. 테스트 데이터베이스 클린업: 잔여 가상 데이터 0건 완전 청소 확인
+- 금지 단어('스마트', '베팅', '배팅') 전수 검색 결과 잔여 0건 확인
+- 인라인 자바스크립트 문법 검사 100% 통과
+
 ## [2026-10-02] v1.7.0 공식 커스텀 도메인(seedfit.pro) 전면 연동 및 CNAME 배포
 
 ### 1. 요구사항 및 기획 의도
