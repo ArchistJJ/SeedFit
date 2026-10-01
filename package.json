@@ -5,7 +5,7 @@
   "scripts": {
     "start": "npx serve -l 5173"
   },
-  "keywords": ["pwa", "ios", "invest", "bankroll", "tracker"],
+  "keywords": ["pwa", "ios", "invest", "portfolio", "personal-finance", "tracker"],
   "author": "JaejunPark",
   "license": "ISC"
 }
