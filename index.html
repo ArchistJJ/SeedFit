@@ -598,6 +598,9 @@
             마인드 다잡고 닫기
           </button>
         </div>
+      </div>
+    </div>
+
     <!-- SeedFit Pro Subscription Modal (공식 보안 결제 모달) -->
     <div id="subscriptionModal" class="absolute inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-end justify-center p-0 transition-opacity">
       <div class="w-full bg-neutral-900 border-t border-neutral-800 rounded-t-[32px] p-6 pb-safe space-y-4 shadow-2xl max-h-[92vh] overflow-y-auto custom-scroll">
@@ -730,7 +733,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.7.2').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.7.3').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -1282,7 +1285,7 @@
       window.closeSubscriptionModal();
     };
 
-    const CURRENT_APP_VERSION = 'v1.7.2';
+    const CURRENT_APP_VERSION = 'v1.7.3';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');

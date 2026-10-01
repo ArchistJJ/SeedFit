@@ -1,5 +1,24 @@
 # 프로젝트 개발 로그 (PROJECT DEVELOPMENT LOG)
 
+## [2026-10-02] v1.7.3 하단 탭 네비게이션 복구 및 모달 태그 완결성 보정
+
+### 1. 요구사항 및 기획 의도
+1. **하단 탭 네비게이션 바(기록, 프로젝트, 통계, 설정) 소실 결함 긴급 수정**:
+   - `index.html` 내 `mentalCareModal` 마크업의 내부 닫는 태그(`</div></div>`)가 누락되어, 뒤이어 위치하던 `subscriptionModal` 및 `<nav id="bottomTabBar">`가 `mentalCareModal(hidden)` 내부로 잘못 중첩 파싱되어 하단 탭이 화면에서 완전히 숨겨지던 결함 발견.
+   - `mentalCareModal`의 닫는 태그를 명확히 닫아 DOM 트리 상의 모든 모달과 하단 탭 바가 독립적인 형제 노드로 정상 렌더링되도록 완벽 복구.
+
+### 2. 구현 내역
+1. **`index.html`**:
+   - `mentalCareModal` 닫는 `</div></div>` 추가 (전체 파일 내 `<div`와 `</div>` 태그 327개로 1:1 완벽 일치 검증).
+   - `CURRENT_APP_VERSION = 'v1.7.3'`, `sw.js?v=1.7.3` 적용.
+2. **`sw.js` & `package.json`**:
+   - `seedfit-cache-v1.7.3`, 버전 `1.7.3` 갱신.
+
+### 3. 검증
+- DOM 태그 균형 검사: `opens=327, closes=327, diff=0` 완전 무결 확인.
+- 하단 탭 바(`#bottomTabBar`)가 모달 외부 최상위 루트로 노출됨을 DOM 트리 구조로 검증 완료.
+- 금지 단어 0건, 인라인 자바스크립트 문법 검사 100% 통과.
+
 ## [2026-10-02] v1.7.2 공식 보안 결제(Lemon Squeezy) 연동 및 SeedFit Pro 멤버십 론칭
 
 ### 1. 요구사항 및 기획 의도
