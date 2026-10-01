@@ -653,7 +653,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.6.3').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.6.4').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -1130,7 +1130,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.6.3';
+    const CURRENT_APP_VERSION = 'v1.6.4';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');
@@ -1324,11 +1324,11 @@
     }
 
     function calculateLossStreak() {
-      // 1. 내 전체 평균 투자 금액 동적 계산
+      // 1. 내 전체 평균 투자 금액 동적 계산 (기록이 없을 때는 0원)
       const validInvests = records.filter(r => r.investAmount && r.investAmount > 0);
       const avgInvest = validInvests.length > 0 
         ? Math.round(validInvests.reduce((sum, r) => sum + r.investAmount, 0) / validInvests.length)
-        : 30000;
+        : 0;
 
       // 2. 정산 완료된 기록 (최신순)
       const settled = records
@@ -1358,12 +1358,12 @@
       // 트리거 조건 판정:
       // A. 3연패 도달 (연패는 3연패 기준)
       const is3Streak = (consecutiveLosses >= 3);
-      // B. 연속 손실액이 내 평균 투자금의 2.5배 이상 (평소보다 비정상적으로 큰 연속 손실)
-      const isHeavyLossStreak = (consecutiveLosses >= 2 && streakLossAmount >= avgInvest * 2.5);
-      // C. 최근 경기에서 평소 평균 투자금의 2배 이상을 투자했다가 미적중 (추격 투자 감지)
-      const isChasingLoss = (lastRec && lastRec.status === 'LOSE' && lastRec.investAmount >= avgInvest * 2);
+      // B. 연속 손실액이 내 평균 투자금의 2.5배 이상 (평균 투자금이 존재할 때만 판정)
+      const isHeavyLossStreak = (avgInvest > 0 && consecutiveLosses >= 2 && streakLossAmount >= avgInvest * 2.5);
+      // C. 최근 경기에서 평소 평균 투자금의 2배 이상을 투자했다가 미적중 (평균 투자금이 존재할 때만 판정)
+      const isChasingLoss = (avgInvest > 0 && lastRec && lastRec.status === 'LOSE' && lastRec.investAmount >= avgInvest * 2);
       // D. 최근 5경기 중 4경기 이상 미적중이면서 손실 누적
-      const isRecentPatternCollapse = (recent5.length >= 4 && recent5LossCount >= 4 && recent5NetProfit <= -avgInvest * 2);
+      const isRecentPatternCollapse = (avgInvest > 0 && recent5.length >= 4 && recent5LossCount >= 4 && recent5NetProfit <= -avgInvest * 2);
 
       const isTriggered = is3Streak || isHeavyLossStreak || isChasingLoss || isRecentPatternCollapse;
 
@@ -1387,22 +1387,24 @@
 
       if (data.manual) {
         if (badge) badge.textContent = '🧘 멘탈 관리 및 평정심 모드';
-        if (sub) sub.textContent = `투자 전 감정을 배제하고 차분한 이성으로 확률과 리스크를 점검하세요. (현재 내 평균 투자금: ${streak.avgInvest.toLocaleString()}원)`;
+        if (sub) sub.textContent = `투자 전 감정을 배제하고 차분한 이성으로 확률과 리스크를 점검하세요.` + (streak.avgInvest > 0 ? ` (현재 내 평균 투자금: ${streak.avgInvest.toLocaleString()}원)` : '');
       } else if (streak.is3Streak) {
         if (badge) badge.textContent = `⚠️ 3연패 지속 감지 (연속 -${streak.streakLossAmount.toLocaleString()}원)`;
-        if (sub) sub.textContent = `최근 3회 연속 미적중되었습니다. (평균 투자금 ${streak.avgInvest.toLocaleString()}원 대비 연속 손실 ${streak.streakLossAmount.toLocaleString()}원) 연패 시 뇌는 조급함으로 무리한 투자를 유발합니다. 지금 멈추는 것이 가장 현명합니다.`;
+        if (sub) sub.textContent = `최근 3회 연속 미적중되었습니다.` + (streak.avgInvest > 0 ? ` (평균 투자금 ${streak.avgInvest.toLocaleString()}원 대비 연속 손실 ${streak.streakLossAmount.toLocaleString()}원)` : ` (연속 손실 ${streak.streakLossAmount.toLocaleString()}원)`) + ` 연패 시 뇌는 조급함으로 무리한 투자를 유발합니다. 지금 멈추는 것이 가장 현명합니다.`;
       } else if (streak.isChasingLoss) {
+        const ratioText = streak.avgInvest > 0 ? `의 ${(streak.lastInvestAmount / streak.avgInvest).toFixed(1)}배에 달하는 ` : ' 대비 ';
         if (badge) badge.textContent = `🚨 평소 평균 대비 과다 투자 손실 감지`;
-        if (sub) sub.textContent = `평소 평균 투자금(${streak.avgInvest.toLocaleString()}원)의 ${(streak.lastInvestAmount / streak.avgInvest).toFixed(1)}배에 달하는 ${streak.lastInvestAmount.toLocaleString()}원이 손실되었습니다. 조급한 추격 투자를 즉시 멈추세요.`;
+        if (sub) sub.textContent = `평소 평균 투자금(${streak.avgInvest.toLocaleString()}원)${ratioText}${streak.lastInvestAmount.toLocaleString()}원이 손실되었습니다. 조급한 추격 투자를 즉시 멈추세요.`;
       } else if (streak.isHeavyLossStreak) {
+        const ratioText = streak.avgInvest > 0 ? `의 ${(streak.streakLossAmount / streak.avgInvest).toFixed(1)}배에 달합니다.` : '입니다.';
         if (badge) badge.textContent = `⚠️ 평균 투자금 대비 누적 손실 급증`;
-        if (sub) sub.textContent = `최근 연속 손실액(${streak.streakLossAmount.toLocaleString()}원)이 평소 평균 투자금(${streak.avgInvest.toLocaleString()}원)의 ${(streak.streakLossAmount / streak.avgInvest).toFixed(1)}배에 달합니다. 쿨다운이 절실한 시점입니다.`;
+        if (sub) sub.textContent = `최근 연속 손실액(${streak.streakLossAmount.toLocaleString()}원)이 평소 평균 투자금(${streak.avgInvest.toLocaleString()}원)${ratioText} 쿨다운이 절실한 시점입니다.`;
       } else if (streak.isRecentPatternCollapse) {
         if (badge) badge.textContent = `⚠️ 최근 경기 페이스 붕괴 감지`;
         if (sub) sub.textContent = `최근 경기들에서 지속적인 손실이 발생하고 있습니다. 흐름이 좋지 않을 때는 쉬어가는 것이 시드를 지키는 최고의 전략입니다.`;
       } else {
         if (badge) badge.textContent = '🧘 멘탈 케어 & 마인드셋';
-        if (sub) sub.textContent = `장기적인 플러스 ROI를 위해 가장 중요한 것은 철저한 멘탈과 자금 관리입니다. (내 평균 투자금: ${streak.avgInvest.toLocaleString()}원)`;
+        if (sub) sub.textContent = `장기적인 플러스 ROI를 위해 가장 중요한 것은 철저한 멘탈과 자금 관리입니다.` + (streak.avgInvest > 0 ? ` (내 평균 투자금: ${streak.avgInvest.toLocaleString()}원)` : '');
       }
 
       stopBreathingExercise();
