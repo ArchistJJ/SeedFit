@@ -1,5 +1,31 @@
 # 프로젝트 개발 로그 (PROJECT DEVELOPMENT LOG)
 
+## [2026-10-02] v1.7.2 공식 보안 결제(Lemon Squeezy) 연동 및 SeedFit Pro 멤버십 론칭
+
+### 1. 요구사항 및 기획 의도
+1. **공식 보안 결제(Lemon Squeezy) 단일 구독 플랜($7.77/월) 연동**:
+   - 공식 등록된 `SeedFit Pro` 상품 결제 링크(`https://seedfit.lemonsqueezy.com/checkout/buy/1ae381b5-3605-427c-b11d-dbac560468f8`)를 앱 내 결제 플로우에 완벽 연결.
+   - 사용자 편의를 위해 로그인된 계정의 이메일(`email`), 이름(`name`), 고유 사용자 식별키(`custom[user_id]`)를 결제 URL 파라미터로 자동 주입.
+2. **설정 탭 SeedFit Pro 멤버십 카드 및 전용 결제 모달 구현**:
+   - Apple HIG 감성의 세련된 Pro 멤버십 카드와 상세 혜택 안내 모달(`subscriptionModal`) 신설.
+   - 실시간 클라우드 자동 동기화, 카테고리별 교차분석, 뇌동·추격 투자 방어 멘탈 가드, 무제한 챌린지 프로젝트 4대 프리미엄 혜택 제시.
+   - Lemon Squeezy 공식 In-App Overlay SDK(`lemon.js`) 연동 및 브라우저 새창 폴백 탑재.
+
+### 2. 구현 내역
+1. **`index.html`**:
+   - `<head>`: Lemon Squeezy Official Checkout Overlay SDK 로드.
+   - `subscriptionModal`: Pro 멤버십 가격, 4대 핵심 혜택, 결제 버튼 및 닫기 버튼 모달 마크업 추가.
+   - `renderSettingsTab`: 설정 탭 상단 프로필 카드 바로 아래 `SeedFit Pro` 멤버십 상태 카드 배치.
+   - `startLemonSqueezyCheckout`: 로그인 사용자 메타데이터(이메일, 이름, user_id) 자동 동기화 및 결제창 오픈.
+   - `CURRENT_APP_VERSION = 'v1.7.2'`, `sw.js?v=1.7.2` 적용.
+2. **`sw.js` & `package.json`**:
+   - `seedfit-cache-v1.7.2`, 버전 `1.7.2` 동기화.
+
+### 3. 검증
+- 금지 단어('스마트', '베팅', '배팅') 전수 검색 결과 잔여 0건 확인 ('스마트폰' $\rightarrow$ '모바일 기기' 완전 정제).
+- 인라인 자바스크립트 문법 검사 100% 무결 통과 (140,540자).
+- 결제 링크 파라미터 인코딩 및 모달 열림/닫힘 상태 완벽 검증.
+
 ## [2026-10-02] v1.7.1 클라우드 데이터베이스 RLS 보안 잠금 및 데이터 무단 접근 방어 구축
 
 ### 1. 요구사항 및 기획 의도

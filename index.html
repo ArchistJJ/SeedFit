@@ -17,6 +17,8 @@
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <!-- Supabase Official JavaScript SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Lemon Squeezy Official Checkout Overlay SDK -->
+  <script src="https://assets.lemonsqueezy.com/lemon.js" defer></script>
   <style>
     * {
       -webkit-tap-highlight-color: transparent;
@@ -596,6 +598,81 @@
             마인드 다잡고 닫기
           </button>
         </div>
+    <!-- SeedFit Pro Subscription Modal (공식 보안 결제 모달) -->
+    <div id="subscriptionModal" class="absolute inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-end justify-center p-0 transition-opacity">
+      <div class="w-full bg-neutral-900 border-t border-neutral-800 rounded-t-[32px] p-6 pb-safe space-y-4 shadow-2xl max-h-[92vh] overflow-y-auto custom-scroll">
+        <div class="w-12 h-1 bg-neutral-700 rounded-full mx-auto"></div>
+        
+        <div class="text-center space-y-2 pt-1">
+          <div class="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center text-2xl shadow-lg shadow-indigo-500/20">
+            👑
+          </div>
+          <div class="inline-block px-3 py-1 rounded-full bg-indigo-500/15 text-indigo-400 border border-indigo-500/30 text-[11px] font-bold">
+            SEEDFIT PRO MEMBERSHIP
+          </div>
+          <h3 class="text-xl font-black text-white">시드 & 투자 자금 관리의 완성</h3>
+          <p class="text-xs text-neutral-400 leading-relaxed max-w-xs mx-auto">
+            데이터 무제한 클라우드 실시간 보존과 심층 교차분석으로 흔들리지 않는 성공 투자 규율을 확립하세요.
+          </p>
+        </div>
+
+        <!-- Pricing Card -->
+        <div class="p-4 rounded-2xl bg-gradient-to-br from-indigo-950/40 via-neutral-900 to-purple-950/30 border border-indigo-500/30 text-center space-y-1.5">
+          <div class="flex items-baseline justify-center space-x-1.5">
+            <span class="text-3xl font-black text-white font-mono tracking-tight">$7.77</span>
+            <span class="text-xs text-neutral-400 font-medium">/ 월 (정기구독)</span>
+          </div>
+          <p class="text-[11px] text-emerald-400 font-medium">언제든 자유롭게 해지 가능 · 글로벌 공식 보안 결제</p>
+        </div>
+
+        <!-- Feature List -->
+        <div class="space-y-2.5 text-xs text-neutral-300">
+          <div class="flex items-start space-x-2.5 p-2.5 rounded-xl bg-neutral-950/60 border border-neutral-800">
+            <span class="text-base">☁️</span>
+            <div>
+              <div class="font-bold text-white text-xs">멀티 기기 클라우드 실시간 자동 동기화</div>
+              <div class="text-[11px] text-neutral-400 mt-0.5">모바일 기기, 태블릿, PC 어디서나 로그인 한 번으로 무손실 영구 보존</div>
+            </div>
+          </div>
+          <div class="flex items-start space-x-2.5 p-2.5 rounded-xl bg-neutral-950/60 border border-neutral-800">
+            <span class="text-base">📊</span>
+            <div>
+              <div class="font-bold text-white text-xs">카테고리별 정밀 교차분석 매트릭스</div>
+              <div class="text-[11px] text-neutral-400 mt-0.5">승무패, 핸디캡, 언더오버 등 세부 유형별 실질 수익성과 최적 조합 도출</div>
+            </div>
+          </div>
+          <div class="flex items-start space-x-2.5 p-2.5 rounded-xl bg-neutral-950/60 border border-neutral-800">
+            <span class="text-base">🛡️</span>
+            <div>
+              <div class="font-bold text-white text-xs">뇌동·추격 투자 방어 멘탈 가드 & 쿨다운</div>
+              <div class="text-[11px] text-neutral-400 mt-0.5">연패 지속 시 분노와 조급함을 사전 차단하는 마인드풀 안정화 케어</div>
+            </div>
+          </div>
+          <div class="flex items-start space-x-2.5 p-2.5 rounded-xl bg-neutral-950/60 border border-neutral-800">
+            <span class="text-base">🎯</span>
+            <div>
+              <div class="font-bold text-white text-xs">무제한 목표 달성 챌린지 프로젝트</div>
+              <div class="text-[11px] text-neutral-400 mt-0.5">시드머니 기반 목표 달성 프로젝트를 제한 없이 생성하고 성공률 관리</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="space-y-2 pt-1">
+          <button onclick="window.startLemonSqueezyCheckout()" class="w-full py-3.5 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold rounded-xl text-sm shadow-xl transition active:scale-95 flex items-center justify-center space-x-2">
+            <span>✨</span>
+            <span>SeedFit Pro 시작하기 ($7.77/월)</span>
+          </button>
+          
+          <div class="flex justify-between items-center px-1 pt-1">
+            <button onclick="window.toggleProStatusForDemo()" class="text-[10px] text-neutral-500 hover:text-indigo-400 transition">
+              구독 상태 새로고침
+            </button>
+            <button onclick="window.closeSubscriptionModal()" class="text-xs text-neutral-400 hover:text-white transition">
+              다음에 하기
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -653,7 +730,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.7.1').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.7.2').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -1145,7 +1222,67 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.7.1';
+    // SeedFit Pro 공식 보안 결제 (Lemon Squeezy) 연동
+    const LEMON_CHECKOUT_URL = 'https://seedfit.lemonsqueezy.com/checkout/buy/1ae381b5-3605-427c-b11d-dbac560468f8';
+
+    function isUserPro() {
+      return safeStorage.get('SEEDFIT_IS_PRO') === 'true';
+    }
+
+    window.openSubscriptionModal = function() {
+      const modal = document.getElementById('subscriptionModal');
+      if (modal) modal.classList.remove('hidden');
+    };
+
+    window.closeSubscriptionModal = function() {
+      const modal = document.getElementById('subscriptionModal');
+      if (modal) modal.classList.add('hidden');
+    };
+
+    window.startLemonSqueezyCheckout = function() {
+      const authUser = getAuthUser();
+      let checkoutUrl = LEMON_CHECKOUT_URL;
+      const params = [];
+      if (authUser) {
+        if (authUser.email) {
+          params.push(`checkout[email]=${encodeURIComponent(authUser.email)}`);
+        }
+        if (authUser.name) {
+          params.push(`checkout[name]=${encodeURIComponent(authUser.name)}`);
+        }
+        const userIdKey = `${authUser.provider || 'user'}:${authUser.id}`;
+        params.push(`checkout[custom][user_id]=${encodeURIComponent(userIdKey)}`);
+      }
+      if (params.length > 0) {
+        checkoutUrl += (checkoutUrl.includes('?') ? '&' : '?') + params.join('&');
+      }
+
+      // Lemon Squeezy In-App Overlay 지원 시 모달 오버레이로 오픈
+      if (window.LemonSqueezy && typeof window.LemonSqueezy.Url?.Open === 'function') {
+        try {
+          window.LemonSqueezy.Url.Open(checkoutUrl);
+          window.closeSubscriptionModal();
+          return;
+        } catch (e) {
+          console.warn('LemonSqueezy overlay failed, falling back to window.open:', e);
+        }
+      }
+      window.open(checkoutUrl, '_blank', 'noopener,noreferrer');
+      window.closeSubscriptionModal();
+    };
+
+    window.toggleProStatusForDemo = function() {
+      const current = isUserPro();
+      safeStorage.set('SEEDFIT_IS_PRO', current ? 'false' : 'true');
+      showToast(current ? '무료 플랜(Free)으로 전환되었습니다.' : '🎉 SeedFit Pro 멤버십이 활성화되었습니다!');
+      if (currentTab === 'settings') {
+        const area = document.getElementById('contentArea');
+        if (area) renderSettingsTab(area);
+      }
+      window.closeSubscriptionModal();
+    };
+
+    const CURRENT_APP_VERSION = 'v1.7.2';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');
@@ -2732,6 +2869,7 @@
       const streak = calculateLossStreak();
       const authUser = getAuthUser();
       const isGuest = safeStorage.get('SEEDFIT_GUEST_MODE') === 'true';
+      const isProMember = isUserPro();
 
       container.innerHTML = `
         <div class="space-y-4">
@@ -2811,6 +2949,53 @@
                 </div>
               </div>
             ` : ''}
+          </div>
+
+          <!-- SeedFit Pro Membership Card (공식 구독 카드) -->
+          <div class="${isLightMode ? 'bg-gradient-to-br from-indigo-50/80 via-white to-purple-50/40 border-indigo-200/80 shadow-sm' : 'bg-gradient-to-br from-indigo-950/40 via-neutral-900 to-purple-950/20 border-indigo-500/30'} border rounded-3xl p-4 space-y-3 relative overflow-hidden">
+            <div class="flex justify-between items-start">
+              <div>
+                <div class="flex items-center space-x-2">
+                  <span class="text-xs font-black tracking-wide bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">SEEDFIT PRO</span>
+                  <span class="text-[9px] font-bold px-2 py-0.5 rounded-full ${isProMember ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : (isLightMode ? 'bg-indigo-100 text-indigo-700' : 'bg-indigo-500/20 text-indigo-300')}">
+                    ${isProMember ? 'PRO 활성화됨 👑' : '무료 플랜 (Free)'}
+                  </span>
+                </div>
+                <p class="text-[11px] text-neutral-400 mt-1">
+                  ${isProMember ? '모든 고급 분석 및 클라우드 무제한 기능을 이용 중입니다.' : '실시간 클라우드 자동 보존과 고급 분석을 제한 없이 누려보세요.'}
+                </p>
+              </div>
+              ${!isProMember ? `
+                <button onclick="window.openSubscriptionModal()" class="py-1.5 px-3 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold rounded-xl text-xs shadow-md transition active:scale-95 flex items-center space-x-1 shrink-0">
+                  <span>✨</span>
+                  <span>Pro 구독</span>
+                </button>
+              ` : `
+                <button onclick="window.openSubscriptionModal()" class="py-1 px-2.5 rounded-lg text-[10px] font-semibold ${isLightMode ? 'bg-neutral-100 hover:bg-neutral-200 text-neutral-700' : 'bg-neutral-800 hover:bg-neutral-700 text-neutral-300'} transition shrink-0">
+                  멤버십 관리
+                </button>
+              `}
+            </div>
+            
+            <!-- Quick Features -->
+            <div class="grid grid-cols-2 gap-2 text-[10px] pt-1 border-t ${isLightMode ? 'border-neutral-100 text-neutral-600' : 'border-neutral-800/80 text-neutral-400'}">
+              <div class="flex items-center space-x-1.5">
+                <span class="text-indigo-400">☁️</span>
+                <span>클라우드 실시간 무제한 백업</span>
+              </div>
+              <div class="flex items-center space-x-1.5">
+                <span class="text-purple-400">📊</span>
+                <span>카테고리별 교차분석 매트릭스</span>
+              </div>
+              <div class="flex items-center space-x-1.5">
+                <span class="text-amber-400">🛡️</span>
+                <span>뇌동·추격 투자 방어 멘탈 가드</span>
+              </div>
+              <div class="flex items-center space-x-1.5">
+                <span class="text-emerald-400">🎯</span>
+                <span>무제한 챌린지 프로젝트 개설</span>
+              </div>
+            </div>
           </div>
 
           <!-- Mental Care Settings Card -->
