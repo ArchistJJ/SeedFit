@@ -1,6 +1,6 @@
 {
   "name": "seedfit-pwa",
-  "version": "1.6.2",
+  "version": "1.6.3",
   "description": "SeedFit (시드핏) - 시드 & 투자 자금 관리 앱",
   "scripts": {
     "start": "npx serve -l 5173"

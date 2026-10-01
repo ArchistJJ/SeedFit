@@ -653,7 +653,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.6.2').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.6.3').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -1130,7 +1130,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.6.2';
+    const CURRENT_APP_VERSION = 'v1.6.3';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');
@@ -2587,13 +2587,12 @@
           </div>
         </div>
 
-        <!-- 📊 카테고리별 교차분석 매트릭스 (한눈에 비교 및 터치 필터링) -->
+        <!-- 카테고리별 교차분석 매트릭스 (한눈에 비교 및 터치 필터링) -->
         <div class="${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900/90 border-neutral-800'} border p-4 rounded-3xl space-y-3 shadow-sm">
           <div class="flex justify-between items-center">
             <div>
-              <h3 class="text-xs font-bold ${isLightMode ? 'text-neutral-900' : 'text-white'} flex items-center space-x-1.5">
-                <span>📊</span>
-                <span>카테고리별 교차분석</span>
+              <h3 class="text-xs font-bold ${isLightMode ? 'text-neutral-900' : 'text-white'}">
+                카테고리별 교차분석
               </h3>
               <p class="text-[10px] text-neutral-400 mt-0.5">셀을 터치하면 해당 조합 통계로 즉시 집중 전환됩니다.</p>
             </div>
@@ -2627,19 +2626,21 @@
                     ${row.cells.map(cell => {
                       const isCellActive = (statsCategoryFilter === cell.cat && statsFoldFilter === cell.fold);
                       return `
-                        <td onclick="window.setStatsCombo('${cell.cat}', '${cell.fold}')" class="p-1.5 text-center cursor-pointer transition rounded-xl ${isCellActive ? 'ring-2 ring-blue-500 bg-blue-500/20 font-bold shadow-md' : (isLightMode ? 'hover:bg-neutral-100' : 'hover:bg-neutral-800/50')}">
-                          ${cell.count === 0 ? `
-                            <div class="text-[10px] text-neutral-500">-</div>
-                            <div class="text-[9px] text-neutral-600">0건</div>
-                          ` : `
-                            <div class="text-[11px] font-bold font-mono ${cell.winRate !== null && cell.winRate >= 50 ? 'text-emerald-400' : (cell.winRate !== null ? 'text-rose-400' : 'text-neutral-400')}">
-                              ${cell.winRate !== null ? cell.winRate + '%' : '-'}
-                            </div>
-                            <div class="text-[9px] font-mono font-medium ${cell.netProfit > 0 ? 'text-emerald-400' : (cell.netProfit < 0 ? 'text-rose-400' : 'text-neutral-400')}">
-                              ${cell.netProfit > 0 ? '+' : ''}${cell.netProfit >= 10000 || cell.netProfit <= -10000 ? (cell.netProfit/10000).toFixed(1)+'만' : cell.netProfit.toLocaleString()}
-                            </div>
-                            <div class="text-[9px] text-neutral-500 font-mono">${cell.count}건</div>
-                          `}
+                        <td onclick="window.setStatsCombo('${cell.cat}', '${cell.fold}')" class="p-1 text-center cursor-pointer transition">
+                          <div class="py-1 px-1 rounded-xl transition ${isCellActive ? (isLightMode ? 'bg-blue-50 border border-blue-500 font-bold shadow-sm' : 'bg-blue-500/20 border border-blue-500 font-bold shadow-sm') : (isLightMode ? 'hover:bg-neutral-100/80 border border-transparent' : 'hover:bg-neutral-800/50 border border-transparent')}">
+                            ${cell.count === 0 ? `
+                              <div class="text-[10px] text-neutral-500">-</div>
+                              <div class="text-[9px] text-neutral-600">0건</div>
+                            ` : `
+                              <div class="text-[11px] font-bold font-mono ${cell.winRate !== null && cell.winRate >= 50 ? 'text-emerald-400' : (cell.winRate !== null ? 'text-rose-400' : 'text-neutral-400')}">
+                                ${cell.winRate !== null ? cell.winRate + '%' : '-'}
+                              </div>
+                              <div class="text-[9px] font-mono font-medium ${cell.netProfit > 0 ? 'text-emerald-400' : (cell.netProfit < 0 ? 'text-rose-400' : 'text-neutral-400')}">
+                                ${cell.netProfit > 0 ? '+' : ''}${cell.netProfit >= 10000 || cell.netProfit <= -10000 ? (cell.netProfit/10000).toFixed(1)+'만' : cell.netProfit.toLocaleString()}
+                              </div>
+                              <div class="text-[9px] text-neutral-500 font-mono">${cell.count}건</div>
+                            `}
+                          </div>
                         </td>
                       `;
                     }).join('')}
