@@ -653,7 +653,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.5.2').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.5.3').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -848,10 +848,25 @@
 
     // 로그아웃
     window.logoutSeedFit = function() {
-      if (confirm('정말 로그아웃 하시겠습니까? 로그아웃 시 온보딩 로그인 화면으로 이동합니다.')) {
+      if (confirm('정말 로그아웃 하시겠습니까? 로그아웃 시 로컬 세션이 안전하게 정리되고 로그인 화면으로 이동합니다.')) {
         safeStorage.set('SEEDFIT_AUTH_USER', '');
         safeStorage.set('SEEDFIT_GUEST_MODE', 'false');
-        showToast('로그아웃 되었습니다.');
+        safeStorage.set('SEEDFIT_LAST_SYNC_TIME', '');
+        // 계정 간 데이터 유출 및 오염 방지를 위해 로컬 상태를 안전하게 초기화
+        records = [];
+        projects = [];
+        mentalCareSettings = {
+          enabled: true,
+          lossStreakThreshold: 3,
+          lossAmountThreshold: 100000
+        };
+        if (typeof saveState === 'function') {
+          saveState(true); // skipCloud = true
+        }
+        if (typeof renderCurrentTab === 'function') {
+          renderCurrentTab();
+        }
+        showToast('안전하게 로그아웃 되었습니다.');
         checkAppEntryFlow();
         if (currentTab === 'settings') {
           const area = document.getElementById('contentArea');
@@ -940,15 +955,15 @@
 
         if (data) {
           let hasUpdated = false;
-          if (Array.isArray(data.records) && data.records.length > 0) {
+          if (Array.isArray(data.records)) {
             records = data.records;
             hasUpdated = true;
           }
-          if (Array.isArray(data.projects) && data.projects.length > 0) {
+          if (Array.isArray(data.projects)) {
             projects = data.projects;
             hasUpdated = true;
           }
-          if (data.settings && Object.keys(data.settings).length > 0) {
+          if (data.settings && typeof data.settings === 'object' && Object.keys(data.settings).length > 0) {
             mentalCareSettings = Object.assign(mentalCareSettings, data.settings);
             hasUpdated = true;
           }
@@ -1115,7 +1130,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.5.2';
+    const CURRENT_APP_VERSION = 'v1.5.3';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');
