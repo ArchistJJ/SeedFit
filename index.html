@@ -15,6 +15,8 @@
   <script src="https://developers.kakao.com/sdk/js/kakao.min.js"></script>
   <!-- Google Identity Services SDK -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <!-- Supabase Official JavaScript SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     * {
       -webkit-tap-highlight-color: transparent;
@@ -651,7 +653,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.4.7').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.5.0').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -836,6 +838,7 @@
       }
       if (userObj) {
         showToast((userObj.name || '사용자') + '님, 환영합니다!');
+        window.syncFromCloud(userObj);
       }
       if (currentTab === 'settings') {
         const area = document.getElementById('contentArea');
@@ -860,6 +863,111 @@
     // 기본 연동 API 키 (사용자 등록 공식 카카오 JavaScript 키 및 구글 OAuth Client ID)
     const DEFAULT_KAKAO_KEY = '6db8d38ab0666c416edf0b3b81eb8b42';
     const DEFAULT_GOOGLE_CLIENT_ID = '597094120304-lsk7gjn23rngsbfv16q1015gc7jbd5ch.apps.googleusercontent.com';
+
+    // Supabase 클라우드 데이터베이스 연동 설정
+    const SUPABASE_PROJECT_URL = 'https://qeuiqvisuscvkgjvqxpe.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFldWlxdmlzdXNjdmtnanZxeHBlIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA4MDM5MDcsImV4cCI6MjEwNjM3OTkwN30.yj-hRe5zQ3eUV20hjDYhzZRfzc4WJYDxUkoNVfLlWIM';
+
+    let supabaseClient = null;
+    function getSupabase() {
+      if (!supabaseClient && window.supabase && typeof window.supabase.createClient === 'function') {
+        try {
+          supabaseClient = window.supabase.createClient(SUPABASE_PROJECT_URL, SUPABASE_ANON_KEY);
+        } catch (e) {
+          console.warn('Supabase initialization failed:', e);
+        }
+      }
+      return supabaseClient;
+    }
+
+    let syncDebounceTimer = null;
+    window.syncToCloud = async function(showToastNotice = false) {
+      const authUser = getAuthUser();
+      if (!authUser || !authUser.id) return;
+      const sb = getSupabase();
+      if (!sb) {
+        if (showToastNotice) showToast('클라우드 연결 서비스를 준비 중입니다.');
+        return;
+      }
+
+      const userIdKey = `${authUser.provider || 'user'}:${authUser.id}`;
+      const payload = {
+        user_id: userIdKey,
+        provider: authUser.provider || 'unknown',
+        email: authUser.email || '',
+        name: authUser.name || '',
+        records: records || [],
+        projects: projects || [],
+        settings: mentalCareSettings || {},
+        updated_at: new Date().toISOString()
+      };
+
+      try {
+        const { error } = await sb.from('seedfit_user_data').upsert(payload, { onConflict: 'user_id' });
+        if (error) {
+          console.warn('Cloud sync error:', error);
+          if (showToastNotice) showToast('클라우드 동기화 실패: ' + (error.message || '네트워크 확인'));
+        } else {
+          safeStorage.set('SEEDFIT_LAST_SYNC_TIME', new Date().toISOString());
+          if (showToastNotice) showToast('클라우드에 안전하게 동기화되었습니다! ☁️');
+          if (currentTab === 'settings') {
+            const area = document.getElementById('contentArea');
+            if (area) renderSettingsTab(area);
+          }
+        }
+      } catch (e) {
+        console.warn('Cloud sync exception:', e);
+      }
+    };
+
+    window.syncFromCloud = async function(userObj, silent = false) {
+      const user = userObj || getAuthUser();
+      if (!user || !user.id) return;
+      const sb = getSupabase();
+      if (!sb) return;
+
+      const userIdKey = `${user.provider || 'user'}:${user.id}`;
+      try {
+        const { data, error } = await sb.from('seedfit_user_data')
+          .select('*')
+          .eq('user_id', userIdKey)
+          .maybeSingle();
+
+        if (error) {
+          console.warn('Fetch from cloud error:', error);
+          return;
+        }
+
+        if (data) {
+          let hasUpdated = false;
+          if (Array.isArray(data.records) && data.records.length > 0) {
+            records = data.records;
+            hasUpdated = true;
+          }
+          if (Array.isArray(data.projects) && data.projects.length > 0) {
+            projects = data.projects;
+            hasUpdated = true;
+          }
+          if (data.settings && Object.keys(data.settings).length > 0) {
+            mentalCareSettings = Object.assign(mentalCareSettings, data.settings);
+            hasUpdated = true;
+          }
+
+          if (hasUpdated) {
+            saveState(true);
+            renderCurrentTab();
+            safeStorage.set('SEEDFIT_LAST_SYNC_TIME', data.updated_at || new Date().toISOString());
+            if (!silent) showToast('클라우드 데이터를 안전하게 불러왔습니다! ☁️');
+          } else {
+            await window.syncToCloud(false);
+          }
+        } else {
+          await window.syncToCloud(false);
+        }
+      } catch (e) {
+        console.warn('syncFromCloud exception:', e);
+      }
+    };
 
     function initKakaoSdk() {
       if (window.Kakao && !Kakao.isInitialized()) {
@@ -1007,7 +1115,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.4.7';
+    const CURRENT_APP_VERSION = 'v1.5.0';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');
@@ -1075,7 +1183,7 @@
       projects = DEFAULT_PROJECTS;
     }
 
-    function saveState() {
+    function saveState(skipCloud = false) {
       const recordsJson = JSON.stringify(records);
       const projectsJson = JSON.stringify(projects);
       safeStorage.set(STORAGE_KEY_RECORDS, recordsJson);
@@ -1084,6 +1192,14 @@
       safeStorage.set(LEGACY_STORAGE_KEY_RECORDS, recordsJson);
       safeStorage.set(LEGACY_STORAGE_KEY_PROJECTS, projectsJson);
       updateProjectsStatus();
+
+      // 로그인된 사용자일 경우 실시간 클라우드 자동 동기화 (500ms 디바운스)
+      if (!skipCloud && getAuthUser()) {
+        if (syncDebounceTimer) clearTimeout(syncDebounceTimer);
+        syncDebounceTimer = setTimeout(() => {
+          window.syncToCloud(false);
+        }, 500);
+      }
     }
 
     const STORAGE_KEY_MENTAL_SETTINGS = 'SEEDFIT_MENTAL_SETTINGS_V1';
@@ -2500,6 +2616,19 @@
               ` : ''}
             </div>
 
+            ${authUser ? `
+              <div class="flex items-center justify-between text-[11px] pt-2.5 border-t ${isLightMode ? 'border-neutral-100' : 'border-neutral-800/80'}">
+                <div class="flex items-center space-x-1.5">
+                  <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                  <span class="font-medium ${isLightMode ? 'text-neutral-700' : 'text-neutral-300'}">Supabase 클라우드 실시간 동기화됨</span>
+                </div>
+                <button onclick="window.syncToCloud(true)" class="py-1 px-2.5 rounded-lg text-[10px] font-semibold ${isLightMode ? 'bg-neutral-100 hover:bg-neutral-200 text-neutral-700 border border-neutral-200' : 'bg-neutral-800 hover:bg-neutral-700 text-neutral-300'} transition active:scale-95 flex items-center space-x-1">
+                  <span>☁️</span>
+                  <span>지금 동기화</span>
+                </button>
+              </div>
+            ` : ''}
+
             ${!authUser ? `
               <!-- 게스트 모드일 때 간편 로그인 추천 배너 -->
               <div class="p-3 rounded-2xl ${isLightMode ? 'bg-amber-50 border-amber-300' : 'bg-amber-500/10 border-amber-500/20'} border space-y-2 text-left">
@@ -3102,12 +3231,18 @@
       renderCurrentTab();
       initInstallLandingGate();
       initKakaoSdk();
+      if (getAuthUser()) {
+        window.syncFromCloud(getAuthUser(), true);
+      }
     });
 
     applyThemeUI();
     renderCurrentTab();
     initInstallLandingGate();
     initKakaoSdk();
+    if (getAuthUser()) {
+      window.syncFromCloud(getAuthUser(), true);
+    }
   </script>
 </body>
 </html>

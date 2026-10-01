@@ -1,5 +1,36 @@
 # 프로젝트 개발 로그 (PROJECT DEVELOPMENT LOG)
 
+## [2026-10-01] v1.5.0 Supabase 클라우드 데이터베이스 실시간 양방향 자동 동기화 구축 완료
+
+### 1. 요구사항 및 기획 의도
+1. **Supabase 클라우드 실시간 데이터 영구 보존 연동**:
+   - 사용자가 카카오 또는 구글 계정으로 로그인했을 때, 기기 로컬 스토리지에만 저장되던 기록(베팅 내역, 프로젝트, 멘탈케어 설정)을 클라우드 DB(`public.seedfit_user_data`)에 실시간으로 자동 동기화(Upsert).
+   - 브라우저 캐시 삭제, 시크릿 모드, 기기 변경(새 아이폰 또는 PC) 시에도 로그인만 하면 즉시 과거의 모든 기록이 복원되도록 양방향 동기화(`syncFromCloud`, `syncToCloud`) 구축.
+2. **PWA 오프라인 우선(Offline-First) 성능 보장**:
+   - 네트워크 연결 여부와 무관하게 로컬 스토리지에 0ms로 즉각 저장되며, 로그인 상태일 때만 500ms 디바운스로 백그라운드 클라우드 전송을 진행하여 UI 버벅임 원천 차단.
+3. **설정 탭 실시간 동기화 상태 시각화**:
+   - 로그인 사용자 프로필 카드에 `Supabase 클라우드 실시간 동기화됨 🟢` 상태 표시 및 언제든 수동으로 동기화할 수 있는 `[지금 동기화 ☁️]` 액션 버튼 탑재.
+4. **추후 Polar 유료 구독 서비스 연동을 위한 데이터 스키마 준비**:
+   - `subscription_tier`(default 'free') 필드가 마련되어 향후 Polar 결제 웹훅 연동 시 Pro 유료 기능을 즉시 제어할 수 있는 확장성 확보.
+
+### 2. 구현 내역
+1. **`index.html`**:
+   - `@supabase/supabase-js@2` 공식 SDK 로드.
+   - `SUPABASE_PROJECT_URL` 및 `SUPABASE_ANON_KEY` 상수 정의 및 싱글톤 클라이언트(`getSupabase`) 초기화.
+   - `window.syncToCloud(showToastNotice)`: 비동기 데이터 업로드 및 타임스탬프 기록.
+   - `window.syncFromCloud(userObj, silent)`: 클라우드 보존 데이터 로드 및 로컬 동기화.
+   - `setAuthUser` 시 즉시 `syncFromCloud` 트리거.
+   - `saveState` 호출 시 `syncToCloud` 디바운스 자동 트리거.
+   - 앱 구동 시(`DOMContentLoaded`) 로그인 유저에 대한 백그라운드 동기화 수행.
+   - 설정 탭 프로필 카드에 클라우드 실시간 동기화 인디케이터 및 수동 동기화 버튼 렌더링.
+   - `CURRENT_APP_VERSION = 'v1.5.0'`, `sw.js?v=1.5.0` 적용.
+2. **`sw.js` & `package.json`**:
+   - `seedfit-cache-v1.5.0`, 버전 `1.5.0` 동기화.
+
+### 3. 검증
+- `node` 인라인 스크립트 문법 검사 100% 무결 통과 (126,336자).
+- Git 커밋 및 원격 저장소 배포 완료.
+
 ## [2026-10-01] v1.4.7 오프라인 백업 설명 텍스트를 실시간 클라우드 연동 전제로 개편
 
 ### 1. 요구사항 및 기획 의도
