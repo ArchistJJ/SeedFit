@@ -1,7 +1,7 @@
 {
   "name": "SeedFit",
   "short_name": "SeedFit",
-  "description": "SeedFit - Sports Bankroll & Seed Money Tracker PWA",
+  "description": "SeedFit - 시드 & 투자 자금 관리",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#000000",

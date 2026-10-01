@@ -7,7 +7,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="SeedFit">
   <meta name="theme-color" content="#000000">
-  <title>SeedFit - 스마트 시드 & 베팅 자금 관리</title>
+  <title>SeedFit - 시드 & 투자 자금 관리</title>
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="manifest" href="manifest.json">
   <script src="https://cdn.tailwindcss.com"></script>
@@ -128,7 +128,7 @@
             <span>SeedFit</span>
           </h1>
           <p class="text-xs text-neutral-400 mt-1 font-medium">
-            시드 머니 & 투자 자금 관리
+            시드 & 투자 자금 관리
           </p>
         </div>
       </div>
@@ -246,7 +246,7 @@
             <span>SeedFit</span>
           </h1>
           <p class="text-xs text-neutral-400 mt-1 font-semibold">
-            시드 머니 & 투자 자금 관리
+            시드 & 투자 자금 관리
           </p>
           <p class="text-[11px] text-neutral-500 mt-1.5 max-w-xs mx-auto leading-relaxed">
             체계적인 시드 자금 관리와 감정 제어로 자산을 안전하게 성장시키세요.
@@ -496,7 +496,7 @@
 
         <div id="newRecordCooldownWarning" class="hidden p-2.5 rounded-xl bg-amber-500/15 border border-amber-500/30 text-[11px] text-amber-300 flex items-center space-x-2">
           <span>🧘</span>
-          <span id="newRecordCooldownWarningText">현재 쿨다운 세션 진행 중입니다. 충동 베팅이 아닌지 신중히 점검하세요.</span>
+          <span id="newRecordCooldownWarningText">현재 쿨다운 세션 진행 중입니다. 충동 투자가 아닌지 신중히 점검하세요.</span>
         </div>
 
         <button id="btnSaveNewRecord" class="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-bold shadow-lg transition active:scale-95">
@@ -579,10 +579,10 @@
         <div class="space-y-2 bg-neutral-950/50 border border-neutral-800/80 rounded-2xl p-3.5 text-xs">
           <div class="font-bold text-neutral-200 flex items-center space-x-1.5">
             <span>🛡️</span>
-            <span>추격 베팅 방지 3원칙</span>
+            <span>추격 투자 방지 3원칙</span>
           </div>
           <ul class="space-y-1.5 text-[11px] text-neutral-400 list-disc list-inside">
-            <li><span class="text-neutral-300 font-medium">손실 만회 베팅 금지:</span> 홧김에 다음 경기를 급히 찾지 마세요.</li>
+            <li><span class="text-neutral-300 font-medium">손실 만회 투자 금지:</span> 홧김에 다음 경기를 급히 찾지 마세요.</li>
             <li><span class="text-neutral-300 font-medium">시드 보호가 1순위:</span> 시드가 남아있어야 다음 기회가 옵니다.</li>
             <li><span class="text-neutral-300 font-medium">30분 쿨다운:</span> 화면을 닫고 찬물을 마시거나 산책하세요.</li>
           </ul>
@@ -653,7 +653,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.5.1').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.5.2').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -1065,8 +1065,8 @@
     // 앱 다운로드 링크 공유 기능 (네이티브 공유 및 클립보드 복사)
     window.shareAppDownloadLink = async function() {
       const shareData = {
-        title: 'SeedFit - 시드 머니 & 투자 자금 관리',
-        text: '스마트 시드 머니 & 투자 자금 관리 앱 SeedFit을 홈 화면에 추가하고 시작해보세요!',
+        title: 'SeedFit - 시드 & 투자 자금 관리',
+        text: '시드 & 투자 자금 관리 앱 SeedFit을 홈 화면에 추가하고 시작해보세요!',
         url: 'https://archistjj.github.io/SeedFit/'
       };
       if (navigator.share) {
@@ -1115,7 +1115,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.5.1';
+    const CURRENT_APP_VERSION = 'v1.5.2';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');
@@ -1345,7 +1345,7 @@
       const is3Streak = (consecutiveLosses >= 3);
       // B. 연속 손실액이 내 평균 투자금의 2.5배 이상 (평소보다 비정상적으로 큰 연속 손실)
       const isHeavyLossStreak = (consecutiveLosses >= 2 && streakLossAmount >= avgInvest * 2.5);
-      // C. 최근 경기에서 평소 평균 투자금의 2배 이상을 베팅했다가 미적중 (추격 마틴게일 베팅 감지)
+      // C. 최근 경기에서 평소 평균 투자금의 2배 이상을 투자했다가 미적중 (추격 투자 감지)
       const isChasingLoss = (lastRec && lastRec.status === 'LOSE' && lastRec.investAmount >= avgInvest * 2);
       // D. 최근 5경기 중 4경기 이상 미적중이면서 손실 누적
       const isRecentPatternCollapse = (recent5.length >= 4 && recent5LossCount >= 4 && recent5NetProfit <= -avgInvest * 2);
@@ -1372,13 +1372,13 @@
 
       if (data.manual) {
         if (badge) badge.textContent = '🧘 멘탈 관리 및 평정심 모드';
-        if (sub) sub.textContent = `베팅 전 감정을 배제하고 차분한 이성으로 확률과 리스크를 점검하세요. (현재 내 평균 투자금: ${streak.avgInvest.toLocaleString()}원)`;
+        if (sub) sub.textContent = `투자 전 감정을 배제하고 차분한 이성으로 확률과 리스크를 점검하세요. (현재 내 평균 투자금: ${streak.avgInvest.toLocaleString()}원)`;
       } else if (streak.is3Streak) {
         if (badge) badge.textContent = `⚠️ 3연패 지속 감지 (연속 -${streak.streakLossAmount.toLocaleString()}원)`;
-        if (sub) sub.textContent = `최근 3회 연속 미적중되었습니다. (평균 투자금 ${streak.avgInvest.toLocaleString()}원 대비 연속 손실 ${streak.streakLossAmount.toLocaleString()}원) 연패 시 뇌는 조급함으로 무리한 베팅을 유발합니다. 지금 멈추는 것이 가장 현명합니다.`;
+        if (sub) sub.textContent = `최근 3회 연속 미적중되었습니다. (평균 투자금 ${streak.avgInvest.toLocaleString()}원 대비 연속 손실 ${streak.streakLossAmount.toLocaleString()}원) 연패 시 뇌는 조급함으로 무리한 투자를 유발합니다. 지금 멈추는 것이 가장 현명합니다.`;
       } else if (streak.isChasingLoss) {
-        if (badge) badge.textContent = `🚨 평소 평균 대비 과다 베팅 손실 감지`;
-        if (sub) sub.textContent = `평소 평균 투자금(${streak.avgInvest.toLocaleString()}원)의 ${(streak.lastInvestAmount / streak.avgInvest).toFixed(1)}배에 달하는 ${streak.lastInvestAmount.toLocaleString()}원이 손실되었습니다. 조급한 추격 베팅을 즉시 멈추세요.`;
+        if (badge) badge.textContent = `🚨 평소 평균 대비 과다 투자 손실 감지`;
+        if (sub) sub.textContent = `평소 평균 투자금(${streak.avgInvest.toLocaleString()}원)의 ${(streak.lastInvestAmount / streak.avgInvest).toFixed(1)}배에 달하는 ${streak.lastInvestAmount.toLocaleString()}원이 손실되었습니다. 조급한 추격 투자를 즉시 멈추세요.`;
       } else if (streak.isHeavyLossStreak) {
         if (badge) badge.textContent = `⚠️ 평균 투자금 대비 누적 손실 급증`;
         if (sub) sub.textContent = `최근 연속 손실액(${streak.streakLossAmount.toLocaleString()}원)이 평소 평균 투자금(${streak.avgInvest.toLocaleString()}원)의 ${(streak.streakLossAmount / streak.avgInvest).toFixed(1)}배에 달합니다. 쿨다운이 절실한 시점입니다.`;
@@ -1427,7 +1427,7 @@
                   <span class="font-bold ${isLightMode ? 'text-amber-800' : 'text-amber-400'} text-xs">쿨다운 휴식 중</span>
                   <span class="text-[10px] ${isLightMode ? 'bg-amber-100 text-amber-900 border-amber-300' : 'bg-amber-500/20 text-amber-300 border-amber-500/40'} border px-2 py-0.5 rounded-full font-mono font-bold whitespace-nowrap">약 ${remMin}분 남음</span>
                 </div>
-                <div class="text-[11px] ${isLightMode ? 'text-neutral-600' : 'text-neutral-400'} truncate">뇌동 베팅을 멈추고 심호흡이나 산책을 취하세요</div>
+                <div class="text-[11px] ${isLightMode ? 'text-neutral-600' : 'text-neutral-400'} truncate">뇌동 투자를 멈추고 심호흡이나 산책을 취하세요</div>
               </div>
             </div>
             <span class="shrink-0 ${isLightMode ? 'text-amber-800 bg-amber-100 border-amber-300' : 'text-amber-400 bg-amber-500/10 border-amber-500/20'} font-bold text-xs px-2.5 py-1.5 rounded-xl border">가이드 ></span>
@@ -1440,7 +1440,7 @@
         if (streak.isTriggered) {
           const reasonTitle = streak.is3Streak 
             ? `${streak.consecutiveLosses}연패 지속 중` 
-            : (streak.isChasingLoss ? '과다 베팅 손실 위험' : '평균 대비 손실 위험');
+            : (streak.isChasingLoss ? '과다 투자 손실 위험' : '평균 대비 손실 위험');
           return `
             <div onclick="window.openMentalCareModal()" class="cursor-pointer p-3.5 bg-gradient-to-r from-rose-500/15 via-amber-500/10 to-rose-500/15 border border-rose-500/30 rounded-2xl flex items-center justify-between text-xs transition hover:opacity-90 active:scale-[0.98] shadow-sm mb-3">
               <div class="flex items-center space-x-3 min-w-0 flex-1 mr-2">
@@ -2659,7 +2659,7 @@
               </button>
             </div>
             <p class="text-[11px] text-neutral-400 leading-relaxed">
-              연패가 지속되거나 손실이 커질 때 뇌동·추격 베팅을 차단하고 평정심을 유지할 수 있도록 안정 가이드와 쿨다운을 제공합니다.
+              연패가 지속되거나 손실이 커질 때 뇌동·추격 투자를 차단하고 평정심을 유지할 수 있도록 안정 가이드와 쿨다운을 제공합니다.
             </p>
 
             <div class="space-y-2 pt-2 border-t ${isLightMode ? 'border-neutral-100' : 'border-neutral-800'} text-xs">
@@ -2680,12 +2680,12 @@
               <div class="p-2.5 rounded-xl ${isLightMode ? 'bg-neutral-50 border border-neutral-200' : 'bg-neutral-950/60 border border-neutral-800/80'} text-[11px] space-y-1.5 text-neutral-400">
                 <div class="font-semibold ${isLightMode ? 'text-neutral-700' : 'text-neutral-300'} flex items-center space-x-1">
                   <span>💡</span>
-                  <span>최근 기록 기반 스마트 감지 조건:</span>
+                  <span>최근 기록 기반 자동 감지 조건:</span>
                 </div>
                 <div class="pl-4 space-y-1 text-[10px] leading-tight">
                   <div>• 3회 연속 미적중(3연패) 발생 시</div>
                   <div>• 평균 대비 2.5배 이상 연속 손실 발생 시</div>
-                  <div>• 평균 대비 2배 이상 단일 추격베팅 실패 시</div>
+                  <div>• 평균 대비 2배 이상 단일 추격투자 실패 시</div>
                   <div>• 최근 5경기 중 4경기 이상 손실 페이스 붕괴 시</div>
                 </div>
               </div>
@@ -2977,7 +2977,7 @@
       if (warnEl && warnText) {
         if (cooldownEndTime && cooldownEndTime > now) {
           const remMin = Math.max(1, Math.ceil((cooldownEndTime - now) / 60000));
-          warnText.textContent = `현재 쿨다운 세션 진행 중 (약 ${remMin}분 남음) · 충동 베팅이 아닌지 한 번 더 점검하세요.`;
+          warnText.textContent = `현재 쿨다운 세션 진행 중 (약 ${remMin}분 남음) · 충동 투자가 아닌지 한 번 더 점검하세요.`;
           warnEl.classList.remove('hidden');
         } else {
           warnEl.classList.add('hidden');
