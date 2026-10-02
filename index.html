@@ -109,6 +109,30 @@
     body.light-theme .border-amber-500\/40 {
       border-color: #f59e0b !important; /* amber-500 */
     }
+
+    /* ========================================================
+       Lemon Squeezy 모바일/PWA 결제 오버레이 뷰포트 & 닫기 버튼 최적화
+       - 화면 상단 노치/상태바와 닫기(X) 버튼이 겹치지 않도록 안전 영역(safe-area) 확보
+       - 화면 전체를 과도하게 덮지 않고 모바일 카드 팝업 형태로 단정하게 안착
+       ======================================================== */
+    .lemonsqueezy-overlay {
+      padding-top: max(env(safe-area-inset-top, 24px), 24px) !important;
+      padding-bottom: max(env(safe-area-inset-bottom, 20px), 20px) !important;
+      padding-left: 12px !important;
+      padding-right: 12px !important;
+      box-sizing: border-box !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+    }
+    .lemonsqueezy-overlay iframe {
+      max-height: 86vh !important;
+      max-width: 440px !important;
+      width: 100% !important;
+      margin: auto !important;
+      border-radius: 24px !important;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7) !important;
+    }
   </style>
 </head>
 <body class="bg-black text-neutral-100 min-h-screen h-[100dvh] flex flex-col justify-between overflow-hidden antialiased">
@@ -603,24 +627,26 @@
 
     <!-- SeedFit Pro Subscription Modal (공식 보안 결제 모달) -->
     <div id="subscriptionModal" class="absolute inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-end justify-center p-0 transition-opacity">
-      <div class="w-full bg-neutral-900 border-t border-neutral-800 rounded-t-[32px] p-6 pb-safe space-y-4 shadow-2xl max-h-[92vh] overflow-y-auto custom-scroll">
+      <div class="w-full bg-neutral-900 border-t border-neutral-800 rounded-t-[32px] p-6 pb-safe space-y-4 shadow-2xl max-h-[92vh] overflow-y-auto custom-scroll relative">
+        <!-- 상단 우측 닫기 버튼 -->
+        <button onclick="window.closeSubscriptionModal()" class="absolute top-5 right-5 w-8 h-8 rounded-full bg-neutral-800 hover:bg-neutral-700 flex items-center justify-center text-neutral-400 hover:text-white transition active:scale-90" aria-label="닫기">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+
         <div class="w-12 h-1 bg-neutral-700 rounded-full mx-auto"></div>
         
         <div class="text-center space-y-2 pt-1">
-          <div class="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center text-2xl shadow-lg shadow-indigo-500/20">
-            👑
-          </div>
-          <div class="inline-block px-3 py-1 rounded-full bg-indigo-500/15 text-indigo-400 border border-indigo-500/30 text-[11px] font-bold">
+          <div class="inline-block px-3.5 py-1 rounded-full bg-gradient-to-r from-indigo-500/20 to-purple-500/20 text-indigo-300 border border-indigo-500/30 text-xs font-black tracking-wider">
             SEEDFIT PRO MEMBERSHIP
           </div>
-          <h3 class="text-xl font-black text-white">시드 & 투자 자금 관리의 완성</h3>
+          <h3 class="text-xl font-black text-white tracking-tight">시드 & 투자 자금 관리의 완성</h3>
           <p class="text-xs text-neutral-400 leading-relaxed max-w-xs mx-auto">
             데이터 무제한 클라우드 실시간 보존과 심층 교차분석으로 흔들리지 않는 성공 투자 규율을 확립하세요.
           </p>
         </div>
 
         <!-- Pricing Card -->
-        <div class="p-4 rounded-2xl bg-gradient-to-br from-indigo-950/40 via-neutral-900 to-purple-950/30 border border-indigo-500/30 text-center space-y-1.5">
+        <div class="p-4 rounded-2xl bg-gradient-to-br from-indigo-950/40 via-neutral-900 to-purple-950/30 border border-indigo-500/30 text-center space-y-1">
           <div class="flex items-baseline justify-center space-x-1.5">
             <span class="text-3xl font-black text-white font-mono tracking-tight">$7.77</span>
             <span class="text-xs text-neutral-400 font-medium">/ 월 (정기구독)</span>
@@ -628,31 +654,31 @@
           <p class="text-[11px] text-emerald-400 font-medium">언제든 자유롭게 해지 가능 · 글로벌 공식 보안 결제</p>
         </div>
 
-        <!-- Feature List -->
+        <!-- Feature List (이모티콘 전면 배제 및 모던 인디케이터 적용) -->
         <div class="space-y-2.5 text-xs text-neutral-300">
-          <div class="flex items-start space-x-2.5 p-2.5 rounded-xl bg-neutral-950/60 border border-neutral-800">
-            <span class="text-base">☁️</span>
+          <div class="flex items-start space-x-3 p-3 rounded-2xl bg-neutral-950/60 border border-neutral-800">
+            <span class="w-2 h-2 rounded-full bg-indigo-400 mt-1.5 shrink-0"></span>
             <div>
               <div class="font-bold text-white text-xs">멀티 기기 클라우드 실시간 자동 동기화</div>
               <div class="text-[11px] text-neutral-400 mt-0.5">모바일 기기, 태블릿, PC 어디서나 로그인 한 번으로 무손실 영구 보존</div>
             </div>
           </div>
-          <div class="flex items-start space-x-2.5 p-2.5 rounded-xl bg-neutral-950/60 border border-neutral-800">
-            <span class="text-base">📊</span>
+          <div class="flex items-start space-x-3 p-3 rounded-2xl bg-neutral-950/60 border border-neutral-800">
+            <span class="w-2 h-2 rounded-full bg-purple-400 mt-1.5 shrink-0"></span>
             <div>
               <div class="font-bold text-white text-xs">카테고리별 정밀 교차분석 매트릭스</div>
               <div class="text-[11px] text-neutral-400 mt-0.5">승무패, 핸디캡, 언더오버 등 세부 유형별 실질 수익성과 최적 조합 도출</div>
             </div>
           </div>
-          <div class="flex items-start space-x-2.5 p-2.5 rounded-xl bg-neutral-950/60 border border-neutral-800">
-            <span class="text-base">🛡️</span>
+          <div class="flex items-start space-x-3 p-3 rounded-2xl bg-neutral-950/60 border border-neutral-800">
+            <span class="w-2 h-2 rounded-full bg-amber-400 mt-1.5 shrink-0"></span>
             <div>
               <div class="font-bold text-white text-xs">뇌동·추격 투자 방어 멘탈 가드 & 쿨다운</div>
               <div class="text-[11px] text-neutral-400 mt-0.5">연패 지속 시 분노와 조급함을 사전 차단하는 마인드풀 안정화 케어</div>
             </div>
           </div>
-          <div class="flex items-start space-x-2.5 p-2.5 rounded-xl bg-neutral-950/60 border border-neutral-800">
-            <span class="text-base">🎯</span>
+          <div class="flex items-start space-x-3 p-3 rounded-2xl bg-neutral-950/60 border border-neutral-800">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 mt-1.5 shrink-0"></span>
             <div>
               <div class="font-bold text-white text-xs">무제한 목표 달성 챌린지 프로젝트</div>
               <div class="text-[11px] text-neutral-400 mt-0.5">시드머니 기반 목표 달성 프로젝트를 제한 없이 생성하고 성공률 관리</div>
@@ -662,17 +688,17 @@
 
         <!-- Action Buttons -->
         <div class="space-y-2 pt-1">
-          <button onclick="window.startLemonSqueezyCheckout()" class="w-full py-3.5 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold rounded-xl text-sm shadow-xl transition active:scale-95 flex items-center justify-center space-x-2">
-            <span>✨</span>
+          <button onclick="window.startLemonSqueezyCheckout()" class="w-full py-3.5 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold rounded-2xl text-sm shadow-xl transition active:scale-[0.98] flex items-center justify-center space-x-2">
             <span>SeedFit Pro 시작하기 ($7.77/월)</span>
           </button>
           
-          <div class="flex justify-between items-center px-1 pt-1">
-            <button onclick="window.toggleProStatusForDemo()" class="text-[10px] text-neutral-500 hover:text-indigo-400 transition">
-              구독 상태 새로고침
-            </button>
-            <button onclick="window.closeSubscriptionModal()" class="text-xs text-neutral-400 hover:text-white transition">
-              다음에 하기
+          <button onclick="window.closeSubscriptionModal()" class="w-full py-3 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 font-semibold rounded-2xl text-xs transition active:scale-[0.98]">
+            다음에 하기
+          </button>
+
+          <div class="text-center pt-1">
+            <button onclick="window.refreshSubscriptionStatus()" class="text-[11px] text-neutral-500 hover:text-indigo-400 underline transition">
+              이미 구독하셨나요? 구독 상태 확인
             </button>
           </div>
         </div>
@@ -733,7 +759,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.7.3').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.7.4').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -932,6 +958,7 @@
         safeStorage.set('SEEDFIT_AUTH_USER', '');
         safeStorage.set('SEEDFIT_GUEST_MODE', 'false');
         safeStorage.set('SEEDFIT_LAST_SYNC_TIME', '');
+        safeStorage.set('SEEDFIT_IS_PRO', 'false');
         supabaseClient = null;
         currentSupabaseUserKey = null;
         // 계정 간 데이터 유출 및 오염 방지를 위해 로컬 상태를 안전하게 초기화
@@ -1061,6 +1088,12 @@
           if (data.settings && typeof data.settings === 'object' && Object.keys(data.settings).length > 0) {
             mentalCareSettings = Object.assign(mentalCareSettings, data.settings);
             hasUpdated = true;
+          }
+
+          if (data.subscription_tier === 'pro') {
+            safeStorage.set('SEEDFIT_IS_PRO', 'true');
+          } else {
+            safeStorage.set('SEEDFIT_IS_PRO', 'false');
           }
 
           if (hasUpdated) {
@@ -1245,7 +1278,17 @@
     window.startLemonSqueezyCheckout = function() {
       const authUser = getAuthUser();
       let checkoutUrl = LEMON_CHECKOUT_URL;
-      const params = [];
+      
+      // 모바일 결제 최적화 파라미터: 거대 썸네일/로고/설명을 숨겨 한 화면에 쏙 들어오게 하고 가독성 극대화
+      const params = [
+        'embed=1',
+        'media=0',
+        'logo=0',
+        'desc=0',
+        'discount=0',
+        `dark=${isLightMode ? '0' : '1'}`
+      ];
+
       if (authUser) {
         if (authUser.email) {
           params.push(`checkout[email]=${encodeURIComponent(authUser.email)}`);
@@ -1256,9 +1299,8 @@
         const userIdKey = `${authUser.provider || 'user'}:${authUser.id}`;
         params.push(`checkout[custom][user_id]=${encodeURIComponent(userIdKey)}`);
       }
-      if (params.length > 0) {
-        checkoutUrl += (checkoutUrl.includes('?') ? '&' : '?') + params.join('&');
-      }
+
+      checkoutUrl += (checkoutUrl.includes('?') ? '&' : '?') + params.join('&');
 
       // Lemon Squeezy In-App Overlay 지원 시 모달 오버레이로 오픈
       if (window.LemonSqueezy && typeof window.LemonSqueezy.Url?.Open === 'function') {
@@ -1274,18 +1316,50 @@
       window.closeSubscriptionModal();
     };
 
-    window.toggleProStatusForDemo = function() {
-      const current = isUserPro();
-      safeStorage.set('SEEDFIT_IS_PRO', current ? 'false' : 'true');
-      showToast(current ? '무료 플랜(Free)으로 전환되었습니다.' : '🎉 SeedFit Pro 멤버십이 활성화되었습니다!');
-      if (currentTab === 'settings') {
-        const area = document.getElementById('contentArea');
-        if (area) renderSettingsTab(area);
+    window.refreshSubscriptionStatus = async function() {
+      const authUser = getAuthUser();
+      if (!authUser || !authUser.id) {
+        showToast('구독 상태를 확인하려면 먼저 로그인을 진행해주세요.');
+        return;
       }
-      window.closeSubscriptionModal();
+      const userIdKey = `${authUser.provider || 'user'}:${authUser.id}`;
+      const sb = getSupabase(userIdKey);
+      if (!sb) {
+        showToast('클라우드 연결을 확인 중입니다. 잠시 후 다시 시도해주세요.');
+        return;
+      }
+
+      showToast('구독 정보를 확인하고 있습니다...');
+      try {
+        const { data, error } = await sb.from('seedfit_user_data')
+          .select('subscription_tier')
+          .eq('user_id', userIdKey)
+          .maybeSingle();
+
+        if (error) {
+          showToast('구독 정보 확인 중 오류가 발생했습니다.');
+          return;
+        }
+
+        if (data && data.subscription_tier === 'pro') {
+          safeStorage.set('SEEDFIT_IS_PRO', 'true');
+          showToast('SeedFit Pro 정기구독이 정상 확인되었습니다.');
+        } else {
+          safeStorage.set('SEEDFIT_IS_PRO', 'false');
+          showToast('현재 활성화된 Pro 정기구독 내역이 없습니다.');
+        }
+
+        if (currentTab === 'settings') {
+          const area = document.getElementById('contentArea');
+          if (area) renderSettingsTab(area);
+        }
+        window.closeSubscriptionModal();
+      } catch (e) {
+        showToast('구독 정보를 불러오지 못했습니다.');
+      }
     };
 
-    const CURRENT_APP_VERSION = 'v1.7.3';
+    const CURRENT_APP_VERSION = 'v1.7.4';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');
@@ -2954,14 +3028,14 @@
             ` : ''}
           </div>
 
-          <!-- SeedFit Pro Membership Card (공식 구독 카드) -->
+          <!-- SeedFit Pro Membership Card (공식 구독 카드 - 이모티콘 전면 배제) -->
           <div class="${isLightMode ? 'bg-gradient-to-br from-indigo-50/80 via-white to-purple-50/40 border-indigo-200/80 shadow-sm' : 'bg-gradient-to-br from-indigo-950/40 via-neutral-900 to-purple-950/20 border-indigo-500/30'} border rounded-3xl p-4 space-y-3 relative overflow-hidden">
             <div class="flex justify-between items-start">
               <div>
                 <div class="flex items-center space-x-2">
                   <span class="text-xs font-black tracking-wide bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">SEEDFIT PRO</span>
                   <span class="text-[9px] font-bold px-2 py-0.5 rounded-full ${isProMember ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : (isLightMode ? 'bg-indigo-100 text-indigo-700' : 'bg-indigo-500/20 text-indigo-300')}">
-                    ${isProMember ? 'PRO 활성화됨 👑' : '무료 플랜 (Free)'}
+                    ${isProMember ? 'PRO 활성화됨' : '무료 플랜 (Free)'}
                   </span>
                 </div>
                 <p class="text-[11px] text-neutral-400 mt-1">
@@ -2969,9 +3043,8 @@
                 </p>
               </div>
               ${!isProMember ? `
-                <button onclick="window.openSubscriptionModal()" class="py-1.5 px-3 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold rounded-xl text-xs shadow-md transition active:scale-95 flex items-center space-x-1 shrink-0">
-                  <span>✨</span>
-                  <span>Pro 구독</span>
+                <button onclick="window.openSubscriptionModal()" class="py-1.5 px-3 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold rounded-xl text-xs shadow-md transition active:scale-95 shrink-0">
+                  Pro 구독
                 </button>
               ` : `
                 <button onclick="window.openSubscriptionModal()" class="py-1 px-2.5 rounded-lg text-[10px] font-semibold ${isLightMode ? 'bg-neutral-100 hover:bg-neutral-200 text-neutral-700' : 'bg-neutral-800 hover:bg-neutral-700 text-neutral-300'} transition shrink-0">
@@ -2980,22 +3053,22 @@
               `}
             </div>
             
-            <!-- Quick Features -->
+            <!-- Quick Features (이모티콘 전면 배제) -->
             <div class="grid grid-cols-2 gap-2 text-[10px] pt-1 border-t ${isLightMode ? 'border-neutral-100 text-neutral-600' : 'border-neutral-800/80 text-neutral-400'}">
               <div class="flex items-center space-x-1.5">
-                <span class="text-indigo-400">☁️</span>
+                <span class="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
                 <span>클라우드 실시간 무제한 백업</span>
               </div>
               <div class="flex items-center space-x-1.5">
-                <span class="text-purple-400">📊</span>
+                <span class="w-1.5 h-1.5 rounded-full bg-purple-400"></span>
                 <span>카테고리별 교차분석 매트릭스</span>
               </div>
               <div class="flex items-center space-x-1.5">
-                <span class="text-amber-400">🛡️</span>
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
                 <span>뇌동·추격 투자 방어 멘탈 가드</span>
               </div>
               <div class="flex items-center space-x-1.5">
-                <span class="text-emerald-400">🎯</span>
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
                 <span>무제한 챌린지 프로젝트 개설</span>
               </div>
             </div>

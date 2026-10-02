@@ -1,5 +1,39 @@
 # 프로젝트 개발 로그 (PROJECT DEVELOPMENT LOG)
 
+## [2026-10-02] v1.7.4 프로 구독 오류 해결, 이모티콘 전면 배제 및 레몬스퀴즈 결제창 뷰포트 최적화
+
+### 1. 요구사항 및 기획 의도
+1. **구독 상태 임의 변경 결함 원천 해결**:
+   - 설정 탭에서 프로 구독 버튼 클릭 시 나타나는 모달 하단의 '구독 상태 새로고침' 버튼이 결제를 하지 않았음에도 임의로 Pro 상태로 변경해 버리던 치명적 결함 해결.
+   - 개발/테스트용으로 잔류했던 토글 함수(`toggleProStatusForDemo`)를 전면 영구 삭제.
+   - 사용자가 실제 결제한 내역을 Supabase 클라우드 데이터베이스(`seedfit_user_data`의 `subscription_tier`)에서 정직하게 조회하여 상태를 갱신하는 안전한 `refreshSubscriptionStatus()`로 교체.
+   - 오터치를 방지하기 위해 '다음에 하기' 버튼과 '구독 상태 확인' 링크를 명확히 분리하고, 모달 우측 상단에 직관적인 닫기(X) 버튼 탑재.
+2. **구독 관련 이모티콘 전면 배제**:
+   - `subscriptionModal` 및 설정 탭의 `SEEDFIT PRO` 멤버십 카드 내의 모든 이모티콘(👑, ☁️, 📊, 🛡️, 🎯, ✨)을 전면 제거하고 애플 순정 스타일의 정갈한 미니멀 인디케이터로 정돈.
+3. **레몬스퀴즈 결제창 뷰포트 및 가독성 개선**:
+   - 결제창 오픈 시 상단의 거대한 상품 썸네일, 스토어 로고, 긴 설명문, 불필요한 할인코드 폼으로 인해 결제창이 과도하게 커지고 스크롤이 필요했던 문제를 Lemon Squeezy URL 최적화 파라미터(`media=0&logo=0&desc=0&discount=0&dark`)로 해결.
+   - PWA 모바일 환경에서 상단 노치/상태바에 닫기(X) 버튼이 가려져 터치가 불가능했던 문제를 `.lemonsqueezy-overlay`에 safe-area 여백 및 중앙 팝업 카드 스타일 CSS를 적용하여 손쉽게 닫고 한눈에 카드 결제 폼을 볼 수 있도록 완벽 개선.
+
+### 2. 구현 내역
+1. **`index.html`**:
+   - CSS: `.lemonsqueezy-overlay` safe-area 여백 및 모바일 팝업 카드 뷰포트 스타일 탑재.
+   - `subscriptionModal`: 상단 닫기(X) 버튼 추가, 모든 이모티콘 제거, 'SeedFit Pro 시작하기 ($7.77/월)' 풀 너비 버튼 + '다음에 하기' + 하단 '이미 구독하셨나요? 구독 상태 확인' 링크로 계층 분리.
+   - `renderSettingsTab`: `SEEDFIT PRO` 멤버십 카드의 이모티콘을 모두 배제하고 컬러 도트 인디케이터로 단정하게 개편.
+   - `startLemonSqueezyCheckout`: `embed=1&media=0&logo=0&desc=0&discount=0&dark` 파라미터 주입으로 결제창 콤팩트화 및 가독성 극대화.
+   - `refreshSubscriptionStatus`: Supabase `seedfit_user_data`의 `subscription_tier`를 실제로 확인하여 Pro 동기화 및 안내 제공.
+   - `logoutSeedFit`: `safeStorage.set('SEEDFIT_IS_PRO', 'false')` 추가로 로그아웃 시 Pro 상태 안전 초기화.
+   - `syncFromCloud`: 클라우드에서 `subscription_tier` 정상 동기화.
+   - `toggleProStatusForDemo` 완전 영구 삭제.
+   - 버전 갱신: `CURRENT_APP_VERSION = 'v1.7.4'`, `sw.js?v=1.7.4`.
+2. **`sw.js` & `package.json`**:
+   - `seedfit-cache-v1.7.4`, 버전 `1.7.4` 동기화.
+
+### 3. 검증
+- 금지 단어('스마트', '베팅', '배팅') 0건 확인.
+- DOM 태그 균형 검사: `opens=326, closes=326, diff=0` 완전 무결 확인.
+- 인라인 자바스크립트 문법 검사 100% 통과 (144,837자).
+- 구독 모달 닫기/새로고침 시 결제 없이 Pro로 전환되지 않음 확인.
+
 ## [2026-10-02] v1.7.3 하단 탭 네비게이션 복구 및 모달 태그 완결성 보정
 
 ### 1. 요구사항 및 기획 의도
