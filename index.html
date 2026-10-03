@@ -531,7 +531,7 @@
         </div>
 
         <button id="btnSaveNewRecord" class="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-sm font-bold shadow-lg transition active:scale-95">
-          기록 저장 (최초 시간 자동 등록)
+          기록 저장
         </button>
       </div>
     </div>
@@ -665,28 +665,28 @@
           <div class="flex items-start space-x-3 p-3 rounded-2xl bg-neutral-950/60 border border-neutral-800">
             <span class="w-2 h-2 rounded-full bg-indigo-400 mt-1.5 shrink-0"></span>
             <div>
-              <div class="font-bold text-white text-xs">멀티 기기 클라우드 실시간 자동 동기화</div>
-              <div class="text-[11px] text-neutral-400 mt-0.5">모바일 기기, 태블릿, PC 어디서나 로그인 한 번으로 무손실 영구 보존</div>
+              <div class="font-bold text-white text-xs">기록 계정 연동 보관</div>
+              <div class="text-[11px] text-neutral-400 mt-0.5">기록 20개 제한 해제 및 모든 기기에서 로그인 한 번으로 무손실 영구 보존</div>
             </div>
           </div>
           <div class="flex items-start space-x-3 p-3 rounded-2xl bg-neutral-950/60 border border-neutral-800">
             <span class="w-2 h-2 rounded-full bg-purple-400 mt-1.5 shrink-0"></span>
             <div>
-              <div class="font-bold text-white text-xs">카테고리별 정밀 교차분석 매트릭스</div>
+              <div class="font-bold text-white text-xs">카테고리별 교차 분석</div>
               <div class="text-[11px] text-neutral-400 mt-0.5">일반투자, 전략투자 등 세부 전략 유형별 실질 수익성과 최적 분산 조합 도출</div>
             </div>
           </div>
           <div class="flex items-start space-x-3 p-3 rounded-2xl bg-neutral-950/60 border border-neutral-800">
             <span class="w-2 h-2 rounded-full bg-amber-400 mt-1.5 shrink-0"></span>
             <div>
-              <div class="font-bold text-white text-xs">뇌동·추격 투자 방어 멘탈 가드 & 쿨다운</div>
+              <div class="font-bold text-white text-xs">멘탈 케어 기능 활성화</div>
               <div class="text-[11px] text-neutral-400 mt-0.5">연패 지속 시 분노와 조급함을 사전 차단하는 마인드풀 안정화 케어</div>
             </div>
           </div>
           <div class="flex items-start space-x-3 p-3 rounded-2xl bg-neutral-950/60 border border-neutral-800">
             <span class="w-2 h-2 rounded-full bg-emerald-400 mt-1.5 shrink-0"></span>
             <div>
-              <div class="font-bold text-white text-xs">무제한 목표 달성 챌린지 프로젝트</div>
+              <div class="font-bold text-white text-xs">무제한 프로젝트 생성</div>
               <div class="text-[11px] text-neutral-400 mt-0.5">시드머니 기반 목표 달성 프로젝트를 제한 없이 생성하고 성공률 관리</div>
             </div>
           </div>
@@ -863,7 +863,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.8.7').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.8.8').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -1739,7 +1739,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.8.7';
+    const CURRENT_APP_VERSION = 'v1.8.8';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');
@@ -2343,10 +2343,18 @@
     function renderRecordsTab(container, actionBar) {
       actionBar.classList.remove('hidden');
 
+      const isProUser = isUserPro();
+      const isRecordLimitReached = (!isProUser && records.length >= 20);
+
       actionBar.innerHTML = `
-        <button onclick="window.openNewRecordModal()" class="w-full py-3.5 bg-blue-600 hover:bg-blue-500 active:scale-[0.98] text-white font-bold rounded-2xl shadow-lg flex items-center justify-center space-x-2 text-sm transition">
+        <button onclick="window.openNewRecordModal()" class="w-full py-3.5 ${isRecordLimitReached ? 'bg-gradient-to-r from-indigo-600 to-purple-600 shadow-indigo-500/25' : 'bg-blue-600 hover:bg-blue-500'} active:scale-[0.98] text-white font-bold rounded-2xl shadow-lg flex items-center justify-center space-x-2 text-sm transition">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
-          <span>새로운 기록 추가하기</span>
+          <span>${isRecordLimitReached ? '기록 추가 (무료 한도 20개 도달 · Pro 전환)' : '새로운 기록 추가하기'}</span>
+          ${!isProUser ? `
+            <span class="text-[10px] font-mono px-2 py-0.5 rounded-full ${isRecordLimitReached ? 'bg-amber-400 text-black font-black' : 'bg-white/20 text-white font-semibold'}">
+              ${records.length}/20
+            </span>
+          ` : ''}
         </button>
       `;
 
@@ -2379,6 +2387,18 @@
 
       container.innerHTML = `
         ${mentalBanner}
+        ${isRecordLimitReached ? `
+          <div onclick="window.openSubscriptionModal('무료 플랜은 기록을 최대 20개까지만 등록할 수 있습니다.')" class="p-3.5 rounded-2xl border ${isLightMode ? 'bg-amber-50/90 border-amber-200 text-amber-900' : 'bg-amber-950/25 border-amber-500/30 text-amber-300'} flex items-center justify-between cursor-pointer active:scale-[0.99] transition shadow-sm mb-3">
+            <div class="flex items-center space-x-2.5">
+              <svg class="w-4 h-4 text-amber-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              <div class="text-[11px] leading-tight">
+                <span class="font-bold">무료 플랜 기록 한도(20개)에 도달했습니다.</span>
+                <p class="text-[10px] text-neutral-400 mt-0.5">무제한 기록 등록과 고급 분석을 위해 Pro 플랜을 구독해보세요.</p>
+              </div>
+            </div>
+            <span class="text-[10px] font-bold px-2 py-1 rounded-xl bg-amber-500 text-black shrink-0 whitespace-nowrap">PRO 업그레이드</span>
+          </div>
+        ` : ''}
         <div class="${isLightMode ? 'bg-white border-neutral-200 shadow-sm' : 'bg-neutral-900/90 border-neutral-800'} rounded-3xl p-4 border space-y-3">
           <div class="flex justify-between items-center text-xs">
             <span class="text-neutral-400 font-medium">총 순손익 (정산 완료 기준)</span>
@@ -3403,24 +3423,16 @@
 
         <!-- 카테고리별 교차분석 매트릭스 (한눈에 비교 및 터치 필터링) -->
         <div class="${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900/90 border-neutral-800'} border p-4 rounded-3xl space-y-3 shadow-sm relative overflow-hidden">
-          ${!isPro ? `
-            <div onclick="window.openSubscriptionModal()" class="absolute inset-0 bg-neutral-950/75 backdrop-blur-[3px] z-10 flex flex-col items-center justify-center p-4 text-center cursor-pointer transition active:scale-[0.99] border border-indigo-500/30 rounded-3xl">
-              <span class="px-3 py-1 rounded-full bg-gradient-to-r from-indigo-500/20 to-purple-500/20 text-indigo-300 border border-indigo-500/30 text-[10px] font-black tracking-wider mb-2">
-                SEEDFIT PRO 전용
-              </span>
-              <h4 class="text-xs font-bold text-white mb-1">카테고리별 정밀 교차분석 잠금 해제</h4>
-              <p class="text-[11px] text-neutral-400 max-w-xs mb-3 leading-tight">일반/전략 유형과 분산 조합 간 2×3 정밀 매트릭스로 가장 승률과 수익성이 높은 최적 조합을 도출하세요.</p>
-              <button class="py-1.5 px-4 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold rounded-xl text-xs shadow-md transition active:scale-95">
-                Pro 멤버십으로 보기
-              </button>
-            </div>
-          ` : ''}
-
-          <div class="flex justify-between items-center ${!isPro ? 'filter blur-[1px] opacity-40' : ''}">
+          <div class="flex justify-between items-center">
             <div>
-              <h3 class="text-xs font-bold ${isLightMode ? 'text-neutral-900' : 'text-white'}">
-                카테고리별 교차분석
-              </h3>
+              <div class="flex items-center space-x-1.5">
+                <h3 class="text-xs font-bold ${isLightMode ? 'text-neutral-900' : 'text-white'}">
+                  카테고리별 교차분석
+                </h3>
+                ${!isPro ? `
+                  <span class="text-[9px] font-black px-1.5 py-0.2 rounded bg-indigo-500/15 text-indigo-400 border border-indigo-500/30">PRO</span>
+                ` : ''}
+              </div>
               <p class="text-[10px] text-neutral-400 mt-0.5">셀을 터치하면 해당 조합 통계로 즉시 집중 전환됩니다.</p>
             </div>
             ${isFilterActive ? `
@@ -3430,7 +3442,7 @@
             ` : ''}
           </div>
 
-          <div class="overflow-x-auto ${!isPro ? 'filter blur-sm select-none pointer-events-none opacity-30' : ''}">
+          <div class="overflow-x-auto">
             <table class="w-full text-xs border-collapse">
               <thead>
                 <tr class="border-b ${isLightMode ? 'border-neutral-200 text-neutral-500' : 'border-neutral-800 text-neutral-400'}">
@@ -3715,7 +3727,7 @@
                     </span>
                   </div>
                   <p class="text-[11px] text-neutral-400 mt-1">
-                    ${isProMember ? '모든 고급 분석 및 클라우드 무제한 기능을 이용 중입니다.' : '실시간 클라우드 자동 보존과 고급 분석을 제한 없이 누려보세요.'}
+                    ${isProMember ? '모든 고급 분석 및 클라우드 무제한 기능을 이용 중입니다.' : '무제한 기록과 통계 분석을 제한없이 이용해보세요.'}
                   </p>
                 </div>
                 ${!isProMember ? `
@@ -3733,19 +3745,19 @@
               <div class="grid grid-cols-2 gap-2 text-[10px] pt-1 border-t ${isLightMode ? 'border-neutral-100 text-neutral-600' : 'border-neutral-800/80 text-neutral-400'}">
                 <div class="flex items-center space-x-1.5">
                   <span class="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
-                  <span>클라우드 실시간 무제한 백업</span>
+                  <span>기록 계정 연동 보관</span>
                 </div>
                 <div class="flex items-center space-x-1.5">
                   <span class="w-1.5 h-1.5 rounded-full bg-purple-400"></span>
-                  <span>카테고리별 교차분석 매트릭스</span>
+                  <span>카테고리별 교차 분석</span>
                 </div>
                 <div class="flex items-center space-x-1.5">
                   <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
-                  <span>뇌동·추격 투자 방어 멘탈 가드</span>
+                  <span>멘탈 케어 기능 활성화</span>
                 </div>
                 <div class="flex items-center space-x-1.5">
                   <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                  <span>무제한 챌린지 프로젝트 개설</span>
+                  <span>무제한 프로젝트 생성</span>
                 </div>
               </div>
             </div>
@@ -4693,6 +4705,11 @@
     document.getElementById('inputExpectedReturn')?.addEventListener('input', updateExpectedProfitNotice);
 
     window.openNewRecordModal = function() {
+      if (!isUserPro() && records.length >= 20) {
+        window.openSubscriptionModal('무료 플랜은 기록을 최대 20개까지만 등록할 수 있습니다.');
+        showToast('무료 플랜은 기록을 최대 20개까지만 등록할 수 있습니다. (20/20)');
+        return;
+      }
       populateProjectSelect();
       document.getElementById('inputInvestAmount').value = '';
       document.getElementById('inputExpectedReturn').value = '';
@@ -4708,6 +4725,11 @@
     };
 
     window.openNewRecordModalForProject = function(projectId) {
+      if (!isUserPro() && records.length >= 20) {
+        window.openSubscriptionModal('무료 플랜은 기록을 최대 20개까지만 등록할 수 있습니다.');
+        showToast('무료 플랜은 기록을 최대 20개까지만 등록할 수 있습니다. (20/20)');
+        return;
+      }
       populateProjectSelect();
       document.getElementById('inputInvestAmount').value = '';
       document.getElementById('inputExpectedReturn').value = '';
@@ -4770,6 +4792,12 @@
     }
 
     function saveNewRecord() {
+      if (!isUserPro() && records.length >= 20) {
+        window.closeNewRecordModal();
+        window.openSubscriptionModal('무료 플랜은 기록을 최대 20개까지만 등록할 수 있습니다.');
+        showToast('무료 플랜은 기록을 최대 20개까지만 등록할 수 있습니다. (20/20)');
+        return;
+      }
       const amount = Number(document.getElementById('inputInvestAmount').value);
       if (!amount || amount <= 0) {
         showToast('올바른 투입 금액을 입력해주세요.');
