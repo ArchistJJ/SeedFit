@@ -1,5 +1,37 @@
 # 프로젝트 개발 로그 (PROJECT DEVELOPMENT LOG)
 
+## [2026-10-03] v1.8.2 멤버십 구독 관리 & 해지 모달 구축, 마스터 관리자 전용 3상태(무료/프로/관리자) 뷰 시뮬레이터 탑재
+
+### 1. 요구사항 및 기획 의도
+1. **멤버십 구독 관리 및 취소(해지) 모달 구축 (`membershipManagementModal`)**:
+   - Pro 구독 사용자가 현재 구독 상태, 결제 금액($7.77/월), 결제 주기, 활성 혜택을 한눈에 확인할 수 있는 전용 관리 창 제공.
+   - 공식 결제사(Lemon Squeezy) 영수증 조회 및 카드 변경 안내 연결(`openCustomerPortal`).
+   - 사용자가 원클릭으로 구독 해지(무료 플랜으로 전환)를 진행할 수 있는 확인 다이얼로그 및 취소 로직(`confirmCancelSubscription`) 구현 (Supabase `subscription_tier: 'free'` 자동 갱신 및 토스트 피드백).
+2. **마스터 관리자 전용 3상태 뷰 시뮬레이터 (무료/프로/관리자 원클릭 전환)**:
+   - 오직 마스터 관리자(`wpdntm0428@gmail.com`)에게만 설정 탭 계정 카드 내 3가지 상태 선택 버튼(`[무료플랜]`, `[프로플랜]`, `[관리자]`) 노출 (일반 사용자에게는 절대 미노출).
+   - **`[무료플랜]` 선택 시**: 일반 무료 사용자와 100% 동일한 화면(통계 탭 잠금, 프로젝트 1개 제한, Pro 가입 유도 배너, 하단 관리 탭 숨김)으로 즉시 전환되어 무료 사용자 경험을 완벽히 테스트 가능.
+   - **`[프로플랜]` 선택 시**: 실제 결제한 유료 구독자와 100% 동일한 화면(통계 탭 잠금 해제, 프로젝트 무제한, 멤버십 관리 모달 및 해지 플로우, 하단 관리 탭 숨김)으로 전환되어 구독자 경험 테스트 가능.
+   - **`[관리자]` 선택 시**: 모든 Pro 혜택 + 하단 5번째 `[관리]` 탭(비즈니스 수익 대시보드)이 활성화되는 마스터 관리자 권한 복귀.
+   - 상태 전환 중에도 마스터 관리자 식별(`isMasterAdminAccount()`)은 유지되므로 언제든 3가지 상태를 자유롭게 스위칭 가능.
+
+### 2. 구현 내역
+1. **`index.html`**:
+   - `isMasterAdminAccount()`, `getAdminTestMode()`, `setAdminTestMode(mode)` 구현.
+   - `isAdminUser()`: 마스터 관리자이면서 `adminTestMode === 'admin'`일 때만 true 반환.
+   - `isUserPro()`: 마스터 관리자가 `admin` 또는 `pro`일 때 true, `free`일 때는 false 반환.
+   - `membershipManagementModal` HTML 추가 및 `openMembershipManagementModal`, `closeMembershipManagementModal`, `openCustomerPortal`, `confirmCancelSubscription` 함수 탑재.
+   - 설정(Settings) 탭 계정 카드 내 관리자 전용 3버튼 시뮬레이터 UI 탑재.
+   - `syncToCloud` 및 `syncFromCloud`에서 시뮬레이션 중 관리자 계정 DB 정보 보호 처리.
+   - 버전 갱신: `CURRENT_APP_VERSION = 'v1.8.2'`, `sw.js?v=1.8.2`.
+2. **`sw.js` & `package.json`**:
+   - `seedfit-cache-v1.8.2`, 버전 `1.8.2` 동기화.
+
+### 3. 검증
+- 금지 단어('스마트', '베팅', '배팅', '적중률') 0건 완전 무결 검증.
+- JS 구문 파싱 100% 통과 (오류 0건).
+- 관리자 계정에서 무료/프로/관리자 3개 모드 전환 시 하단 탭 및 각 화면 제한 기능 실시간 정상 반영 확인.
+- 구독 취소 모달에서 해지 확인 시 정상 동작 및 토스트 안내 확인.
+
 ## [2026-10-03] v1.8.1 관리자 계정(wpdntm0428@gmail.com) 단일 영구 고정, 도박 용어 전면 퇴출 및 투자 전문 용어 통일, 신규 가입자 클라우드 DB 자동 등록 동기화
 
 ### 1. 요구사항 및 기획 의도

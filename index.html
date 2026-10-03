@@ -697,11 +697,99 @@
             다음에 하기
           </button>
 
-          <div class="text-center pt-1">
+          <div class="text-center pt-1 space-y-1">
             <button onclick="window.refreshSubscriptionStatus()" class="text-[11px] text-neutral-500 hover:text-indigo-400 underline transition">
               이미 구독하셨나요? 구독 상태 확인
             </button>
+            <div id="subscriptionManageLink" class="hidden">
+              <button onclick="window.closeSubscriptionModal(); window.openMembershipManagementModal();" class="text-[11px] text-indigo-400 hover:text-indigo-300 font-semibold underline transition">
+                현재 Pro 멤버십 관리 및 해지 바로가기
+              </button>
+            </div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SeedFit Pro Membership Management & Cancellation Modal (멤버십 관리 & 해지 모달) -->
+    <div id="membershipManagementModal" class="absolute inset-0 bg-black/80 backdrop-blur-md z-50 hidden flex items-end justify-center p-0 transition-opacity">
+      <div class="w-full bg-neutral-900 border-t border-neutral-800 rounded-t-[32px] p-6 pb-safe space-y-4 shadow-2xl max-h-[92vh] overflow-y-auto custom-scroll relative">
+        <!-- 상단 우측 닫기 버튼 -->
+        <button onclick="window.closeMembershipManagementModal()" class="absolute top-5 right-5 w-8 h-8 rounded-full bg-neutral-800 hover:bg-neutral-700 flex items-center justify-center text-neutral-400 hover:text-white transition active:scale-90" aria-label="닫기">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+
+        <div class="text-center space-y-2 pt-1">
+          <div class="inline-block px-3.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-black tracking-wider">
+            SEEDFIT PRO MEMBERSHIP
+          </div>
+          <h3 class="text-xl font-black text-white tracking-tight">멤버십 구독 관리</h3>
+          <p class="text-xs text-neutral-400 leading-relaxed max-w-xs mx-auto">
+            현재 이용 중인 구독 상세 내역과 결제 관리를 안전하게 확인하세요.
+          </p>
+        </div>
+
+        <!-- Current Subscription Status Card -->
+        <div class="p-4 rounded-2xl bg-neutral-950/80 border border-neutral-800 space-y-3">
+          <div class="flex justify-between items-center">
+            <div>
+              <div class="text-xs text-neutral-400 font-medium">현재 이용 플랜</div>
+              <div class="text-sm font-bold text-white flex items-center space-x-1.5 mt-0.5">
+                <span>SeedFit Pro</span>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">활성 구독 중</span>
+              </div>
+            </div>
+            <div class="text-right">
+              <div class="text-xs text-neutral-400 font-medium">구독 금액</div>
+              <div class="text-sm font-bold text-white font-mono mt-0.5">$7.77 <span class="text-[10px] text-neutral-400 font-sans">/ 월</span></div>
+            </div>
+          </div>
+
+          <div class="pt-2 border-t border-neutral-800/80 grid grid-cols-2 gap-2 text-[11px]">
+            <div>
+              <span class="text-neutral-500">결제 주기:</span>
+              <span class="text-neutral-300 ml-1 font-medium">매월 정기결제</span>
+            </div>
+            <div>
+              <span class="text-neutral-500">갱신 상태:</span>
+              <span class="text-emerald-400 ml-1 font-medium">자동 갱신 활성</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Active Pro Benefits Summary -->
+        <div class="space-y-2 p-3.5 rounded-2xl bg-neutral-950/40 border border-neutral-800/80 text-xs text-neutral-300">
+          <div class="text-[11px] font-bold text-neutral-400 mb-1">현재 적용 중인 Pro 전용 혜택</div>
+          <div class="flex items-center space-x-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+            <span>멀티 기기 클라우드 무제한 실시간 동기화</span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+            <span>일반/전략 투자 x 분산 조합 정밀 교차분석</span>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+            <span>목표 달성 챌린지 프로젝트 무제한 생성 및 관리</span>
+          </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="space-y-2 pt-2">
+          <!-- 공식 고객 포털 열기 (Lemon Squeezy 영수증 / 카드 변경 안내) -->
+          <button onclick="window.openCustomerPortal()" class="w-full py-3 bg-neutral-800 hover:bg-neutral-700 text-white font-bold rounded-2xl text-xs transition active:scale-[0.98] flex items-center justify-center space-x-2 border border-neutral-700">
+            <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
+            <span>결제 수단 변경 및 공식 영수증 확인</span>
+          </button>
+
+          <!-- 구독 해지 신청 버튼 -->
+          <button onclick="window.confirmCancelSubscription()" class="w-full py-3 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 font-bold rounded-2xl text-xs transition active:scale-[0.98] flex items-center justify-center space-x-1.5">
+            <span>구독 취소 (무료 플랜으로 전환)</span>
+          </button>
+
+          <button onclick="window.closeMembershipManagementModal()" class="w-full py-2.5 text-neutral-400 hover:text-white font-medium text-xs transition">
+            닫기
+          </button>
         </div>
       </div>
     </div>
@@ -765,7 +853,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.8.1').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.8.2').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -1069,7 +1157,7 @@
         provider: authUser.provider || 'unknown',
         email: authUser.email || '',
         name: authUser.name || '',
-        subscription_tier: isPro ? 'pro' : 'free',
+        subscription_tier: (isMasterAdminAccount() || isPro) ? 'pro' : 'free',
         records: isPro ? (records || []) : [],
         projects: isPro ? (projects || []) : [],
         settings: mentalCareSettings || {},
@@ -1127,10 +1215,19 @@
             hasUpdated = true;
           }
 
-          if (data.subscription_tier === 'pro' || isAdminUser()) {
-            safeStorage.set('SEEDFIT_IS_PRO', 'true');
+          if (isMasterAdminAccount()) {
+            const mode = getAdminTestMode();
+            if (mode === 'admin' || mode === 'pro') {
+              safeStorage.set('SEEDFIT_IS_PRO', 'true');
+            } else if (mode === 'free') {
+              safeStorage.set('SEEDFIT_IS_PRO', 'false');
+            }
           } else {
-            safeStorage.set('SEEDFIT_IS_PRO', 'false');
+            if (data.subscription_tier === 'pro') {
+              safeStorage.set('SEEDFIT_IS_PRO', 'true');
+            } else {
+              safeStorage.set('SEEDFIT_IS_PRO', 'false');
+            }
           }
 
           if (hasUpdated) {
@@ -1298,21 +1395,60 @@
     // SeedFit Pro 공식 보안 결제 (Lemon Squeezy) 연동
     const LEMON_CHECKOUT_URL = 'https://seedfit.lemonsqueezy.com/checkout/buy/1ae381b5-3605-427c-b11d-dbac560468f8';
 
-    // 마스터 관리자 식별자 목록 (개발자 & 운영자 계정 자동 감지)
     // 마스터 관리자 공식 단독 계정 (오직 이 계정에만 관리자 권한 부여)
     const MASTER_ADMIN_EMAIL = 'wpdntm0428@gmail.com';
 
-    function isAdminUser() {
+    function isMasterAdminAccount() {
       const authUser = getAuthUser();
       if (!authUser || !authUser.email) return false;
       return authUser.email.toLowerCase().trim() === MASTER_ADMIN_EMAIL;
     }
 
+    function getAdminTestMode() {
+      if (!isMasterAdminAccount()) return 'normal';
+      return safeStorage.get('SEEDFIT_ADMIN_TEST_MODE') || 'admin';
+    }
+
+    function isAdminUser() {
+      if (!isMasterAdminAccount()) return false;
+      const mode = getAdminTestMode();
+      return mode === 'admin';
+    }
+
     function isUserPro() {
-      // 마스터 관리자(wpdntm0428@gmail.com)는 구독 결제 없이도 모든 Pro 기능 무제한 이용 & 테스트 가능
-      if (isAdminUser()) return true;
+      if (isMasterAdminAccount()) {
+        const mode = getAdminTestMode();
+        if (mode === 'admin') return true;
+        if (mode === 'pro') return true;
+        if (mode === 'free') return false;
+      }
       return safeStorage.get('SEEDFIT_IS_PRO') === 'true';
     }
+
+    window.setAdminTestMode = function(mode) {
+      if (!isMasterAdminAccount()) return;
+      if (!['free', 'pro', 'admin'].includes(mode)) return;
+      safeStorage.set('SEEDFIT_ADMIN_TEST_MODE', mode);
+      
+      if (mode === 'pro') {
+        safeStorage.set('SEEDFIT_IS_PRO', 'true');
+      } else if (mode === 'free') {
+        safeStorage.set('SEEDFIT_IS_PRO', 'false');
+      }
+
+      updateBottomTabBar();
+      if (currentTab === 'admin' && mode !== 'admin') {
+        currentTab = 'settings';
+      }
+      renderCurrentTab();
+
+      const labels = {
+        free: '무료 플랜 (Free) 시뮬레이션 모드로 전환되었습니다.',
+        pro: '프로 플랜 (Pro) 시뮬레이션 모드로 전환되었습니다.',
+        admin: '마스터 관리자 (Admin) 모드로 복귀했습니다.'
+      };
+      showToast(labels[mode] || '상태가 변경되었습니다.');
+    };
 
     window.openSubscriptionModal = function(customNotice = '') {
       const modal = document.getElementById('subscriptionModal');
@@ -1326,6 +1462,14 @@
           noticeBox.classList.add('hidden');
         }
       }
+      const manageLink = document.getElementById('subscriptionManageLink');
+      if (manageLink) {
+        if (isUserPro()) {
+          manageLink.classList.remove('hidden');
+        } else {
+          manageLink.classList.add('hidden');
+        }
+      }
       if (modal) modal.classList.remove('hidden');
     };
 
@@ -1337,6 +1481,63 @@
         noticeBox.classList.add('hidden');
       }
       if (modal) modal.classList.add('hidden');
+    };
+
+    window.openMembershipManagementModal = function() {
+      const modal = document.getElementById('membershipManagementModal');
+      if (modal) modal.classList.remove('hidden');
+    };
+
+    window.closeMembershipManagementModal = function() {
+      const modal = document.getElementById('membershipManagementModal');
+      if (modal) modal.classList.add('hidden');
+    };
+
+    window.openCustomerPortal = function() {
+      alert("💡 결제 정보 및 영수증 관리 안내\n\n공식 결제 서비스(Lemon Squeezy)에서 구독 결제 시 발송된 이메일 영수증 내의 [Manage Subscription] 링크를 통해 카드 변경, 영수증 출력 및 결제 수단 관리를 안전하게 이용하실 수 있습니다.");
+    };
+
+    window.confirmCancelSubscription = async function() {
+      const confirmed = confirm(
+        "정말 SeedFit Pro 구독을 해지하시겠습니까?\n\n" +
+        "• 구독을 취소하시면 다음 결제 주기부터 자동 결제가 중단됩니다.\n" +
+        "• 통계·심층 교차분석 및 프로젝트 개수(최대 1개)가 무료 플랜 기준으로 전환됩니다.\n" +
+        "• 기존에 입력하신 모든 투자 기록 데이터는 안전하게 보존됩니다.\n\n" +
+        "해지를 진행하시겠습니까?"
+      );
+
+      if (!confirmed) return;
+
+      // 마스터 관리자가 프로 시뮬레이션 중이었다면 무료 시뮬레이션으로 전환
+      if (isMasterAdminAccount() && getAdminTestMode() === 'pro') {
+        window.setAdminTestMode('free');
+        window.closeMembershipManagementModal();
+        return;
+      }
+
+      safeStorage.set('SEEDFIT_IS_PRO', 'false');
+
+      const authUser = getAuthUser();
+      if (authUser && authUser.id) {
+        const userIdKey = `${authUser.provider || 'user'}:${authUser.id}`;
+        const sb = getSupabase(userIdKey);
+        if (sb) {
+          try {
+            await sb.from('seedfit_user_data')
+              .update({
+                subscription_tier: 'free',
+                updated_at: new Date().toISOString()
+              })
+              .eq('user_id', userIdKey);
+          } catch (err) {
+            console.warn('Subscription cancel db update failed:', err);
+          }
+        }
+      }
+
+      window.closeMembershipManagementModal();
+      showToast('구독이 정상적으로 취소되었습니다. 무료 플랜으로 전환되었습니다.');
+      renderCurrentTab();
     };
 
     window.startLemonSqueezyCheckout = function() {
@@ -1423,7 +1624,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.8.1';
+    const CURRENT_APP_VERSION = 'v1.8.2';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');
@@ -3224,6 +3425,8 @@
       const isGuest = safeStorage.get('SEEDFIT_GUEST_MODE') === 'true';
       const isProMember = isUserPro();
       const isAdmin = isAdminUser();
+      const isMasterAdmin = isMasterAdminAccount();
+      const adminTestMode = getAdminTestMode();
 
       container.innerHTML = `
         <div class="space-y-4">
@@ -3280,12 +3483,16 @@
             ${authUser ? `
               <div class="flex items-center justify-between text-[11px] pt-2.5 border-t ${isLightMode ? 'border-neutral-100' : 'border-neutral-800/80'}">
                 <div class="flex items-center space-x-1.5">
-                  <span class="w-2 h-2 rounded-full ${isProMember ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}"></span>
+                  <span class="w-2 h-2 rounded-full ${isAdmin ? 'bg-amber-400' : (isProMember ? 'bg-emerald-400 animate-pulse' : 'bg-neutral-500')}"></span>
                   <span class="font-medium ${isLightMode ? 'text-neutral-700' : 'text-neutral-300'}">
                     ${isAdmin ? '마스터 관리자 프리패스 연동됨' : (isProMember ? '클라우드 실시간 동기화됨' : '로컬 보존 모드 (클라우드 Pro)')}
                   </span>
                 </div>
-                ${isProMember ? `
+                ${isAdmin ? `
+                  <button onclick="window.syncToCloud(true)" class="py-1 px-2.5 rounded-lg text-[10px] font-semibold ${isLightMode ? 'bg-neutral-100 hover:bg-neutral-200 text-neutral-700 border border-neutral-200' : 'bg-neutral-800 hover:bg-neutral-700 text-neutral-300'} transition active:scale-95 flex items-center space-x-1">
+                    <span>지금 동기화</span>
+                  </button>
+                ` : (isProMember ? `
                   <button onclick="window.syncToCloud(true)" class="py-1 px-2.5 rounded-lg text-[10px] font-semibold ${isLightMode ? 'bg-neutral-100 hover:bg-neutral-200 text-neutral-700 border border-neutral-200' : 'bg-neutral-800 hover:bg-neutral-700 text-neutral-300'} transition active:scale-95 flex items-center space-x-1">
                     <span>지금 동기화</span>
                   </button>
@@ -3293,8 +3500,35 @@
                   <button onclick="window.openSubscriptionModal()" class="py-1 px-2.5 rounded-lg text-[10px] font-bold bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-sm transition active:scale-95 flex items-center space-x-1">
                     <span>Pro 연동</span>
                   </button>
-                `}
+                `)}
               </div>
+
+              ${isMasterAdmin ? `
+                <!-- 마스터 관리자 전용 상태 시뮬레이터 (일반 사용자에게는 절대 미노출) -->
+                <div class="pt-2.5 border-t ${isLightMode ? 'border-neutral-100' : 'border-neutral-800/80'} space-y-1.5">
+                  <div class="flex justify-between items-center text-[10px]">
+                    <span class="text-neutral-400 font-bold flex items-center space-x-1">
+                      <span>👑 관리자 뷰 시뮬레이터</span>
+                      <span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30 font-semibold">테스트 전용</span>
+                    </span>
+                    <span class="text-[9px] font-mono text-neutral-500">현재 상태: <b class="${adminTestMode === 'free' ? 'text-amber-400' : (adminTestMode === 'pro' ? 'text-indigo-400' : 'text-amber-300')}">${adminTestMode === 'free' ? '무료 플랜' : (adminTestMode === 'pro' ? '프로 플랜' : '관리자')}</b></span>
+                  </div>
+                  <div class="grid grid-cols-3 gap-1.5 p-1 rounded-2xl ${isLightMode ? 'bg-neutral-100 border border-neutral-200' : 'bg-neutral-950 border border-neutral-800'}">
+                    <button onclick="window.setAdminTestMode('free')" class="py-1.5 rounded-xl text-[11px] font-bold transition active:scale-95 ${adminTestMode === 'free' ? 'bg-amber-500 text-black shadow-md font-black' : (isLightMode ? 'text-neutral-600 hover:text-black' : 'text-neutral-400 hover:text-white')}">
+                      무료플랜
+                    </button>
+                    <button onclick="window.setAdminTestMode('pro')" class="py-1.5 rounded-xl text-[11px] font-bold transition active:scale-95 ${adminTestMode === 'pro' ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md font-black' : (isLightMode ? 'text-neutral-600 hover:text-black' : 'text-neutral-400 hover:text-white')}">
+                      프로플랜
+                    </button>
+                    <button onclick="window.setAdminTestMode('admin')" class="py-1.5 rounded-xl text-[11px] font-bold transition active:scale-95 ${adminTestMode === 'admin' ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-black shadow-md font-black' : (isLightMode ? 'text-neutral-600 hover:text-black' : 'text-neutral-400 hover:text-white')}">
+                      관리자
+                    </button>
+                  </div>
+                  <p class="text-[9px] text-neutral-500 leading-tight">
+                    * 무료/프로/관리자 3가지 상태를 선택하여 각 권한별 화면과 제한 기능을 실시간으로 검증할 수 있습니다.
+                  </p>
+                </div>
+              ` : ''}
             ` : ''}
 
             ${!authUser ? `
@@ -3341,7 +3575,7 @@
                   Pro 구독
                 </button>
               ` : `
-                <button onclick="window.openSubscriptionModal()" class="py-1 px-2.5 rounded-lg text-[10px] font-semibold ${isLightMode ? 'bg-neutral-100 hover:bg-neutral-200 text-neutral-700' : 'bg-neutral-800 hover:bg-neutral-700 text-neutral-300'} transition shrink-0">
+                <button onclick="window.openMembershipManagementModal()" class="py-1 px-2.5 rounded-lg text-[10px] font-semibold ${isLightMode ? 'bg-neutral-100 hover:bg-neutral-200 text-neutral-700' : 'bg-neutral-800 hover:bg-neutral-700 text-neutral-300'} transition shrink-0">
                   멤버십 관리
                 </button>
               `)}
