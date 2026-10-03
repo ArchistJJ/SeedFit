@@ -274,8 +274,8 @@
           <p class="text-xs text-neutral-400 mt-1 font-semibold">
             시드 & 투자 자금 관리
           </p>
-          <p class="text-[11px] text-neutral-500 mt-1.5 max-w-xs mx-auto leading-relaxed">
-            체계적인 시드 자금 관리와 감정 제어로 자산을 안전하게 성장시키세요.
+          <p class="text-[11px] text-neutral-500 mt-1.5 max-w-xs mx-auto leading-relaxed break-keep">
+            체계적인 시드 자금 관리와 감정 제어로<br>자산을 안전하게 성장시키세요.
           </p>
         </div>
       </div>
@@ -759,7 +759,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.7.5').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.7.6').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -1369,7 +1369,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.7.5';
+    const CURRENT_APP_VERSION = 'v1.7.6';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');
