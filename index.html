@@ -162,11 +162,11 @@
       <!-- 기기 선택 탭 버튼 (자동 감지 기본 선택) -->
       <div class="grid grid-cols-2 p-1 bg-neutral-900 border border-neutral-800 rounded-2xl gap-1">
         <button id="tabBtnIos" onclick="window.switchLandingTab('ios')" class="py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1.5 bg-neutral-800 text-white shadow-sm">
-          <span>🍎</span>
+          <svg class="w-4 h-4 text-neutral-300" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.37c.61-.75 1.04-1.8 0.92-2.85-.9.04-1.99.6-2.63 1.35-.57.65-1.06 1.71-.93 2.73 1 .08 2.03-.49 2.64-1.23z"/></svg>
           <span>아이폰 (iOS)</span>
         </button>
         <button id="tabBtnAndroid" onclick="window.switchLandingTab('android')" class="py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1.5 text-neutral-400 hover:text-white">
-          <span>🤖</span>
+          <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
           <span>갤럭시 (안드로이드)</span>
         </button>
       </div>
@@ -176,14 +176,14 @@
         <!-- Safari 권장 알림 배너 -->
         <div id="iosSafariNotice" class="p-3 bg-blue-500/10 border border-blue-500/25 rounded-2xl flex items-center justify-between text-xs text-blue-300">
           <div class="flex items-center space-x-2">
-            <span class="text-base">🧭</span>
+            <svg class="w-4 h-4 text-blue-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             <span>아이폰은 <b>Safari 브라우저</b>에서 홈 화면에 추가할 수 있습니다.</span>
           </div>
         </div>
 
         <div class="bg-neutral-900/80 border border-neutral-800 rounded-3xl p-5 space-y-4">
           <div class="font-bold text-sm text-white flex items-center space-x-2">
-            <span>📲</span>
+            <svg class="w-4 h-4 text-blue-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
             <span>홈 화면에 앱으로 추가하는 방법</span>
           </div>
 
@@ -216,7 +216,9 @@
 
         <!-- 하단 공유 버튼 가리키는 부드러운 화살표 안내 -->
         <div class="p-3 rounded-2xl bg-neutral-900/50 border border-neutral-800/60 text-center text-xs text-neutral-400 space-y-1">
-          <div class="text-blue-400 animate-bounce text-base">⬇️</div>
+          <div class="text-blue-400 animate-bounce flex justify-center">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>
+          </div>
           <p class="text-[11px]">지금 화면 맨 아래의 <b>공유 버튼</b>을 눌러주세요</p>
         </div>
       </div>
@@ -231,13 +233,16 @@
 
           <!-- 갤럭시 원클릭 설치 버튼 -->
           <button id="btnAndroidInstall" onclick="window.triggerAndroidInstall()" class="w-full py-4 bg-gradient-to-r from-emerald-500 to-blue-600 hover:from-emerald-400 hover:to-blue-500 text-white font-black rounded-2xl shadow-xl transition active:scale-95 flex items-center justify-center space-x-2 text-sm tracking-wide">
-            <span class="text-base">⚡</span>
+            <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
             <span>SeedFit 앱 3초 만에 설치하기</span>
           </button>
 
           <!-- 수동 백업 안내 (오류 방지용) -->
           <div class="pt-2 text-left border-t border-neutral-800/80 space-y-2 text-xs text-neutral-400">
-            <p class="font-semibold text-neutral-300">💡 만약 설치 창이 자동으로 안 뜰 경우:</p>
+            <p class="font-semibold text-neutral-300 flex items-center space-x-1.5">
+              <svg class="w-3.5 h-3.5 text-blue-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              <span>만약 설치 창이 자동으로 안 뜰 경우:</span>
+            </p>
             <div class="space-y-1.5 text-[11px]">
               <div>• <b>크롬</b>: 우측 상단 점 3개(⋮) → <b>[앱 설치]</b> 또는 <b>[홈 화면에 추가]</b></div>
               <div>• <b>삼성인터넷</b>: 우측 하단 메뉴(≡) → <b>[현재 페이지 추가]</b> → <b>[홈 화면]</b></div>
@@ -305,7 +310,7 @@
       <!-- 중요 데이터 보존 안내 카드 (유저 필수 지침) -->
       <div class="bg-amber-500/10 border border-amber-500/25 rounded-2xl p-4 space-y-2 text-left">
         <div class="flex items-center space-x-2 text-amber-400 font-bold text-xs">
-          <span class="text-base">⚠️</span>
+          <svg class="w-4 h-4 text-amber-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
           <span>로그인 사용을 권장합니다</span>
         </div>
         <p class="text-[11px] text-neutral-300 leading-relaxed">
@@ -402,12 +407,12 @@
 
         <div class="grid grid-cols-2 gap-3 pt-1">
           <button onclick="selectSettleType('WIN')" id="btnSettleWin" class="py-3 rounded-2xl bg-emerald-500/20 border-2 border-emerald-500 flex flex-col items-center space-y-1 transition active:scale-95 shadow-sm">
-            <span class="text-xl">🎯</span>
+            <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             <span class="text-xs font-bold text-emerald-400">적중</span>
             <span id="btnSettleWinSub" class="text-[10px] text-emerald-300 font-mono">+45,000원</span>
           </button>
           <button onclick="selectSettleType('LOSE')" id="btnSettleLose" class="py-3 rounded-2xl bg-rose-500/10 border border-neutral-700 hover:bg-rose-500/20 flex flex-col items-center space-y-1 transition active:scale-95">
-            <span class="text-xl">❌</span>
+            <svg class="w-6 h-6 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
             <span class="text-xs font-bold text-rose-400">미적중 (0원)</span>
             <span id="btnSettleLoseSub" class="text-[10px] text-rose-300 font-mono">-50,000원</span>
           </button>
@@ -521,7 +526,7 @@
         </div>
 
         <div id="newRecordCooldownWarning" class="hidden p-2.5 rounded-xl bg-amber-500/15 border border-amber-500/30 text-[11px] text-amber-300 flex items-center space-x-2">
-          <span>🧘</span>
+          <svg class="w-4 h-4 text-amber-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
           <span id="newRecordCooldownWarningText">현재 쿨다운 세션 진행 중입니다. 충동 투자가 아닌지 신중히 점검하세요.</span>
         </div>
 
@@ -572,11 +577,11 @@
         <div class="w-12 h-1 bg-neutral-700 rounded-full mx-auto"></div>
         
         <div class="text-center space-y-2 pt-1">
-          <div class="w-14 h-14 mx-auto rounded-full bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-3xl">
-            🧘
+          <div class="w-14 h-14 mx-auto rounded-full bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400">
+            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
           </div>
           <div class="inline-block px-3 py-1 rounded-full bg-rose-500/20 text-rose-400 border border-rose-500/30 text-[11px] font-bold" id="mentalCareReasonBadge">
-            ⚠️ 3연패 지속 감지
+            3연패 지속 감지
           </div>
           <h3 class="text-lg font-black text-white">잠시 멈추고 호흡을 가다듬을 시간</h3>
           <p class="text-xs text-neutral-400 leading-relaxed max-w-xs mx-auto" id="mentalCareSubMessage">
@@ -604,7 +609,7 @@
         <!-- Golden Rules of Tilt Prevention -->
         <div class="space-y-2 bg-neutral-950/50 border border-neutral-800/80 rounded-2xl p-3.5 text-xs">
           <div class="font-bold text-neutral-200 flex items-center space-x-1.5">
-            <span>🛡️</span>
+            <svg class="w-4 h-4 text-amber-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
             <span>추격 투자 방지 3원칙</span>
           </div>
           <ul class="space-y-1.5 text-[11px] text-neutral-400 list-disc list-inside">
@@ -858,7 +863,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.8.5').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.8.6').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -993,7 +998,7 @@
       }
 
       // beforeinstallprompt가 아직 없거나 브라우저 권한 제한인 경우 (오류 크래시 100% 방지 폴백)
-      alert("💡 갤럭시 브라우저 메뉴에서 간편하게 설치할 수 있습니다!\n\n1. 브라우저 우측 상단 점 3개(⋮) 또는 우측 하단 삼선(≡) 터치\n2. [앱 설치] 또는 [홈 화면에 추가] 선택\n\n누르시면 3초 만에 폰에 정식 앱으로 설치됩니다.");
+      alert("갤럭시 브라우저 메뉴에서 간편하게 설치할 수 있습니다!\n\n1. 브라우저 우측 상단 점 3개(⋮) 또는 우측 하단 삼선(≡) 터치\n2. [앱 설치] 또는 [홈 화면에 추가] 선택\n\n누르시면 3초 만에 폰에 정식 앱으로 설치됩니다.");
     };
 
     window.skipLandingAndExplore = function() {
@@ -1058,7 +1063,7 @@
       }
       if (userObj) {
         const isAdmin = (typeof isAdminUser === 'function' && isAdminUser());
-        showToast((userObj.name || '사용자') + '님, 환영합니다!' + (isAdmin ? ' (👑 관리자 모드)' : ''));
+        showToast((userObj.name || '사용자') + '님, 환영합니다!' + (isAdmin ? ' (관리자 모드)' : ''));
         window.syncFromCloud(userObj);
       }
       if (typeof renderCurrentTab === 'function') {
@@ -1176,7 +1181,7 @@
           if (showToastNotice && isPro) showToast('클라우드 동기화 실패: ' + (error.message || '네트워크 확인'));
         } else {
           safeStorage.set('SEEDFIT_LAST_SYNC_TIME', new Date().toISOString());
-          if (showToastNotice && isPro) showToast('클라우드에 안전하게 동기화되었습니다! ☁️');
+          if (showToastNotice && isPro) showToast('클라우드에 안전하게 동기화되었습니다.');
           if (currentTab === 'settings') {
             const area = document.getElementById('contentArea');
             if (area) renderSettingsTab(area);
@@ -1268,7 +1273,7 @@
             saveState(true);
             renderCurrentTab();
             safeStorage.set('SEEDFIT_LAST_SYNC_TIME', data.updated_at || new Date().toISOString());
-            if (!silent) showToast('클라우드 데이터를 안전하게 불러왔습니다! ☁️');
+            if (!silent) showToast('클라우드 데이터를 안전하게 불러왔습니다.');
           } else {
             await window.syncToCloud(false, true);
           }
@@ -1422,6 +1427,15 @@
           }
         } catch (e) {
           console.warn('Storage write unavailable:', e);
+        }
+      },
+      remove: function(key) {
+        try {
+          if (typeof window !== 'undefined' && window.localStorage) {
+            localStorage.removeItem(key);
+          }
+        } catch (e) {
+          console.warn('Storage remove unavailable:', e);
         }
       }
     };
@@ -1586,7 +1600,7 @@
 
     window.confirmCancelSubscription = async function() {
       const confirmed = confirm(
-        "⚠️ SeedFit Pro 구독 취소 및 7일 데이터 보존 안내\n\n" +
+        "[안내] SeedFit Pro 구독 취소 및 7일 데이터 보존\n\n" +
         "• 구독을 취소하시면 다음 결제 주기부터 자동 결제가 중단됩니다.\n" +
         "• [중요] 기존에 등록하신 모든 투자 기록 및 프로젝트 데이터는 '해지일로부터 7일 동안만 임시 보존'됩니다.\n" +
         "• 7일 이내에 다시 구독하시면 기존의 모든 데이터가 즉시 연동 복원됩니다.\n" +
@@ -1725,7 +1739,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.8.5';
+    const CURRENT_APP_VERSION = 'v1.8.6';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');
@@ -1872,7 +1886,7 @@
           const ins = document.getElementById('breathingInstruction');
           const circle = document.getElementById('breathingCircle');
           const timer = document.getElementById('breathingTimerText');
-          if (ins) ins.innerHTML = '<span class="text-emerald-400 font-bold">✓ 1분 심호흡 완료! 심박수가 안정되었습니다.</span>';
+          if (ins) ins.innerHTML = '<span class="text-emerald-400 font-bold inline-flex items-center space-x-1"><svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg><span>1분 심호흡 완료! 심박수가 안정되었습니다.</span></span>';
           if (circle) circle.className = "w-20 h-20 rounded-full border-4 border-emerald-400/50 bg-emerald-500/10 flex items-center justify-center transition-all transform scale-100";
           if (timer) timer.textContent = "완료";
           showToast('1분 호흡 완료! 편안한 마음으로 휴식하세요.');
@@ -2010,25 +2024,25 @@
       const sub = document.getElementById('mentalCareSubMessage');
 
       if (data.manual) {
-        if (badge) badge.textContent = '🧘 멘탈 관리 및 평정심 모드';
+        if (badge) badge.textContent = '멘탈 관리 및 평정심 모드';
         if (sub) sub.textContent = `투자 전 감정을 배제하고 차분한 이성으로 확률과 리스크를 점검하세요.` + (streak.avgInvest > 0 ? ` (현재 내 평균 투자금: ${streak.avgInvest.toLocaleString()}원)` : '');
       } else if (streak.isStreakTriggered || streak.is3Streak) {
         const streakCnt = streak.threshold || streak.consecutiveLosses || 3;
-        if (badge) badge.textContent = `⚠️ ${streakCnt}연패 지속 감지 (연속 -${streak.streakLossAmount.toLocaleString()}원)`;
+        if (badge) badge.textContent = `${streakCnt}연패 지속 감지 (연속 -${streak.streakLossAmount.toLocaleString()}원)`;
         if (sub) sub.textContent = `최근 ${streakCnt}회 연속 미적중되었습니다.` + (streak.avgInvest > 0 ? ` (평균 투자금 ${streak.avgInvest.toLocaleString()}원 대비 연속 손실 ${streak.streakLossAmount.toLocaleString()}원)` : ` (연속 손실 ${streak.streakLossAmount.toLocaleString()}원)`) + ` 연패 시 뇌는 조급함으로 무리한 투자를 유발합니다. 지금 멈추는 것이 가장 현명합니다.`;
       } else if (streak.isChasingLoss) {
         const ratioText = streak.avgInvest > 0 ? `의 ${(streak.lastInvestAmount / streak.avgInvest).toFixed(1)}배에 달하는 ` : ' 대비 ';
-        if (badge) badge.textContent = `🚨 평소 평균 대비 과다 투자 손실 감지`;
+        if (badge) badge.textContent = `평소 평균 대비 과다 투자 손실 감지`;
         if (sub) sub.textContent = `평소 평균 투자금(${streak.avgInvest.toLocaleString()}원)${ratioText}${streak.lastInvestAmount.toLocaleString()}원이 손실되었습니다. 조급한 추격 투자를 즉시 멈추세요.`;
       } else if (streak.isHeavyLossStreak) {
         const ratioText = streak.avgInvest > 0 ? `의 ${(streak.streakLossAmount / streak.avgInvest).toFixed(1)}배에 달합니다.` : '입니다.';
-        if (badge) badge.textContent = `⚠️ 평균 투자금 대비 누적 손실 급증`;
+        if (badge) badge.textContent = `평균 투자금 대비 누적 손실 급증`;
         if (sub) sub.textContent = `최근 연속 손실액(${streak.streakLossAmount.toLocaleString()}원)이 평소 평균 투자금(${streak.avgInvest.toLocaleString()}원)${ratioText} 쿨다운이 절실한 시점입니다.`;
       } else if (streak.isRecentPatternCollapse) {
-        if (badge) badge.textContent = `⚠️ 최근 경기 페이스 붕괴 감지`;
+        if (badge) badge.textContent = `최근 경기 페이스 붕괴 감지`;
         if (sub) sub.textContent = `최근 경기들에서 지속적인 손실이 발생하고 있습니다. 흐름이 좋지 않을 때는 쉬어가는 것이 시드를 지키는 최고의 전략입니다.`;
       } else {
-        if (badge) badge.textContent = '🧘 멘탈 케어 & 마인드셋';
+        if (badge) badge.textContent = '멘탈 케어 & 마인드셋';
         if (sub) sub.textContent = `장기적인 플러스 ROI를 위해 가장 중요한 것은 철저한 멘탈과 자금 관리입니다.` + (streak.avgInvest > 0 ? ` (내 평균 투자금: ${streak.avgInvest.toLocaleString()}원)` : '');
       }
 
@@ -2077,7 +2091,9 @@
         return `
           <div onclick="window.openMentalCareModal({ manual: true })" class="cursor-pointer p-3.5 ${isLightMode ? 'bg-amber-50/90 border-amber-300' : 'bg-gradient-to-r from-amber-500/15 via-orange-500/10 to-amber-500/15 border-amber-500/30'} border rounded-2xl flex items-center justify-between text-xs transition hover:opacity-90 active:scale-[0.98] shadow-sm mb-3">
             <div class="flex items-center space-x-3 min-w-0 flex-1 mr-2">
-              <span class="text-2xl animate-pulse shrink-0">🧘</span>
+              <div class="w-8 h-8 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
+                <svg class="w-5 h-5 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+              </div>
               <div class="min-w-0 flex-1 space-y-1">
                 <div class="flex items-center gap-1.5 flex-wrap">
                   <span class="font-bold ${isLightMode ? 'text-amber-800' : 'text-amber-400'} text-xs">쿨다운 휴식 중</span>
@@ -2100,7 +2116,9 @@
           return `
             <div onclick="window.openMentalCareModal()" class="cursor-pointer p-3.5 bg-gradient-to-r from-rose-500/15 via-amber-500/10 to-rose-500/15 border border-rose-500/30 rounded-2xl flex items-center justify-between text-xs transition hover:opacity-90 active:scale-[0.98] shadow-sm mb-3">
               <div class="flex items-center space-x-3 min-w-0 flex-1 mr-2">
-                <span class="text-2xl shrink-0">🧘</span>
+                <div class="w-8 h-8 rounded-full bg-rose-500/20 text-rose-400 flex items-center justify-center shrink-0">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                </div>
                 <div class="min-w-0 flex-1 space-y-1">
                   <div class="flex items-center gap-1.5 flex-wrap">
                     <span class="font-bold text-rose-400 text-xs">마인드 케어</span>
@@ -2392,7 +2410,7 @@
             <div class="flex space-x-1.5 overflow-x-auto pb-0.5 custom-scroll text-xs">
               ${[
                 { id: 'ALL', label: '전체 보기' },
-                { id: 'PENDING', label: `정산 대기중 ⏳${pendingCount > 0 ? ` (${pendingCount})` : ''}` },
+                { id: 'PENDING', label: `정산 대기중${pendingCount > 0 ? ` (${pendingCount})` : ''}` },
                 { id: '일반투자', label: '일반투자' },
                 { id: '전략투자', label: '전략투자' }
               ].map(item => `
@@ -2434,10 +2452,10 @@
               profitDisplay = `<span class="text-xs ${isLightMode ? 'text-amber-800 font-bold' : 'text-amber-400'} font-mono">진행 중</span>`;
             } else if (r.status === 'WIN') {
               const profit = (r.returnAmount || 0) - r.investAmount;
-              statusBadge = `<span class="bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold px-2 py-0.5 rounded-full">적중 🎯</span>`;
+              statusBadge = `<span class="bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold px-2 py-0.5 rounded-full">적중</span>`;
               profitDisplay = `<span class="text-xs font-mono font-bold text-emerald-400">+${profit.toLocaleString()}원</span>`;
             } else {
-              statusBadge = `<span class="bg-rose-500/15 text-rose-400 border border-rose-500/30 text-[10px] font-bold px-2 py-0.5 rounded-full">미적중 ❌</span>`;
+              statusBadge = `<span class="bg-rose-500/15 text-rose-400 border border-rose-500/30 text-[10px] font-bold px-2 py-0.5 rounded-full">미적중</span>`;
               profitDisplay = `<span class="text-xs font-mono font-bold text-rose-400">-${r.investAmount.toLocaleString()}원</span>`;
             }
 
@@ -2623,7 +2641,7 @@
                   </div>
                   <div class="flex items-center space-x-1.5">
                     <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${p.status === 'ACTIVE' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' : (p.status === 'SUCCESS' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-400 border border-rose-500/30')}">
-                      ${p.status === 'ACTIVE' ? '진행 중' : (p.status === 'SUCCESS' ? '성공 🏆' : '실패 ⚠️')}
+                      ${p.status === 'ACTIVE' ? '진행 중' : (p.status === 'SUCCESS' ? '성공' : '실패')}
                     </span>
                     <button onclick="event.stopPropagation(); window.deleteProject('${p.id}')" class="p-1 rounded-lg text-neutral-500 hover:text-rose-400 hover:bg-rose-500/10 transition active:scale-90" title="프로젝트 삭제">
                       <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
@@ -2725,14 +2743,14 @@
       if (p.status === 'SUCCESS') {
         statusBanner = `
           <div class="p-3 bg-emerald-500/20 border border-emerald-500/40 rounded-2xl flex items-center space-x-2 text-emerald-400">
-            <span class="text-xl">🏆</span>
+            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
             <div class="text-xs font-bold leading-snug">목표 금액 달성 완료! 프로젝트가 성공으로 종료되었습니다.</div>
           </div>
         `;
       } else if (p.status === 'FAILED') {
         statusBanner = `
           <div class="p-3 bg-rose-500/20 border border-rose-500/40 rounded-2xl flex items-center space-x-2 text-rose-400">
-            <span class="text-xl">⚠️</span>
+            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
             <div class="text-xs font-bold leading-snug">초기 시드금을 모두 소진하여 프로젝트가 종료되었습니다.</div>
           </div>
         `;
@@ -2807,10 +2825,10 @@
               profitDisplay = `<span class="text-xs ${isLightMode ? 'text-amber-800 font-bold' : 'text-amber-400'} font-mono">진행 중</span>`;
             } else if (r.status === 'WIN') {
               const profit = (r.returnAmount || 0) - r.investAmount;
-              statusBadge = `<span class="bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold px-2 py-0.5 rounded-full">적중 🎯</span>`;
+              statusBadge = `<span class="bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold px-2 py-0.5 rounded-full">적중</span>`;
               profitDisplay = `<span class="text-xs font-mono font-bold text-emerald-400">+${profit.toLocaleString()}원</span>`;
             } else {
-              statusBadge = `<span class="bg-rose-500/15 text-rose-400 border border-rose-500/30 text-[10px] font-bold px-2 py-0.5 rounded-full">미적중 ❌</span>`;
+              statusBadge = `<span class="bg-rose-500/15 text-rose-400 border border-rose-500/30 text-[10px] font-bold px-2 py-0.5 rounded-full">미적중</span>`;
               profitDisplay = `<span class="text-xs font-mono font-bold text-rose-400">-${r.investAmount.toLocaleString()}원</span>`;
             }
 
@@ -3334,7 +3352,7 @@
           <!-- 현재 선택된 조합 안내 바 -->
           <div class="pt-1 border-t ${isLightMode ? 'border-neutral-100' : 'border-neutral-800'} flex items-center justify-between text-[11px]">
             <div class="flex items-center space-x-1.5 text-blue-400 font-semibold truncate">
-              <span>🎯</span>
+              <svg class="w-3.5 h-3.5 text-blue-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/></svg>
               <span>${filterBadgeText}</span>
               <span class="font-mono text-neutral-400 font-normal">(${comboRecords.length}건)</span>
             </div>
@@ -3551,7 +3569,7 @@
                       </div>
                     `}
                     <div class="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold ${authUser.provider === 'kakao' ? 'bg-[#FEE500] text-black' : (authUser.provider === 'google' ? 'bg-white text-neutral-800 border border-neutral-300' : 'bg-emerald-500 text-black')}">
-                      ${authUser.provider === 'kakao' ? 'K' : (authUser.provider === 'google' ? 'G' : '★')}
+                      ${authUser.provider === 'kakao' ? 'K' : (authUser.provider === 'google' ? 'G' : 'U')}
                     </div>
                   </div>
                   <div>
@@ -3561,14 +3579,14 @@
                         ${authUser.provider === 'kakao' ? '카카오 연동' : (authUser.provider === 'google' ? 'Google 연동' : '체험 계정')}
                       </span>
                       ${isAdmin ? `
-                        <span class="text-[9px] px-1.5 py-0.2 rounded font-black bg-amber-500/20 text-amber-400 border border-amber-500/30">👑 관리자</span>
+                        <span class="text-[9px] px-1.5 py-0.2 rounded font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">관리자</span>
                       ` : ''}
                     </h3>
                     <p class="text-[10px] text-neutral-400">${authUser.email || '클라우드 동기화 활성화됨'}</p>
                   </div>
                 ` : `
-                  <div class="w-10 h-10 rounded-full ${isLightMode ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-amber-500/15 text-amber-400 border-amber-500/30'} flex items-center justify-center text-lg border">
-                    👤
+                  <div class="w-10 h-10 rounded-full ${isLightMode ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-amber-500/15 text-amber-400 border-amber-500/30'} flex items-center justify-center border">
+                    <svg class="w-5 h-5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
                   </div>
                   <div>
                     <h3 class="text-xs font-bold ${isLightMode ? 'text-neutral-900' : 'text-white'} flex items-center space-x-1.5">
@@ -3619,8 +3637,9 @@
                 <!-- 마스터 관리자 전용 상태 시뮬레이터 (일반 사용자에게는 절대 미노출) -->
                 <div class="pt-2.5 border-t ${isLightMode ? 'border-neutral-100' : 'border-neutral-800/80'} space-y-1.5">
                   <div class="flex justify-between items-center text-[10px]">
-                    <span class="text-neutral-400 font-bold flex items-center space-x-1">
-                      <span>👑 관리자 뷰 시뮬레이터</span>
+                    <span class="text-neutral-400 font-bold flex items-center space-x-1.5">
+                      <svg class="w-3.5 h-3.5 text-amber-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
+                      <span>관리자 뷰 시뮬레이터</span>
                       <span class="text-[9px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30 font-semibold">테스트 전용</span>
                     </span>
                     <span class="text-[9px] font-mono text-neutral-500">현재 상태: <b class="${adminTestMode === 'free' ? 'text-amber-400' : (adminTestMode === 'pro' ? 'text-indigo-400' : 'text-amber-300')}">${adminTestMode === 'free' ? '무료 플랜' : (adminTestMode === 'pro' ? '프로 플랜' : '관리자')}</b></span>
@@ -3736,7 +3755,7 @@
           <div class="${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900 border-neutral-800'} border rounded-3xl p-4 space-y-3">
             <div class="flex justify-between items-center">
               <div class="flex items-center space-x-2">
-                <span class="text-base">🧘</span>
+                <svg class="w-4 h-4 text-amber-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
                 <h3 class="text-xs font-bold ${isLightMode ? 'text-neutral-800' : 'text-neutral-300'}">멘탈 케어 & 쿨다운 알림</h3>
                 ${!isProMember ? `
                   <span class="text-[9px] font-black px-1.5 py-0.2 rounded bg-indigo-500/15 text-indigo-400 border border-indigo-500/30">PRO</span>
@@ -3777,8 +3796,8 @@
               </div>
 
               <div class="p-2.5 rounded-xl ${isLightMode ? 'bg-neutral-50 border border-neutral-200' : 'bg-neutral-950/60 border border-neutral-800/80'} text-[11px] space-y-1.5 text-neutral-400">
-                <div class="font-semibold ${isLightMode ? 'text-neutral-700' : 'text-neutral-300'} flex items-center space-x-1">
-                  <span>💡</span>
+                <div class="font-semibold ${isLightMode ? 'text-neutral-700' : 'text-neutral-300'} flex items-center space-x-1.5">
+                  <svg class="w-3.5 h-3.5 text-amber-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
                   <span>최근 기록 기반 자동 감지 조건:</span>
                 </div>
                 <div class="pl-4 space-y-1 text-[10px] leading-tight">
@@ -3792,7 +3811,7 @@
 
             <div class="pt-1">
               <button onclick="window.openMentalCareModal({ manual: true })" class="w-full py-2.5 ${isLightMode ? 'bg-amber-100 hover:bg-amber-200 text-amber-800 border-amber-300' : 'bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border-amber-500/25'} font-semibold rounded-xl text-xs transition border active:scale-95 flex items-center justify-center space-x-1.5">
-                <span>🧘</span>
+                <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
                 <span>멘탈 케어 & 호흡 가이드 직접 열기</span>
               </button>
             </div>
@@ -3801,7 +3820,7 @@
           <div class="${isLightMode ? 'bg-white border-neutral-200 shadow-sm' : 'bg-neutral-900 border-neutral-800'} border rounded-3xl p-4 space-y-3">
             <div class="flex justify-between items-center">
               <h3 class="text-xs font-bold ${isLightMode ? 'text-neutral-800' : 'text-neutral-300'} flex items-center space-x-1.5">
-                <span>💾</span>
+                <svg class="w-3.5 h-3.5 text-neutral-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 4H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2V8l-4-4H8z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 4v4h8V4M10 16h4"/></svg>
                 <span>오프라인 수동 백업 & 복원 (JSON)</span>
               </h3>
               <span class="text-[10px] text-neutral-400 font-medium">로컬 소장용</span>
@@ -3810,12 +3829,12 @@
               계정 로그인 시 모든 기록이 클라우드에 실시간으로 안전하게 자동 보존됩니다. 이 기능은 클라우드 동기화와 별개로 <b>내 기기에 별도 오프라인 백업 파일(.json)을 직접 영구 소장</b>하거나 다른 환경으로 이전할 때 사용합니다.
             </p>
             <div class="grid grid-cols-2 gap-2 pt-1">
-              <button onclick="exportDataJson()" class="py-2.5 ${isLightMode ? 'bg-neutral-100 hover:bg-neutral-200 text-neutral-800 border border-neutral-200' : 'bg-neutral-800 hover:bg-neutral-700 text-neutral-200'} font-semibold rounded-xl text-xs transition active:scale-95 flex items-center justify-center space-x-1">
-                <span>💾</span>
+              <button onclick="exportDataJson()" class="py-2.5 ${isLightMode ? 'bg-neutral-100 hover:bg-neutral-200 text-neutral-800 border border-neutral-200' : 'bg-neutral-800 hover:bg-neutral-700 text-neutral-200'} font-semibold rounded-xl text-xs transition active:scale-95 flex items-center justify-center space-x-1.5">
+                <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
                 <span>파일 백업(다운로드)</span>
               </button>
-              <label class="py-2.5 ${isLightMode ? 'bg-neutral-100 hover:bg-neutral-200 text-neutral-800 border border-neutral-200' : 'bg-neutral-800 hover:bg-neutral-700 text-neutral-200'} font-semibold rounded-xl text-xs transition active:scale-95 text-center cursor-pointer flex items-center justify-center space-x-1">
-                <span>📁</span>
+              <label class="py-2.5 ${isLightMode ? 'bg-neutral-100 hover:bg-neutral-200 text-neutral-800 border border-neutral-200' : 'bg-neutral-800 hover:bg-neutral-700 text-neutral-200'} font-semibold rounded-xl text-xs transition active:scale-95 text-center cursor-pointer flex items-center justify-center space-x-1.5">
+                <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
                 <span>파일 불러오기</span>
                 <input type="file" id="importFileInput" onchange="importDataJson(event)" accept=".json" class="hidden" />
               </label>
@@ -3826,7 +3845,7 @@
           <div class="${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900 border-neutral-800'} border rounded-3xl p-4 space-y-3 text-xs text-neutral-300">
             <div class="flex justify-between items-center">
               <div class="font-bold ${isLightMode ? 'text-neutral-900' : 'text-white'} flex items-center space-x-1.5">
-                <span class="text-base">📤</span>
+                <svg class="w-4 h-4 text-blue-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/></svg>
                 <span>앱 다운로드 링크 공유하기</span>
               </div>
               <span class="text-[10px] font-semibold text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">공식 웹앱</span>
@@ -3857,7 +3876,7 @@
               아이폰 홈 화면 웹앱에서 최신 업데이트가 보이지 않을 경우 아래 버튼을 누르면 캐시를 즉시 비우고 최신 버전으로 새로고침합니다.
             </p>
             <button onclick="window.forceAppReload()" class="w-full py-2.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 font-semibold rounded-xl text-xs transition border border-neutral-700 active:scale-95 flex items-center justify-center space-x-1.5">
-              <span>🔄</span>
+              <svg class="w-3.5 h-3.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
               <span>최신 버전으로 즉시 새로고침 (캐시 갱신)</span>
             </button>
           </div>
@@ -3928,7 +3947,7 @@
 
           adminDashboardState.users = fetchedUsers;
           adminDashboardState.lastFetched = new Date().toISOString();
-          if (showToastNotice) showToast('실시간 비즈니스 데이터를 최신화했습니다! 📊');
+          if (showToastNotice) showToast('실시간 비즈니스 데이터를 최신화했습니다.');
         }
       } catch (err) {
         console.error('Admin dashboard fetch exception:', err);
@@ -4013,7 +4032,9 @@
             <!-- 1행: 대시보드 타이틀 & 새로고침 버튼 -->
             <div class="flex justify-between items-center gap-2">
               <div class="flex items-center space-x-2.5 min-w-0">
-                <span class="text-2xl shrink-0">👑</span>
+                <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-500/20 to-indigo-500/20 border border-amber-500/30 flex items-center justify-center shrink-0">
+                  <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                </div>
                 <div class="min-w-0">
                   <h2 class="text-sm sm:text-base font-black ${isLightMode ? 'text-neutral-900' : 'text-white'} tracking-tight whitespace-nowrap">
                     비즈니스 & 구독 대시보드
@@ -4048,7 +4069,7 @@
 
             <!-- 안내 배너 -->
             <div class="p-2.5 rounded-2xl ${isLightMode ? 'bg-blue-50 border-blue-200 text-blue-900' : 'bg-blue-950/30 border-blue-800/40 text-blue-300'} border text-[11px] flex items-center space-x-2">
-              <span class="text-sm shrink-0">💡</span>
+              <svg class="w-4 h-4 text-blue-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
               <span class="leading-tight">
                 현재 계정은 마스터 권한이 부여되어 <b>무료/결제 여부와 무관하게 모든 Pro 기능이 무제한 활성화</b>되어 있습니다.
               </span>
@@ -4061,7 +4082,7 @@
             <div class="${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900 border-neutral-800'} border p-4 rounded-3xl space-y-1 shadow-sm relative overflow-hidden">
               <div class="flex justify-between items-center text-neutral-400 text-[11px]">
                 <span>현재 구독수</span>
-                <span class="text-xs">💳</span>
+                <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
               </div>
               <div class="flex items-baseline space-x-1.5 pt-1">
                 <span class="text-2xl font-black font-mono tracking-tight ${isLightMode ? 'text-neutral-900' : 'text-white'}">
@@ -4077,7 +4098,7 @@
             <div class="${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900 border-neutral-800'} border p-4 rounded-3xl space-y-1 shadow-sm relative overflow-hidden">
               <div class="flex justify-between items-center text-neutral-400 text-[11px]">
                 <span>총 가입수</span>
-                <span class="text-xs">👥</span>
+                <svg class="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
               </div>
               <div class="flex items-baseline space-x-1.5 pt-1">
                 <span class="text-2xl font-black font-mono tracking-tight ${isLightMode ? 'text-neutral-900' : 'text-white'}">
@@ -4093,7 +4114,7 @@
             <div class="${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900 border-neutral-800'} border p-4 rounded-3xl space-y-1 shadow-sm relative overflow-hidden">
               <div class="flex justify-between items-center text-neutral-400 text-[11px]">
                 <span>구독 전환율</span>
-                <span class="text-xs">📈</span>
+                <svg class="w-3.5 h-3.5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
               </div>
               <div class="flex items-baseline space-x-1.5 pt-1">
                 <span class="text-2xl font-black font-mono tracking-tight bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent">
@@ -4109,7 +4130,7 @@
             <div class="${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900 border-neutral-800'} border p-4 rounded-3xl space-y-1 shadow-sm relative overflow-hidden">
               <div class="flex justify-between items-center text-neutral-400 text-[11px]">
                 <span>월 구독 매출 (MRR)</span>
-                <span class="text-xs">💰</span>
+                <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
               </div>
               <div class="flex items-baseline space-x-1 pt-1 truncate">
                 <span class="text-lg font-black font-mono tracking-tight ${isLightMode ? 'text-neutral-900' : 'text-white'}">
@@ -4127,7 +4148,7 @@
             <div class="flex justify-between items-center">
               <div>
                 <h3 class="text-xs font-bold ${isLightMode ? 'text-neutral-900' : 'text-white'} flex items-center space-x-1.5">
-                  <span>📊</span>
+                  <svg class="w-3.5 h-3.5 text-blue-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
                   <span>월별 가입자·구독자 변동 통계</span>
                 </h3>
                 <p class="text-[10px] text-neutral-400">월별 신규 가입 대비 Pro 구독 성장 지표</p>
@@ -4179,7 +4200,7 @@
           <!-- 4. 관리자 빠른 도구 & 연동 현황 -->
           <div class="${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900 border-neutral-800'} border p-4 rounded-3xl space-y-2.5 text-xs text-neutral-400">
             <h4 class="font-bold ${isLightMode ? 'text-neutral-800' : 'text-neutral-200'} flex items-center space-x-1.5">
-              <span>⚙️</span>
+              <svg class="w-3.5 h-3.5 text-neutral-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
               <span>결제 시스템 연동 준비 현황</span>
             </h4>
             <div class="p-3 rounded-2xl ${isLightMode ? 'bg-neutral-50 border-neutral-200' : 'bg-neutral-950/60 border-neutral-800'} border space-y-1.5 text-[11px] leading-relaxed">
@@ -4548,7 +4569,7 @@
       projects.filter(p => p.status === 'ACTIVE').forEach(p => {
         const opt = document.createElement('option');
         opt.value = p.id;
-        opt.textContent = `🎯 ${p.name}`;
+        opt.textContent = p.name;
         select.appendChild(opt);
       });
     }
