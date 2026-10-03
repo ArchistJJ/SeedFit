@@ -647,9 +647,9 @@
           <div class="inline-block px-3.5 py-1 rounded-full bg-gradient-to-r from-indigo-500/20 to-purple-500/20 text-indigo-300 border border-indigo-500/30 text-xs font-black tracking-wider">
             SEEDFIT PRO MEMBERSHIP
           </div>
-          <h3 class="text-xl font-black text-white tracking-tight">시드 & 투자 자금 관리의 완성</h3>
-          <p class="text-xs text-neutral-400 leading-relaxed max-w-xs mx-auto">
-            데이터 무제한 클라우드 실시간 보존과 심층 교차분석으로 흔들리지 않는 성공 투자 규율을 확립하세요.
+          <h3 class="text-xl font-black text-white tracking-tight">자금 관리의 완성</h3>
+          <p class="text-xs text-neutral-400 leading-relaxed max-w-xs mx-auto break-keep">
+            계정 데이터 연동과 분석을 통해<br>흔들리지 않고 자금을 관리하세요.
           </p>
         </div>
 
@@ -704,10 +704,7 @@
             다음에 하기
           </button>
 
-          <div class="text-center pt-1 space-y-1">
-            <button onclick="window.refreshSubscriptionStatus()" class="text-[11px] text-neutral-500 hover:text-indigo-400 underline transition">
-              이미 구독하셨나요? 구독 상태 확인
-            </button>
+          <div class="text-center py-2 space-y-1">
             <div id="subscriptionManageLink" class="hidden">
               <button onclick="window.closeSubscriptionModal(); window.openMembershipManagementModal();" class="text-[11px] text-indigo-400 hover:text-indigo-300 font-semibold underline transition">
                 현재 Pro 멤버십 관리 및 해지 바로가기
@@ -894,7 +891,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.9.2').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.9.3').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -1786,7 +1783,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.9.2';
+    const CURRENT_APP_VERSION = 'v1.9.3';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');
