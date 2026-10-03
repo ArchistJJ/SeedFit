@@ -633,8 +633,9 @@
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
 
-        <div class="w-12 h-1 bg-neutral-700 rounded-full mx-auto"></div>
-        
+        <!-- 동적 상황별 안내 배너 (추가 프로젝트 생성 시도시 등) -->
+        <div id="subscriptionCustomNotice" class="hidden p-3.5 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-bold text-center break-keep shadow-sm"></div>
+
         <div class="text-center space-y-2 pt-1">
           <div class="inline-block px-3.5 py-1 rounded-full bg-gradient-to-r from-indigo-500/20 to-purple-500/20 text-indigo-300 border border-indigo-500/30 text-xs font-black tracking-wider">
             SEEDFIT PRO MEMBERSHIP
@@ -759,7 +760,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.7.6').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.7.7').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -1275,13 +1276,28 @@
       return safeStorage.get('SEEDFIT_IS_PRO') === 'true';
     }
 
-    window.openSubscriptionModal = function() {
+    window.openSubscriptionModal = function(customNotice = '') {
       const modal = document.getElementById('subscriptionModal');
+      const noticeBox = document.getElementById('subscriptionCustomNotice');
+      if (noticeBox) {
+        if (customNotice) {
+          noticeBox.textContent = customNotice;
+          noticeBox.classList.remove('hidden');
+        } else {
+          noticeBox.textContent = '';
+          noticeBox.classList.add('hidden');
+        }
+      }
       if (modal) modal.classList.remove('hidden');
     };
 
     window.closeSubscriptionModal = function() {
       const modal = document.getElementById('subscriptionModal');
+      const noticeBox = document.getElementById('subscriptionCustomNotice');
+      if (noticeBox) {
+        noticeBox.textContent = '';
+        noticeBox.classList.add('hidden');
+      }
       if (modal) modal.classList.add('hidden');
     };
 
@@ -1369,7 +1385,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.7.6';
+    const CURRENT_APP_VERSION = 'v1.7.7';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');
@@ -1595,8 +1611,9 @@
       }, 0);
 
       // 트리거 조건 판정:
-      // A. 3연패 도달 (연패는 3연패 기준)
-      const is3Streak = (consecutiveLosses >= 3);
+      // A. 사용자 설정 연패 도달 (기본 3연패, 사용자 커스텀 가능)
+      const threshold = Number(mentalCareSettings.lossStreakThreshold) || 3;
+      const isStreakTriggered = (consecutiveLosses >= threshold);
       // B. 연속 손실액이 내 평균 투자금의 2.5배 이상 (평균 투자금이 존재할 때만 판정)
       const isHeavyLossStreak = (avgInvest > 0 && consecutiveLosses >= 2 && streakLossAmount >= avgInvest * 2.5);
       // C. 최근 경기에서 평소 평균 투자금의 2배 이상을 투자했다가 미적중 (평균 투자금이 존재할 때만 판정)
@@ -1604,14 +1621,16 @@
       // D. 최근 5경기 중 4경기 이상 미적중이면서 손실 누적
       const isRecentPatternCollapse = (avgInvest > 0 && recent5.length >= 4 && recent5LossCount >= 4 && recent5NetProfit <= -avgInvest * 2);
 
-      const isTriggered = is3Streak || isHeavyLossStreak || isChasingLoss || isRecentPatternCollapse;
+      const isTriggered = isStreakTriggered || isHeavyLossStreak || isChasingLoss || isRecentPatternCollapse;
 
       return {
         consecutiveLosses,
         streakLossAmount,
         avgInvest,
         isTriggered,
-        is3Streak,
+        threshold,
+        is3Streak: isStreakTriggered,
+        isStreakTriggered,
         isHeavyLossStreak,
         isChasingLoss,
         isRecentPatternCollapse,
@@ -1619,9 +1638,22 @@
       };
     }
 
+    window.setLossStreakThreshold = function(threshold) {
+      threshold = Number(threshold) || 3;
+      if (!isUserPro()) {
+        window.openSubscriptionModal('멘탈 가드 연패 기준 설정은 SeedFit Pro 전용 기능입니다.');
+        showToast('멘탈 가드 연패 기준 커스텀은 SeedFit Pro 전용 기능입니다.');
+        return;
+      }
+      mentalCareSettings.lossStreakThreshold = threshold;
+      safeStorage.set(STORAGE_KEY_MENTAL_SETTINGS, JSON.stringify(mentalCareSettings));
+      renderCurrentTab();
+      showToast(`연패 감지 기준이 ${threshold}연패로 설정되었습니다.`);
+    };
+
     window.openMentalCareModal = function(data = {}) {
       if (!isUserPro()) {
-        window.openSubscriptionModal();
+        window.openSubscriptionModal('뇌동·추격 투자 방어 멘탈 가드는 SeedFit Pro 전용 기능입니다.');
         showToast('뇌동·추격 투자 방어 멘탈 가드는 SeedFit Pro 전용 기능입니다.');
         return;
       }
@@ -1633,9 +1665,10 @@
       if (data.manual) {
         if (badge) badge.textContent = '🧘 멘탈 관리 및 평정심 모드';
         if (sub) sub.textContent = `투자 전 감정을 배제하고 차분한 이성으로 확률과 리스크를 점검하세요.` + (streak.avgInvest > 0 ? ` (현재 내 평균 투자금: ${streak.avgInvest.toLocaleString()}원)` : '');
-      } else if (streak.is3Streak) {
-        if (badge) badge.textContent = `⚠️ 3연패 지속 감지 (연속 -${streak.streakLossAmount.toLocaleString()}원)`;
-        if (sub) sub.textContent = `최근 3회 연속 미적중되었습니다.` + (streak.avgInvest > 0 ? ` (평균 투자금 ${streak.avgInvest.toLocaleString()}원 대비 연속 손실 ${streak.streakLossAmount.toLocaleString()}원)` : ` (연속 손실 ${streak.streakLossAmount.toLocaleString()}원)`) + ` 연패 시 뇌는 조급함으로 무리한 투자를 유발합니다. 지금 멈추는 것이 가장 현명합니다.`;
+      } else if (streak.isStreakTriggered || streak.is3Streak) {
+        const streakCnt = streak.threshold || streak.consecutiveLosses || 3;
+        if (badge) badge.textContent = `⚠️ ${streakCnt}연패 지속 감지 (연속 -${streak.streakLossAmount.toLocaleString()}원)`;
+        if (sub) sub.textContent = `최근 ${streakCnt}회 연속 미적중되었습니다.` + (streak.avgInvest > 0 ? ` (평균 투자금 ${streak.avgInvest.toLocaleString()}원 대비 연속 손실 ${streak.streakLossAmount.toLocaleString()}원)` : ` (연속 손실 ${streak.streakLossAmount.toLocaleString()}원)`) + ` 연패 시 뇌는 조급함으로 무리한 투자를 유발합니다. 지금 멈추는 것이 가장 현명합니다.`;
       } else if (streak.isChasingLoss) {
         const ratioText = streak.avgInvest > 0 ? `의 ${(streak.lastInvestAmount / streak.avgInvest).toFixed(1)}배에 달하는 ` : ' 대비 ';
         if (badge) badge.textContent = `🚨 평소 평균 대비 과다 투자 손실 감지`;
@@ -2122,11 +2155,39 @@
 
       container.innerHTML = `
         <div class="flex justify-between items-center">
-          <span class="text-xs font-semibold text-neutral-400">참여 중인 챌린지 (${projects.length})</span>
+          <div class="flex items-center space-x-2">
+            <span class="text-xs font-semibold text-neutral-400">참여 중인 챌린지 (${projects.length})</span>
+            ${!isUserPro() ? `
+              <span class="text-[9px] font-bold px-1.5 py-0.5 rounded-full ${projects.length >= 1 ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30' : 'bg-neutral-800 text-neutral-400'}">
+                무료 ${projects.length}/1
+              </span>
+            ` : `
+              <span class="text-[9px] font-black px-1.5 py-0.5 rounded-full bg-indigo-500/15 text-indigo-400 border border-indigo-500/30">
+                PRO 무제한
+              </span>
+            `}
+          </div>
           <button onclick="window.openNewProjectModal()" class="text-xs bg-blue-600 hover:bg-blue-500 text-white font-semibold px-3 py-1.5 rounded-xl shadow-sm transition active:scale-95">
             + 새 프로젝트
           </button>
         </div>
+
+        ${!isUserPro() && projects.length >= 1 ? `
+          <div class="p-3.5 rounded-2xl border ${isLightMode ? 'bg-amber-50/80 border-amber-200 text-amber-950' : 'bg-gradient-to-r from-amber-500/10 via-neutral-900 to-amber-500/10 border-amber-500/30 text-neutral-200'} flex items-center justify-between text-xs shadow-sm mb-1">
+            <div class="space-y-0.5 min-w-0 flex-1 mr-2">
+              <div class="font-bold flex items-center space-x-1.5 text-xs text-amber-400">
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                <span>무료 플랜 1개 사용 중</span>
+              </div>
+              <p class="text-[11px] text-neutral-400 truncate break-keep">
+                프로 플랜을 구독해야 추가 프로젝트를 생성할 수 있습니다.
+              </p>
+            </div>
+            <button onclick="window.openSubscriptionModal('프로 플랜을 구독해야 추가 프로젝트를 생성할 수 있습니다.')" class="shrink-0 px-3 py-1.5 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold rounded-xl text-xs shadow-sm transition active:scale-95">
+              PRO 구독
+            </button>
+          </div>
+        ` : ''}
 
         <div class="space-y-3.5">
           ${projects.length === 0 ? `
@@ -2378,17 +2439,32 @@
     }
 
     window.setStatsPeriod = function(period) {
+      if (!isUserPro()) {
+        window.openSubscriptionModal('통계·분석 탭은 프로 버전을 구독해야 이용이 가능합니다.');
+        showToast('프로 버전을 구독해야 이용이 가능합니다.');
+        return;
+      }
       statsPeriod = period;
       renderCurrentTab();
     };
 
     window.toggleIncludeProjects = function() {
+      if (!isUserPro()) {
+        window.openSubscriptionModal('통계·분석 탭은 프로 버전을 구독해야 이용이 가능합니다.');
+        showToast('프로 버전을 구독해야 이용이 가능합니다.');
+        return;
+      }
       includeProjectsInStats = !includeProjectsInStats;
       renderCurrentTab();
       showToast(includeProjectsInStats ? '프로젝트 기록 포함됨' : '프로젝트 기록 제외됨');
     };
 
     window.navigateStatsDate = function(direction) {
+      if (!isUserPro()) {
+        window.openSubscriptionModal('통계·분석 탭은 프로 버전을 구독해야 이용이 가능합니다.');
+        showToast('프로 버전을 구독해야 이용이 가능합니다.');
+        return;
+      }
       const now = new Date();
       const todayIsoStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
       const thisMonthIsoStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
@@ -2423,29 +2499,54 @@
     };
 
     window.setCustomStatsDate = function(val) {
+      if (!isUserPro()) {
+        window.openSubscriptionModal('통계·분석 탭은 프로 버전을 구독해야 이용이 가능합니다.');
+        showToast('프로 버전을 구독해야 이용이 가능합니다.');
+        return;
+      }
       if (!val) return;
       statsSelectedDate = val;
       renderCurrentTab();
     };
 
     window.setCustomStatsMonth = function(val) {
+      if (!isUserPro()) {
+        window.openSubscriptionModal('통계·분석 탭은 프로 버전을 구독해야 이용이 가능합니다.');
+        showToast('프로 버전을 구독해야 이용이 가능합니다.');
+        return;
+      }
       if (!val) return;
       statsSelectedMonth = val;
       renderCurrentTab();
     };
 
     window.setCustomStatsYear = function(val) {
+      if (!isUserPro()) {
+        window.openSubscriptionModal('통계·분석 탭은 프로 버전을 구독해야 이용이 가능합니다.');
+        showToast('프로 버전을 구독해야 이용이 가능합니다.');
+        return;
+      }
       if (!val) return;
       statsSelectedYear = String(val);
       renderCurrentTab();
     };
 
     window.setStatsCategoryFilter = function(cat) {
+      if (!isUserPro()) {
+        window.openSubscriptionModal('통계·분석 탭은 프로 버전을 구독해야 이용이 가능합니다.');
+        showToast('프로 버전을 구독해야 이용이 가능합니다.');
+        return;
+      }
       statsCategoryFilter = (statsCategoryFilter === cat ? 'ALL' : cat);
       renderCurrentTab();
     };
 
     window.setStatsFoldFilter = function(fold) {
+      if (!isUserPro()) {
+        window.openSubscriptionModal('통계·분석 탭은 프로 버전을 구독해야 이용이 가능합니다.');
+        showToast('프로 버전을 구독해야 이용이 가능합니다.');
+        return;
+      }
       statsFoldFilter = (statsFoldFilter === fold ? 'ALL' : fold);
       renderCurrentTab();
     };
@@ -2501,10 +2602,10 @@
 
     function renderStatsTab(container) {
       const isPro = isUserPro();
-      // 1. 기간 및 프로젝트 포함 여부 기준 필터링
-      let periodRecords = includeProjectsInStats 
-        ? records 
-        : records.filter(r => !r.projectId);
+      // 무료 플랜 사용자는 기록 탭에서 기록을 해도 이 탭에서 통계나 분석이 반영되지 않고 기본 화면 그대로 0원인 상태로 유지
+      let periodRecords = (!isPro)
+        ? []
+        : (includeProjectsInStats ? records : records.filter(r => !r.projectId));
 
       const now = new Date();
       const todayFormattedStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
@@ -2722,6 +2823,23 @@
       }
 
       container.innerHTML = `
+        ${!isPro ? `
+          <!-- PRO 전용 안내 카드 (일별/월별 선택 버튼 상단) -->
+          <div class="p-4 rounded-3xl border ${isLightMode ? 'bg-indigo-50/90 border-indigo-200' : 'bg-gradient-to-br from-indigo-950/40 via-neutral-900 to-indigo-950/30 border-indigo-500/30'} shadow-sm space-y-2.5 text-center mb-1">
+            <div class="flex items-center justify-center space-x-1.5">
+              <span class="text-xs font-black px-2 py-0.5 rounded-full bg-indigo-500 text-white shadow-sm tracking-wide">SEEDFIT PRO</span>
+              <span class="text-xs font-bold ${isLightMode ? 'text-indigo-900' : 'text-indigo-200'}">통계 및 분석 전용 기능</span>
+            </div>
+            <p class="text-[11px] ${isLightMode ? 'text-indigo-800' : 'text-neutral-300'} leading-relaxed break-keep font-medium">
+              프로 버전을 구독해야 이용이 가능합니다.
+            </p>
+            <button onclick="window.openSubscriptionModal('통계·분석 탭은 프로 버전을 구독해야 이용이 가능합니다.')" class="w-full py-3 bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-bold rounded-2xl text-xs shadow-lg transition active:scale-95 flex items-center justify-center space-x-1.5">
+              <span>PRO 구독하기</span>
+              <span>→</span>
+            </button>
+          </div>
+        ` : ''}
+
         <!-- 기간 선택기 -->
         <div class="p-1 ${isLightMode ? 'bg-neutral-200/80 border-neutral-300' : 'bg-neutral-900 border-neutral-800'} rounded-2xl flex border text-xs">
           ${[
@@ -3151,9 +3269,20 @@
             <div class="space-y-2 pt-2 border-t ${isLightMode ? 'border-neutral-100' : 'border-neutral-800'} text-xs">
               <div class="flex justify-between items-center py-1">
                 <span class="text-neutral-400">연패 감지 기준</span>
-                <span class="px-2.5 py-1 rounded-lg text-[11px] font-bold ${isLightMode ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-amber-500/15 text-amber-400 border-amber-500/30'} border">
-                  3연패 시 즉시 감지
-                </span>
+                <div class="flex items-center space-x-1">
+                  ${[2, 3, 4, 5].map(cnt => {
+                    const isSel = (mentalCareSettings.lossStreakThreshold || 3) === cnt;
+                    return `
+                      <button onclick="window.setLossStreakThreshold(${cnt})" class="px-2.5 py-1 rounded-lg text-xs font-bold transition active:scale-95 ${
+                        isSel
+                          ? (isLightMode ? 'bg-amber-500 text-white shadow-sm' : 'bg-amber-500 text-black shadow-sm font-black')
+                          : (isLightMode ? 'bg-neutral-100 text-neutral-600 hover:bg-neutral-200' : 'bg-neutral-800 text-neutral-400 hover:bg-neutral-700')
+                      }">
+                        ${cnt}연패
+                      </button>
+                    `;
+                  }).join('')}
+                </div>
               </div>
 
               <div class="flex justify-between items-center py-1">
@@ -3169,7 +3298,7 @@
                   <span>최근 기록 기반 자동 감지 조건:</span>
                 </div>
                 <div class="pl-4 space-y-1 text-[10px] leading-tight">
-                  <div>• 3회 연속 미적중(3연패) 발생 시</div>
+                  <div>• ${(mentalCareSettings.lossStreakThreshold || 3)}회 연속 미적중(${(mentalCareSettings.lossStreakThreshold || 3)}연패) 발생 시</div>
                   <div>• 평균 대비 2.5배 이상 연속 손실 발생 시</div>
                   <div>• 평균 대비 2배 이상 단일 추격투자 실패 시</div>
                   <div>• 최근 5경기 중 4경기 이상 손실 페이스 붕괴 시</div>
@@ -3652,8 +3781,8 @@
     window.openNewProjectModal = function() {
       // 무료 플랜은 프로젝트 1개까지 생성 가능, 2개 이상부터 Pro 혜택
       if (projects.length >= 1 && !isUserPro()) {
-        window.openSubscriptionModal();
-        showToast('무료 플랜은 1개 프로젝트까지 가능합니다. 무제한 생성을 위해 Pro로 업그레이드하세요.');
+        window.openSubscriptionModal('프로 플랜을 구독해야 추가 프로젝트를 생성할 수 있습니다.');
+        showToast('프로 플랜을 구독해야 추가 프로젝트를 생성할 수 있습니다.');
         return;
       }
       document.getElementById('inputProjectName').value = '';
@@ -3669,8 +3798,8 @@
     function saveNewProject() {
       if (projects.length >= 1 && !isUserPro()) {
         window.closeNewProjectModal();
-        window.openSubscriptionModal();
-        showToast('무료 플랜은 1개 프로젝트까지 가능합니다. 무제한 생성을 위해 Pro로 업그레이드하세요.');
+        window.openSubscriptionModal('프로 플랜을 구독해야 추가 프로젝트를 생성할 수 있습니다.');
+        showToast('프로 플랜을 구독해야 추가 프로젝트를 생성할 수 있습니다.');
         return;
       }
       const name = document.getElementById('inputProjectName').value.trim();
