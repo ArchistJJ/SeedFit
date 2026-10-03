@@ -774,17 +774,22 @@
           </div>
         </div>
 
+        <!-- 7일 데이터 보존 정책 안내 카드 -->
+        <div class="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/25 space-y-1.5 text-left">
+          <div class="font-bold flex items-center space-x-1.5 text-amber-400 text-xs">
+            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+            <span>구독 취소 시 데이터 보존 유예 정책 (7일)</span>
+          </div>
+          <p class="text-[11px] text-neutral-300 leading-relaxed">
+            구독을 취소하셔도 기존에 등록하신 투자 기록 및 프로젝트 데이터는 <b>취소일로부터 7일간 안전하게 임시 보존</b>됩니다. <b>7일 이내에 다시 구독하시면 기존의 모든 데이터가 즉시 연동 복원</b>되며, 7일이 경과하면 클라우드에서 영구 삭제됩니다.
+          </p>
+        </div>
+
         <!-- Actions -->
         <div class="space-y-2 pt-2">
-          <!-- 공식 고객 포털 열기 (Lemon Squeezy 영수증 / 카드 변경 안내) -->
-          <button onclick="window.openCustomerPortal()" class="w-full py-3 bg-neutral-800 hover:bg-neutral-700 text-white font-bold rounded-2xl text-xs transition active:scale-[0.98] flex items-center justify-center space-x-2 border border-neutral-700">
-            <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>
-            <span>결제 수단 변경 및 공식 영수증 확인</span>
-          </button>
-
           <!-- 구독 해지 신청 버튼 -->
           <button onclick="window.confirmCancelSubscription()" class="w-full py-3 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 font-bold rounded-2xl text-xs transition active:scale-[0.98] flex items-center justify-center space-x-1.5">
-            <span>구독 취소 (무료 플랜으로 전환)</span>
+            <span>구독 취소 (7일 후 데이터 영구 삭제)</span>
           </button>
 
           <button onclick="window.closeMembershipManagementModal()" class="w-full py-2.5 text-neutral-400 hover:text-white font-medium text-xs transition">
@@ -853,7 +858,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.8.2').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.8.3').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -1219,14 +1224,43 @@
             const mode = getAdminTestMode();
             if (mode === 'admin' || mode === 'pro') {
               safeStorage.set('SEEDFIT_IS_PRO', 'true');
+              if (typeof restoreCancelledSubscriptionData === 'function') restoreCancelledSubscriptionData();
             } else if (mode === 'free') {
               safeStorage.set('SEEDFIT_IS_PRO', 'false');
             }
           } else {
             if (data.subscription_tier === 'pro') {
               safeStorage.set('SEEDFIT_IS_PRO', 'true');
+              if (typeof restoreCancelledSubscriptionData === 'function') restoreCancelledSubscriptionData();
             } else {
               safeStorage.set('SEEDFIT_IS_PRO', 'false');
+
+              // 7일 데이터 보존 기간 만료 여부 검사 (구독 해지 후 7일 경과 시 클라우드 및 기기 영구 삭제)
+              if (data.data_retention_until || data.cancelled_at) {
+                const retentionExpiry = data.data_retention_until
+                  ? new Date(data.data_retention_until).getTime()
+                  : (new Date(data.cancelled_at).getTime() + 7 * 24 * 60 * 60 * 1000);
+
+                if (Date.now() > retentionExpiry) {
+                  records = [];
+                  projects = [];
+                  safeStorage.set(STORAGE_KEY_RECORDS, JSON.stringify([]));
+                  safeStorage.set(STORAGE_KEY_PROJECTS, JSON.stringify([]));
+                  if (typeof restoreCancelledSubscriptionData === 'function') restoreCancelledSubscriptionData();
+                  await sb.from('seedfit_user_data').update({
+                    records: [],
+                    projects: [],
+                    data_retention_until: null,
+                    cancelled_at: null,
+                    updated_at: new Date().toISOString()
+                  }).eq('user_id', userIdKey);
+                  renderCurrentTab();
+                  return;
+                } else {
+                  if (data.cancelled_at) safeStorage.set('SEEDFIT_CANCELLED_AT', data.cancelled_at);
+                  if (data.data_retention_until) safeStorage.set('SEEDFIT_RETENTION_UNTIL', data.data_retention_until);
+                }
+              }
             }
           }
 
@@ -1432,6 +1466,9 @@
       
       if (mode === 'pro') {
         safeStorage.set('SEEDFIT_IS_PRO', 'true');
+        restoreCancelledSubscriptionData();
+      } else if (mode === 'admin') {
+        restoreCancelledSubscriptionData();
       } else if (mode === 'free') {
         safeStorage.set('SEEDFIT_IS_PRO', 'false');
       }
@@ -1493,29 +1530,90 @@
       if (modal) modal.classList.add('hidden');
     };
 
-    window.openCustomerPortal = function() {
-      alert("💡 결제 정보 및 영수증 관리 안내\n\n공식 결제 서비스(Lemon Squeezy)에서 구독 결제 시 발송된 이메일 영수증 내의 [Manage Subscription] 링크를 통해 카드 변경, 영수증 출력 및 결제 수단 관리를 안전하게 이용하실 수 있습니다.");
-    };
+    function restoreCancelledSubscriptionData() {
+      safeStorage.remove('SEEDFIT_CANCELLED_AT');
+      safeStorage.remove('SEEDFIT_RETENTION_UNTIL');
+    }
+
+    async function checkDataRetentionExpired() {
+      // Pro 회원이거나 마스터 관리자인 경우 데이터 삭제 대상이 아님
+      if (isUserPro() || isMasterAdminAccount()) return;
+
+      const authUser = getAuthUser();
+      const retentionUntilStr = safeStorage.get('SEEDFIT_RETENTION_UNTIL');
+      const cancelledAtStr = safeStorage.get('SEEDFIT_CANCELLED_AT');
+
+      if (!retentionUntilStr && !cancelledAtStr) return;
+
+      const now = Date.now();
+      const retentionExpiry = retentionUntilStr 
+        ? new Date(retentionUntilStr).getTime() 
+        : (new Date(cancelledAtStr).getTime() + 7 * 24 * 60 * 60 * 1000);
+
+      if (now > retentionExpiry) {
+        // 7일 경과 -> 데이터 영구 삭제 실행!
+        records = [];
+        projects = [];
+        safeStorage.set(STORAGE_KEY_RECORDS, JSON.stringify([]));
+        safeStorage.set(STORAGE_KEY_PROJECTS, JSON.stringify([]));
+        safeStorage.remove('SEEDFIT_CANCELLED_AT');
+        safeStorage.remove('SEEDFIT_RETENTION_UNTIL');
+
+        if (authUser && authUser.id) {
+          const userIdKey = `${authUser.provider || 'user'}:${authUser.id}`;
+          const sb = getSupabase(userIdKey);
+          if (sb) {
+            try {
+              await sb.from('seedfit_user_data')
+                .update({
+                  records: [],
+                  projects: [],
+                  cancelled_at: null,
+                  data_retention_until: null,
+                  updated_at: new Date().toISOString()
+                })
+                .eq('user_id', userIdKey);
+            } catch (e) {
+              console.warn('Expired data cloud cleanup failed:', e);
+            }
+          }
+        }
+
+        renderCurrentTab();
+        showToast('구독 취소 후 7일이 경과하여 이전 클라우드 데이터가 영구 삭제되었습니다.');
+      }
+    }
 
     window.confirmCancelSubscription = async function() {
       const confirmed = confirm(
-        "정말 SeedFit Pro 구독을 해지하시겠습니까?\n\n" +
+        "⚠️ SeedFit Pro 구독 취소 및 7일 데이터 보존 안내\n\n" +
         "• 구독을 취소하시면 다음 결제 주기부터 자동 결제가 중단됩니다.\n" +
-        "• 통계·심층 교차분석 및 프로젝트 개수(최대 1개)가 무료 플랜 기준으로 전환됩니다.\n" +
-        "• 기존에 입력하신 모든 투자 기록 데이터는 안전하게 보존됩니다.\n\n" +
-        "해지를 진행하시겠습니까?"
+        "• [중요] 기존에 등록하신 모든 투자 기록 및 프로젝트 데이터는 '해지일로부터 7일 동안만 임시 보존'됩니다.\n" +
+        "• 7일 이내에 다시 구독하시면 기존의 모든 데이터가 즉시 연동 복원됩니다.\n" +
+        "• 7일이 경과하면 클라우드에서 기존 데이터가 영구 삭제되어 복구할 수 없습니다.\n\n" +
+        "정말 구독을 취소하시겠습니까?"
       );
 
       if (!confirmed) return;
 
+      const now = new Date();
+      const cancelledAt = now.toISOString();
+      const retentionDays = 7;
+      const retentionUntil = new Date(now.getTime() + retentionDays * 24 * 60 * 60 * 1000).toISOString();
+
       // 마스터 관리자가 프로 시뮬레이션 중이었다면 무료 시뮬레이션으로 전환
       if (isMasterAdminAccount() && getAdminTestMode() === 'pro') {
+        safeStorage.set('SEEDFIT_CANCELLED_AT', cancelledAt);
+        safeStorage.set('SEEDFIT_RETENTION_UNTIL', retentionUntil);
         window.setAdminTestMode('free');
         window.closeMembershipManagementModal();
+        showToast('구독이 취소되었습니다. (7일간 데이터 임시 보존 모드)');
         return;
       }
 
       safeStorage.set('SEEDFIT_IS_PRO', 'false');
+      safeStorage.set('SEEDFIT_CANCELLED_AT', cancelledAt);
+      safeStorage.set('SEEDFIT_RETENTION_UNTIL', retentionUntil);
 
       const authUser = getAuthUser();
       if (authUser && authUser.id) {
@@ -1526,6 +1624,8 @@
             await sb.from('seedfit_user_data')
               .update({
                 subscription_tier: 'free',
+                cancelled_at: cancelledAt,
+                data_retention_until: retentionUntil,
                 updated_at: new Date().toISOString()
               })
               .eq('user_id', userIdKey);
@@ -1536,7 +1636,7 @@
       }
 
       window.closeMembershipManagementModal();
-      showToast('구독이 정상적으로 취소되었습니다. 무료 플랜으로 전환되었습니다.');
+      showToast('구독이 취소되었습니다. 7일 이내 재구독 시 데이터가 복원됩니다.');
       renderCurrentTab();
     };
 
@@ -1608,7 +1708,8 @@
 
         if (data && data.subscription_tier === 'pro') {
           safeStorage.set('SEEDFIT_IS_PRO', 'true');
-          showToast('SeedFit Pro 정기구독이 정상 확인되었습니다.');
+          restoreCancelledSubscriptionData();
+          showToast('SeedFit Pro 정기구독이 정상 확인되었습니다. 기존 데이터가 모두 연동되었습니다.');
         } else {
           safeStorage.set('SEEDFIT_IS_PRO', 'false');
           showToast('현재 활성화된 Pro 정기구독 내역이 없습니다.');
@@ -1624,7 +1725,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.8.2';
+    const CURRENT_APP_VERSION = 'v1.8.3';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');
@@ -3428,6 +3529,12 @@
       const isMasterAdmin = isMasterAdminAccount();
       const adminTestMode = getAdminTestMode();
 
+      const cancelledAt = safeStorage.get('SEEDFIT_CANCELLED_AT');
+      const retentionUntil = safeStorage.get('SEEDFIT_RETENTION_UNTIL');
+      const retentionExpiry = retentionUntil ? new Date(retentionUntil).getTime() : (cancelledAt ? new Date(cancelledAt).getTime() + 7 * 24 * 60 * 60 * 1000 : null);
+      const isWithinGracePeriod = (!isProMember && retentionExpiry && Date.now() < retentionExpiry);
+      const remainingDays = isWithinGracePeriod ? Math.max(1, Math.ceil((retentionExpiry - Date.now()) / (24 * 60 * 60 * 1000))) : 0;
+
       container.innerHTML = `
         <div class="space-y-4">
           <!-- User Account & Sync Status Card -->
@@ -3548,6 +3655,27 @@
               </div>
             ` : ''}
           </div>
+
+          ${isWithinGracePeriod ? `
+            <!-- 7일 데이터 보존 유예 기간 카운트다운 배너 -->
+            <div class="p-3.5 rounded-3xl ${isLightMode ? 'bg-amber-50 border-amber-300' : 'bg-amber-500/15 border-amber-500/30'} border space-y-2 text-left shadow-sm">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold ${isLightMode ? 'text-amber-900' : 'text-amber-300'} flex items-center space-x-1.5">
+                  <svg class="w-4 h-4 text-amber-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                  <span>데이터 보존 유예 기간 (D-${remainingDays})</span>
+                </span>
+                <span class="text-[10px] font-mono text-amber-400 bg-amber-500/20 border border-amber-500/30 px-2 py-0.5 rounded-full font-bold">
+                  ${remainingDays}일 후 영구 삭제
+                </span>
+              </div>
+              <p class="text-[11px] ${isLightMode ? 'text-amber-800' : 'text-neutral-300'} leading-relaxed">
+                구독이 취소된 상태입니다. 기존에 등록하신 투자 기록 및 프로젝트는 <b>${remainingDays}일 후 영구 삭제</b>됩니다. 기한 내에 다시 구독하시면 모든 데이터가 즉시 연동 복원됩니다.
+              </p>
+              <button onclick="window.openSubscriptionModal('기존 데이터를 그대로 유지하고 복원하려면 다시 구독해 주세요.')" class="w-full py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-extrabold rounded-xl text-xs shadow-md transition active:scale-95 flex items-center justify-center space-x-1">
+                <span>Pro 다시 구독하고 데이터 복원하기</span>
+              </button>
+            </div>
+          ` : ''}
 
           <!-- SeedFit Pro Membership Card (공식 구독 카드 - 이모티콘 전면 배제) -->
           <div class="${isLightMode ? 'bg-gradient-to-br from-indigo-50/80 via-white to-purple-50/40 border-indigo-200/80 shadow-sm' : 'bg-gradient-to-br from-indigo-950/40 via-neutral-900 to-purple-950/20 border-indigo-500/30'} border rounded-3xl p-4 space-y-3 relative overflow-hidden">
@@ -4706,6 +4834,7 @@
       applyThemeUI();
       updateBottomTabBar();
       renderCurrentTab();
+      checkDataRetentionExpired();
       initInstallLandingGate();
       initKakaoSdk();
       if (getAuthUser()) {
@@ -4716,6 +4845,7 @@
     applyThemeUI();
     updateBottomTabBar();
     renderCurrentTab();
+    checkDataRetentionExpired();
     initInstallLandingGate();
     initKakaoSdk();
     if (getAuthUser()) {
