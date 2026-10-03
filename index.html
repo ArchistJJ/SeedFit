@@ -858,7 +858,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.8.3').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.8.4').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -1725,7 +1725,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.8.3';
+    const CURRENT_APP_VERSION = 'v1.8.4';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');
@@ -3898,9 +3898,7 @@
       loading: false,
       users: [],
       lastFetched: null,
-      viewMode: 'real', // 'real' 또는 'demo'
-      filterPlan: 'ALL', // 'ALL', 'pro', 'free'
-      searchKeyword: ''
+      viewMode: 'real' // 'real' 또는 'demo'
     };
 
     // 실시간 Supabase 유저 & 구독 데이터 로드
@@ -3959,66 +3957,10 @@
       }
     };
 
-    // 관리자 유저 플랜 변경 (Free <-> Pro 수동 토글)
-    window.adminToggleUserPlan = async function(userId, currentTier) {
-      const nextTier = (currentTier === 'pro') ? 'free' : 'pro';
-      const confirmMsg = (nextTier === 'pro')
-        ? `'${userId}' 유저를 PRO 정기구독 회원으로 승격하시겠습니까?`
-        : `'${userId}' 유저의 PRO 구독을 해지(무료 플랜 전환)하시겠습니까?`;
-
-      if (!confirm(confirmMsg)) return;
-
-      const sb = getSupabase();
-      if (!sb) {
-        showToast('클라우드 연결 상태를 확인해주세요.');
-        return;
-      }
-
-      showToast('구독 플랜을 변경하고 있습니다...');
-      try {
-        const { error } = await sb
-          .from('seedfit_user_data')
-          .update({ subscription_tier: nextTier, updated_at: new Date().toISOString() })
-          .eq('user_id', userId);
-
-        if (error) {
-          showToast('플랜 변경 실패: ' + error.message);
-          return;
-        }
-
-        // 로컬 상태 즉시 반영
-        const target = adminDashboardState.users.find(u => u.user_id === userId);
-        if (target) target.subscription_tier = nextTier;
-
-        // 본인 계정인 경우 로컬 스토리지도 함께 동기화
-        const authUser = getAuthUser();
-        if (authUser && `${authUser.provider || 'user'}:${authUser.id}` === userId) {
-          safeStorage.set('SEEDFIT_IS_PRO', nextTier === 'pro' ? 'true' : 'false');
-        }
-
-        showToast(`'${userId}' 유저가 ${nextTier.toUpperCase()} 플랜으로 변경되었습니다!`);
-        renderAdminTab(document.getElementById('contentArea'));
-      } catch (e) {
-        showToast('플랜 변경 중 오류가 발생했습니다.');
-      }
-    };
-
     // 관리자 대시보드 뷰 모드 토글 (실제 DB <-> 시뮬레이션 데모)
     window.toggleAdminViewMode = function() {
       adminDashboardState.viewMode = (adminDashboardState.viewMode === 'real') ? 'demo' : 'real';
       showToast(adminDashboardState.viewMode === 'demo' ? '가상 시뮬레이션 데모 모드로 전환되었습니다.' : '실시간 실제 클라우드 DB 데이터 모드로 전환되었습니다.');
-      renderAdminTab(document.getElementById('contentArea'));
-    };
-
-    // 관리자 유저 필터 설정
-    window.setAdminFilterPlan = function(plan) {
-      adminDashboardState.filterPlan = plan;
-      renderAdminTab(document.getElementById('contentArea'));
-    };
-
-    // 관리자 검색어 설정
-    window.setAdminSearchKeyword = function(keyword) {
-      adminDashboardState.searchKeyword = keyword.trim().toLowerCase();
       renderAdminTab(document.getElementById('contentArea'));
     };
 
@@ -4083,53 +4025,49 @@
         { month: '2026.10 (당월)', signups: totalSignups, newSubs: activeSubscribers, activeSubs: activeSubscribers, revenue: monthlyRevenue, rate: `${conversionRate}%` }
       ];
 
-      // 필터링된 유저 목록
-      let filteredUsers = activeUsers.filter(u => {
-        if (adminDashboardState.filterPlan === 'pro' && u.subscription_tier !== 'pro') return false;
-        if (adminDashboardState.filterPlan === 'free' && u.subscription_tier === 'pro') return false;
-        if (adminDashboardState.searchKeyword) {
-          const kw = adminDashboardState.searchKeyword;
-          const matchName = (u.name || '').toLowerCase().includes(kw);
-          const matchEmail = (u.email || '').toLowerCase().includes(kw);
-          const matchId = (u.user_id || '').toLowerCase().includes(kw);
-          if (!matchName && !matchEmail && !matchId) return false;
-        }
-        return true;
-      });
-
       container.innerHTML = `
         <div class="space-y-4">
           <!-- 1. 관리자 상단 제어 바 -->
-          <div class="${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900 border-neutral-800'} border rounded-3xl p-4 space-y-3 shadow-sm">
-            <div class="flex justify-between items-center">
-              <div class="flex items-center space-x-2">
-                <span class="text-lg">👑</span>
-                <div>
-                  <h2 class="text-sm font-black ${isLightMode ? 'text-neutral-900' : 'text-white'} flex items-center space-x-1.5">
-                    <span>비즈니스 & 구독 대시보드</span>
-                    <span class="text-[9px] px-1.5 py-0.2 rounded font-bold ${isDemo ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'}">
-                      ${isDemo ? '데모 시뮬레이션' : '클라우드 실시간'}
-                    </span>
+          <div class="${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900 border-neutral-800'} border rounded-3xl p-4 space-y-3.5 shadow-sm">
+            <!-- 1행: 대시보드 타이틀 & 새로고침 버튼 -->
+            <div class="flex justify-between items-center gap-2">
+              <div class="flex items-center space-x-2.5 min-w-0">
+                <span class="text-2xl shrink-0">👑</span>
+                <div class="min-w-0">
+                  <h2 class="text-sm sm:text-base font-black ${isLightMode ? 'text-neutral-900' : 'text-white'} tracking-tight whitespace-nowrap">
+                    비즈니스 & 구독 대시보드
                   </h2>
-                  <p class="text-[10px] text-neutral-400">
+                  <p class="text-[10px] text-neutral-400 truncate">
                     ${adminDashboardState.lastFetched ? `동기화: ${new Date(adminDashboardState.lastFetched).toLocaleTimeString()}` : '실시간 데이터 준비 중'}
                   </p>
                 </div>
               </div>
 
-              <div class="flex items-center space-x-1.5">
-                <button onclick="window.toggleAdminViewMode()" class="px-2.5 py-1.5 rounded-xl text-[10px] font-bold ${isDemo ? 'bg-amber-500 text-black' : (isLightMode ? 'bg-neutral-100 text-neutral-700' : 'bg-neutral-800 text-neutral-300')} transition active:scale-95">
-                  ${isDemo ? '실제 데이터 보기' : '데모 시뮬레이션'}
-                </button>
-                <button onclick="window.fetchAdminDashboardData(true)" ${adminDashboardState.loading ? 'disabled' : ''} class="p-1.5 rounded-xl ${isLightMode ? 'bg-neutral-100 hover:bg-neutral-200 text-neutral-700' : 'bg-neutral-800 hover:bg-neutral-700 text-neutral-300'} transition active:scale-95 flex items-center justify-center">
-                  <svg class="w-4 h-4 ${adminDashboardState.loading ? 'animate-spin text-blue-500' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-                </button>
+              <!-- 새로고침 버튼 -->
+              <button onclick="window.fetchAdminDashboardData(true)" ${adminDashboardState.loading ? 'disabled' : ''} class="px-2.5 py-1.5 rounded-xl ${isLightMode ? 'bg-neutral-100 hover:bg-neutral-200 text-neutral-700' : 'bg-neutral-800 hover:bg-neutral-700 text-neutral-200'} transition active:scale-95 flex items-center space-x-1.5 text-xs font-semibold shrink-0">
+                <svg class="w-3.5 h-3.5 ${adminDashboardState.loading ? 'animate-spin text-blue-500' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                <span class="text-[11px]">새로고침</span>
+              </button>
+            </div>
+
+            <!-- 2행: 데이터 모드 상태 배지 & 실제/데모 모드 전환 토글 -->
+            <div class="flex justify-between items-center pt-2.5 border-t ${isLightMode ? 'border-neutral-100' : 'border-neutral-800/80'}">
+              <div class="flex items-center space-x-2">
+                <span class="text-[11px] text-neutral-400 font-medium">데이터 모드:</span>
+                <span class="text-[10px] px-2 py-0.5 rounded-full font-bold whitespace-nowrap flex items-center space-x-1.5 ${isDemo ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'}">
+                  <span class="w-1.5 h-1.5 rounded-full ${isDemo ? 'bg-amber-400' : 'bg-emerald-400 animate-pulse'}"></span>
+                  <span>${isDemo ? '시뮬레이션 데모' : '클라우드 실시간'}</span>
+                </span>
               </div>
+
+              <button onclick="window.toggleAdminViewMode()" class="px-2.5 py-1 rounded-xl text-[11px] font-bold ${isDemo ? 'bg-amber-500 text-black shadow-sm' : (isLightMode ? 'bg-neutral-100 hover:bg-neutral-200 text-neutral-700' : 'bg-neutral-800 hover:bg-neutral-700 text-neutral-300')} transition active:scale-95 whitespace-nowrap">
+                ${isDemo ? '실제 DB 보기' : '데모 전환'}
+              </button>
             </div>
 
             <!-- 안내 배너 -->
             <div class="p-2.5 rounded-2xl ${isLightMode ? 'bg-blue-50 border-blue-200 text-blue-900' : 'bg-blue-950/30 border-blue-800/40 text-blue-300'} border text-[11px] flex items-center space-x-2">
-              <span class="text-sm">💡</span>
+              <span class="text-sm shrink-0">💡</span>
               <span class="leading-tight">
                 현재 계정은 마스터 권한이 부여되어 <b>무료/결제 여부와 무관하게 모든 Pro 기능이 무제한 활성화</b>되어 있습니다.
               </span>
@@ -4257,103 +4195,22 @@
             </div>
           </div>
 
-          <!-- 4. 실시간 회원 & 구독 관리 테이블 -->
-          <div class="${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900 border-neutral-800'} border p-4 rounded-3xl space-y-3 shadow-sm">
-            <div class="flex justify-between items-center flex-wrap gap-2">
-              <div>
-                <h3 class="text-xs font-bold ${isLightMode ? 'text-neutral-900' : 'text-white'} flex items-center space-x-1.5">
-                  <span>👥</span>
-                  <span>회원 및 구독자 실시간 관리</span>
-                </h3>
-                <p class="text-[10px] text-neutral-400">총 ${activeUsers.length}명 등록됨 (플랜 즉시 전환 지원)</p>
-              </div>
-
-              <!-- 플랜 필터 탭 -->
-              <div class="flex items-center space-x-1 bg-neutral-800/80 p-0.5 rounded-xl text-[10px]">
-                <button onclick="window.setAdminFilterPlan('ALL')" class="px-2 py-1 rounded-lg font-bold transition ${adminDashboardState.filterPlan === 'ALL' ? 'bg-blue-600 text-white shadow' : 'text-neutral-400'}">전체</button>
-                <button onclick="window.setAdminFilterPlan('pro')" class="px-2 py-1 rounded-lg font-bold transition ${adminDashboardState.filterPlan === 'pro' ? 'bg-purple-600 text-white shadow' : 'text-neutral-400'}">PRO</button>
-                <button onclick="window.setAdminFilterPlan('free')" class="px-2 py-1 rounded-lg font-bold transition ${adminDashboardState.filterPlan === 'free' ? 'bg-neutral-700 text-white shadow' : 'text-neutral-400'}">FREE</button>
-              </div>
-            </div>
-
-            <!-- 유저 검색 인풋 -->
-            <div>
-              <input type="text" placeholder="이름, 이메일, 유저 ID 검색..." value="${adminDashboardState.searchKeyword}" oninput="window.setAdminSearchKeyword(this.value)" class="w-full px-3 py-2 rounded-xl text-xs ${isLightMode ? 'bg-neutral-100 border-neutral-200 text-neutral-900' : 'bg-neutral-800/90 border-neutral-700 text-white'} border focus:outline-none focus:ring-1 focus:ring-blue-500" />
-            </div>
-
-            <!-- 회원 리스트 카드 -->
-            <div class="space-y-2 pt-1">
-              ${filteredUsers.length === 0 ? `
-                <div class="text-center py-6 text-xs text-neutral-400">
-                  해당 조건의 회원이 없습니다.
-                </div>
-              ` : filteredUsers.map(user => {
-                const isPro = (user.subscription_tier === 'pro');
-                const authUser = getAuthUser();
-                const isCurrentMe = (authUser && `${authUser.provider || 'user'}:${authUser.id}` === user.user_id);
-                const recordCount = Array.isArray(user.records) ? user.records.length : 0;
-                const projectCount = Array.isArray(user.projects) ? user.projects.length : 0;
-                const updatedTimeStr = user.updated_at ? new Date(user.updated_at).toLocaleDateString() : '-';
-
-                return `
-                  <div class="${isLightMode ? 'bg-neutral-50 border-neutral-200' : 'bg-neutral-950/60 border-neutral-800'} border p-3 rounded-2xl space-y-2 text-xs">
-                    <div class="flex justify-between items-start">
-                      <div class="flex items-center space-x-2">
-                        <div class="w-8 h-8 rounded-full ${user.provider === 'kakao' ? 'bg-[#FEE500] text-black' : (user.provider === 'google' ? 'bg-white text-neutral-800 border border-neutral-300' : 'bg-blue-600 text-white')} flex items-center justify-center font-bold text-xs">
-                          ${user.provider === 'kakao' ? 'K' : (user.provider === 'google' ? 'G' : '★')}
-                        </div>
-                        <div>
-                          <div class="flex items-center space-x-1.5">
-                            <span class="font-bold ${isLightMode ? 'text-neutral-900' : 'text-white'}">${user.name || '무명 회원'}</span>
-                            ${isCurrentMe ? `
-                              <span class="text-[9px] px-1.5 py-0.2 rounded font-extrabold bg-amber-500/20 text-amber-400 border border-amber-500/30">👑 내 계정</span>
-                            ` : ''}
-                          </div>
-                          <p class="text-[10px] text-neutral-400 truncate max-w-[180px]">${user.email || user.user_id}</p>
-                        </div>
-                      </div>
-
-                      <div class="flex items-center space-x-1.5">
-                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${isPro ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30' : 'bg-neutral-800 text-neutral-400 border border-neutral-700'}">
-                          ${isPro ? 'PRO 👑' : 'FREE'}
-                        </span>
-                        <button onclick="window.adminToggleUserPlan('${user.user_id}', '${user.subscription_tier}')" class="px-2 py-0.5 rounded-lg text-[10px] font-bold ${isPro ? 'bg-neutral-800 hover:bg-neutral-700 text-neutral-300' : 'bg-purple-600 hover:bg-purple-500 text-white'} transition active:scale-95">
-                          ${isPro ? 'Free 전환' : 'Pro 승격'}
-                        </button>
-                      </div>
-                    </div>
-
-                    <div class="flex justify-between items-center text-[10px] text-neutral-400 pt-1 border-t ${isLightMode ? 'border-neutral-200' : 'border-neutral-800/80'}">
-                      <div class="space-x-2">
-                        <span>기록: <b class="${isLightMode ? 'text-neutral-800' : 'text-neutral-200'} font-mono">${recordCount}건</b></span>
-                        <span>프로젝트: <b class="${isLightMode ? 'text-neutral-800' : 'text-neutral-200'} font-mono">${projectCount}개</b></span>
-                      </div>
-                      <div>
-                        <span>최근 활동: ${updatedTimeStr}</span>
-                      </div>
-                    </div>
-                  </div>
-                `;
-              }).join('')}
-            </div>
-          </div>
-
-          <!-- 5. 관리자 빠른 도구 & 연동 현황 -->
+          <!-- 4. 관리자 빠른 도구 & 연동 현황 -->
           <div class="${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900 border-neutral-800'} border p-4 rounded-3xl space-y-2.5 text-xs text-neutral-400">
             <h4 class="font-bold ${isLightMode ? 'text-neutral-800' : 'text-neutral-200'} flex items-center space-x-1.5">
               <span>⚙️</span>
               <span>결제 시스템 연동 준비 현황</span>
             </h4>
-            <div class="p-3 rounded-2xl bg-neutral-950/60 border border-neutral-800 space-y-1.5 text-[11px] leading-relaxed">
-              <div class="flex justify-between items-center text-neutral-300">
-                <span>• 국내 PG(페이앱 정기결제)</span>
-                <span class="text-amber-400 font-semibold">가맹 심사 대기 중</span>
+            <div class="p-3 rounded-2xl ${isLightMode ? 'bg-neutral-50 border-neutral-200' : 'bg-neutral-950/60 border-neutral-800'} border space-y-1.5 text-[11px] leading-relaxed">
+              <div class="flex justify-between items-center ${isLightMode ? 'text-neutral-700' : 'text-neutral-300'}">
+                <span>• 국내 PG (페이앱 정기결제)</span>
+                <span class="text-amber-400 font-semibold">가맹 계약 및 심사 대기</span>
               </div>
-              <div class="flex justify-between items-center text-neutral-300">
-                <span>• 클라우드 DB(Supabase)</span>
+              <div class="flex justify-between items-center ${isLightMode ? 'text-neutral-700' : 'text-neutral-300'}">
+                <span>• 클라우드 실시간 동기화 DB</span>
                 <span class="text-emerald-400 font-semibold">정상 연결됨</span>
               </div>
-              <div class="flex justify-between items-center text-neutral-300">
+              <div class="flex justify-between items-center ${isLightMode ? 'text-neutral-700' : 'text-neutral-300'}">
                 <span>• 결제 웹훅(Webhook) 엔드포인트</span>
                 <span class="text-blue-400 font-semibold">규격 설계 완료</span>
               </div>
