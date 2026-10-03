@@ -858,7 +858,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.8.4').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.8.5').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -1725,7 +1725,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.8.4';
+    const CURRENT_APP_VERSION = 'v1.8.5';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');
@@ -3600,9 +3600,14 @@
                     <span>지금 동기화</span>
                   </button>
                 ` : (isProMember ? `
-                  <button onclick="window.syncToCloud(true)" class="py-1 px-2.5 rounded-lg text-[10px] font-semibold ${isLightMode ? 'bg-neutral-100 hover:bg-neutral-200 text-neutral-700 border border-neutral-200' : 'bg-neutral-800 hover:bg-neutral-700 text-neutral-300'} transition active:scale-95 flex items-center space-x-1">
-                    <span>지금 동기화</span>
-                  </button>
+                  <div class="flex items-center space-x-1.5">
+                    <button onclick="window.openMembershipManagementModal()" class="py-1 px-2.5 rounded-lg text-[10px] font-semibold ${isLightMode ? 'bg-neutral-100 hover:bg-neutral-200 text-neutral-700 border border-neutral-200' : 'bg-neutral-800 hover:bg-neutral-700 text-neutral-300'} transition active:scale-95">
+                      <span>멤버십 관리</span>
+                    </button>
+                    <button onclick="window.syncToCloud(true)" class="py-1 px-2 rounded-lg text-[10px] font-semibold ${isLightMode ? 'bg-neutral-100 hover:bg-neutral-200 text-neutral-700 border border-neutral-200' : 'bg-neutral-800 hover:bg-neutral-700 text-neutral-300'} transition active:scale-95 flex items-center space-x-1">
+                      <span>동기화</span>
+                    </button>
+                  </div>
                 ` : `
                   <button onclick="window.openSubscriptionModal()" class="py-1 px-2.5 rounded-lg text-[10px] font-bold bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-sm transition active:scale-95 flex items-center space-x-1">
                     <span>Pro 연동</span>
@@ -3677,58 +3682,55 @@
             </div>
           ` : ''}
 
-          <!-- SeedFit Pro Membership Card (공식 구독 카드 - 이모티콘 전면 배제) -->
-          <div class="${isLightMode ? 'bg-gradient-to-br from-indigo-50/80 via-white to-purple-50/40 border-indigo-200/80 shadow-sm' : 'bg-gradient-to-br from-indigo-950/40 via-neutral-900 to-purple-950/20 border-indigo-500/30'} border rounded-3xl p-4 space-y-3 relative overflow-hidden">
-            <div class="flex justify-between items-start">
-              <div>
-                <div class="flex items-center space-x-2">
-                  <span class="text-xs font-black tracking-wide bg-gradient-to-r ${isAdmin ? 'from-amber-400 to-amber-500' : 'from-indigo-400 to-purple-400'} bg-clip-text text-transparent">
-                    ${isAdmin ? 'SEEDFIT MASTER' : 'SEEDFIT PRO'}
-                  </span>
-                  <span class="text-[9px] font-bold px-2 py-0.5 rounded-full ${isAdmin ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30 font-black' : (isProMember ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : (isLightMode ? 'bg-indigo-100 text-indigo-700' : 'bg-indigo-500/20 text-indigo-300'))}">
-                    ${isAdmin ? '👑 관리자 프리패스' : (isProMember ? 'PRO 활성화됨' : '무료 플랜 (Free)')}
-                  </span>
+          ${!isAdmin ? `
+            <!-- SeedFit Pro Membership Card (공식 구독 카드 - 이모티콘 전면 배제) -->
+            <div class="${isLightMode ? 'bg-gradient-to-br from-indigo-50/80 via-white to-purple-50/40 border-indigo-200/80 shadow-sm' : 'bg-gradient-to-br from-indigo-950/40 via-neutral-900 to-purple-950/20 border-indigo-500/30'} border rounded-3xl p-4 space-y-3 relative overflow-hidden">
+              <div class="flex justify-between items-start">
+                <div>
+                  <div class="flex items-center space-x-2">
+                    <span class="text-xs font-black tracking-wide bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
+                      SEEDFIT PRO
+                    </span>
+                    <span class="text-[9px] font-bold px-2 py-0.5 rounded-full ${isProMember ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : (isLightMode ? 'bg-indigo-100 text-indigo-700' : 'bg-indigo-500/20 text-indigo-300')}">
+                      ${isProMember ? 'PRO 활성화됨' : '무료 플랜 (Free)'}
+                    </span>
+                  </div>
+                  <p class="text-[11px] text-neutral-400 mt-1">
+                    ${isProMember ? '모든 고급 분석 및 클라우드 무제한 기능을 이용 중입니다.' : '실시간 클라우드 자동 보존과 고급 분석을 제한 없이 누려보세요.'}
+                  </p>
                 </div>
-                <p class="text-[11px] text-neutral-400 mt-1">
-                  ${isAdmin ? '관리자 권한으로 모든 Pro 기능과 비즈니스 대시보드가 무제한 개방되었습니다.' : (isProMember ? '모든 고급 분석 및 클라우드 무제한 기능을 이용 중입니다.' : '실시간 클라우드 자동 보존과 고급 분석을 제한 없이 누려보세요.')}
-                </p>
+                ${!isProMember ? `
+                  <button onclick="window.openSubscriptionModal()" class="py-1.5 px-3 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold rounded-xl text-xs shadow-md transition active:scale-95 shrink-0">
+                    Pro 구독
+                  </button>
+                ` : `
+                  <button onclick="window.openMembershipManagementModal()" class="py-1 px-2.5 rounded-lg text-[10px] font-semibold ${isLightMode ? 'bg-neutral-100 hover:bg-neutral-200 text-neutral-700' : 'bg-neutral-800 hover:bg-neutral-700 text-neutral-300'} transition shrink-0">
+                    멤버십 관리
+                  </button>
+                `}
               </div>
-              ${isAdmin ? `
-                <button onclick="window.switchTab('admin')" class="py-1.5 px-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-extrabold rounded-xl text-xs shadow-md transition active:scale-95 shrink-0 flex items-center space-x-1">
-                  <span>관리 대시보드</span>
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
-                </button>
-              ` : (!isProMember ? `
-                <button onclick="window.openSubscriptionModal()" class="py-1.5 px-3 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold rounded-xl text-xs shadow-md transition active:scale-95 shrink-0">
-                  Pro 구독
-                </button>
-              ` : `
-                <button onclick="window.openMembershipManagementModal()" class="py-1 px-2.5 rounded-lg text-[10px] font-semibold ${isLightMode ? 'bg-neutral-100 hover:bg-neutral-200 text-neutral-700' : 'bg-neutral-800 hover:bg-neutral-700 text-neutral-300'} transition shrink-0">
-                  멤버십 관리
-                </button>
-              `)}
-            </div>
-            
-            <!-- Quick Features (이모티콘 전면 배제) -->
-            <div class="grid grid-cols-2 gap-2 text-[10px] pt-1 border-t ${isLightMode ? 'border-neutral-100 text-neutral-600' : 'border-neutral-800/80 text-neutral-400'}">
-              <div class="flex items-center space-x-1.5">
-                <span class="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
-                <span>클라우드 실시간 무제한 백업</span>
-              </div>
-              <div class="flex items-center space-x-1.5">
-                <span class="w-1.5 h-1.5 rounded-full bg-purple-400"></span>
-                <span>카테고리별 교차분석 매트릭스</span>
-              </div>
-              <div class="flex items-center space-x-1.5">
-                <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
-                <span>뇌동·추격 투자 방어 멘탈 가드</span>
-              </div>
-              <div class="flex items-center space-x-1.5">
-                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                <span>무제한 챌린지 프로젝트 개설</span>
+              
+              <!-- Quick Features (이모티콘 전면 배제) -->
+              <div class="grid grid-cols-2 gap-2 text-[10px] pt-1 border-t ${isLightMode ? 'border-neutral-100 text-neutral-600' : 'border-neutral-800/80 text-neutral-400'}">
+                <div class="flex items-center space-x-1.5">
+                  <span class="w-1.5 h-1.5 rounded-full bg-indigo-400"></span>
+                  <span>클라우드 실시간 무제한 백업</span>
+                </div>
+                <div class="flex items-center space-x-1.5">
+                  <span class="w-1.5 h-1.5 rounded-full bg-purple-400"></span>
+                  <span>카테고리별 교차분석 매트릭스</span>
+                </div>
+                <div class="flex items-center space-x-1.5">
+                  <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                  <span>뇌동·추격 투자 방어 멘탈 가드</span>
+                </div>
+                <div class="flex items-center space-x-1.5">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                  <span>무제한 챌린지 프로젝트 개설</span>
+                </div>
               </div>
             </div>
-          </div>
+          ` : ''}
 
           <!-- Mental Care Settings Card -->
           <div class="${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900 border-neutral-800'} border rounded-3xl p-4 space-y-3">
@@ -3860,27 +3862,6 @@
             </button>
           </div>
 
-          ${isAdmin ? `
-            <!-- 마스터 관리자 전용 바로가기 카드 (오직 wpdntm0428@gmail.com에만 노출) -->
-            <div class="${isLightMode ? 'bg-gradient-to-br from-amber-500/10 via-white to-amber-500/5 border-amber-300/80 shadow-sm' : 'bg-gradient-to-br from-amber-950/20 via-neutral-900 to-amber-900/10 border-amber-500/30'} border rounded-3xl p-4 space-y-3">
-              <div class="flex justify-between items-center text-xs">
-                <div class="flex items-center space-x-1.5">
-                  <span class="text-base">👑</span>
-                  <span class="font-bold ${isLightMode ? 'text-neutral-900' : 'text-neutral-200'}">마스터 관리자 권한</span>
-                </div>
-                <span class="font-mono text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">
-                  wpdntm0428@gmail.com
-                </span>
-              </div>
-              <p class="text-[11px] text-neutral-400 leading-relaxed">
-                현재 계정에 마스터 관리자 권한이 부여되어 있습니다. <b>구독 없이 모든 Pro 기능 무제한 이용 & 테스트</b>가 가능하며, 하단 <b>[관리]</b> 탭에서 가입자 및 수익 대시보드를 즉시 열람할 수 있습니다.
-              </p>
-              <button onclick="window.switchTab('admin')" class="w-full py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-extrabold rounded-xl text-xs transition active:scale-95 flex items-center justify-center space-x-1.5 shadow-md">
-                <span>관리자 비즈니스 대시보드 열기</span>
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
-              </button>
-            </div>
-          ` : ''}
 
           <div class="pt-2">
             <button onclick="resetAllData()" class="w-full py-3 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-semibold rounded-2xl text-xs transition border border-rose-500/30">
