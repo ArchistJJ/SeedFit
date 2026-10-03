@@ -406,15 +406,13 @@
         </div>
 
         <div class="grid grid-cols-2 gap-3 pt-1">
-          <button onclick="selectSettleType('WIN')" id="btnSettleWin" class="py-3 rounded-2xl bg-emerald-500/20 border-2 border-emerald-500 flex flex-col items-center space-y-1 transition active:scale-95 shadow-sm">
+          <button onclick="selectSettleType('WIN')" id="btnSettleWin" class="py-3.5 rounded-2xl bg-emerald-500/20 border-2 border-emerald-500 flex flex-col items-center justify-center space-y-1.5 transition active:scale-95 shadow-sm">
             <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            <span class="text-xs font-bold text-emerald-400">적중</span>
-            <span id="btnSettleWinSub" class="text-[10px] text-emerald-300 font-mono">+45,000원</span>
+            <span id="btnSettleWinSub" class="text-xs font-bold text-emerald-300 font-mono">+45,000원</span>
           </button>
-          <button onclick="selectSettleType('LOSE')" id="btnSettleLose" class="py-3 rounded-2xl bg-rose-500/10 border border-neutral-700 hover:bg-rose-500/20 flex flex-col items-center space-y-1 transition active:scale-95">
+          <button onclick="selectSettleType('LOSE')" id="btnSettleLose" class="py-3.5 rounded-2xl bg-rose-500/10 border border-neutral-700 hover:bg-rose-500/20 flex flex-col items-center justify-center space-y-1.5 transition active:scale-95">
             <svg class="w-6 h-6 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            <span class="text-xs font-bold text-rose-400">미적중 (0원)</span>
-            <span id="btnSettleLoseSub" class="text-[10px] text-rose-300 font-mono">-50,000원</span>
+            <span id="btnSettleLoseSub" class="text-xs font-bold text-rose-300 font-mono">-50,000원</span>
           </button>
         </div>
 
@@ -867,7 +865,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.9.0').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.9.1').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -1743,7 +1741,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.9.0';
+    const CURRENT_APP_VERSION = 'v1.9.1';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');
@@ -4586,11 +4584,11 @@
       const btnLose = document.getElementById('btnSettleLose');
 
       if (type === 'WIN') {
-        btnWin.className = 'py-3 rounded-2xl bg-emerald-500/25 border-2 border-emerald-500 flex flex-col items-center space-y-1 transition active:scale-95 shadow-md';
-        btnLose.className = 'py-3 rounded-2xl bg-rose-500/10 border border-neutral-700/60 hover:bg-rose-500/20 flex flex-col items-center space-y-1 transition active:scale-95';
+        btnWin.className = 'py-3.5 rounded-2xl bg-emerald-500/25 border-2 border-emerald-500 flex flex-col items-center justify-center space-y-1.5 transition active:scale-95 shadow-md';
+        btnLose.className = 'py-3.5 rounded-2xl bg-rose-500/10 border border-neutral-700/60 hover:bg-rose-500/20 flex flex-col items-center justify-center space-y-1.5 transition active:scale-95';
       } else {
-        btnLose.className = 'py-3 rounded-2xl bg-rose-500/25 border-2 border-rose-500 flex flex-col items-center space-y-1 transition active:scale-95 shadow-md';
-        btnWin.className = 'py-3 rounded-2xl bg-emerald-500/10 border border-neutral-700/60 hover:bg-emerald-500/20 flex flex-col items-center space-y-1 transition active:scale-95';
+        btnLose.className = 'py-3.5 rounded-2xl bg-rose-500/25 border-2 border-rose-500 flex flex-col items-center justify-center space-y-1.5 transition active:scale-95 shadow-md';
+        btnWin.className = 'py-3.5 rounded-2xl bg-emerald-500/10 border border-neutral-700/60 hover:bg-emerald-500/20 flex flex-col items-center justify-center space-y-1.5 transition active:scale-95';
       }
       updateExpectedProfit();
     }
