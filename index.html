@@ -863,7 +863,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.8.6').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.8.7').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -1739,7 +1739,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.8.6';
+    const CURRENT_APP_VERSION = 'v1.8.7';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');
@@ -3898,7 +3898,14 @@
       loading: false,
       users: [],
       lastFetched: null,
-      viewMode: 'real' // 'real' 또는 'demo'
+      viewMode: 'real', // 'real' 또는 'demo'
+      selectedMonthIdx: null
+    };
+
+    // 관리자 대시보드 성장 그래프 선택 월 변경
+    window.selectAdminGrowthMonth = function(idx) {
+      adminDashboardState.selectedMonthIdx = idx;
+      if (currentTab === 'admin') renderAdminTab(document.getElementById('contentArea'));
     };
 
     // 실시간 Supabase 유저 & 구독 데이터 로드
@@ -4013,17 +4020,108 @@
       const pricePerMonth = 9900; // 월 구독료 (₩9,900원 기준)
       const monthlyRevenue = activeSubscribers * pricePerMonth;
 
-      // 월별 가입자 & 구독자 변동 통계 (최근 6개월)
-      const monthlyGrowth = isDemo ? [
-        { month: '2026.10', signups: 14, newSubs: 5, activeSubs: activeSubscribers, revenue: activeSubscribers * pricePerMonth, rate: '35.7%' },
-        { month: '2026.09', signups: 22, newSubs: 7, activeSubs: 11, revenue: 11 * pricePerMonth, rate: '31.8%' },
-        { month: '2026.08', signups: 18, newSubs: 5, activeSubs: 7, revenue: 7 * pricePerMonth, rate: '27.7%' },
-        { month: '2026.07', signups: 15, newSubs: 4, activeSubs: 4, revenue: 4 * pricePerMonth, rate: '26.6%' },
-        { month: '2026.06', signups: 9,  newSubs: 2, activeSubs: 2, revenue: 2 * pricePerMonth, rate: '22.2%' },
-        { month: '2026.05', signups: 5,  newSubs: 1, activeSubs: 1, revenue: 1 * pricePerMonth, rate: '20.0%' },
-      ] : [
-        { month: '2026.10 (당월)', signups: totalSignups, newSubs: activeSubscribers, activeSubs: activeSubscribers, revenue: monthlyRevenue, rate: `${conversionRate}%` }
-      ];
+      // 월별 가입자 & 구독자 변동 통계 (최근 6개월) - 시간순 정렬: 과거 -> 현재
+      let chronGrowth = [];
+      if (isDemo) {
+        chronGrowth = [
+          { month: '2026.05', label: '5월', signups: 5, newSubs: 1, revenue: 1 * pricePerMonth, rate: '20.0%' },
+          { month: '2026.06', label: '6월', signups: 9, newSubs: 2, revenue: 2 * pricePerMonth, rate: '22.2%' },
+          { month: '2026.07', label: '7월', signups: 15, newSubs: 4, revenue: 4 * pricePerMonth, rate: '26.6%' },
+          { month: '2026.08', label: '8월', signups: 18, newSubs: 5, revenue: 7 * pricePerMonth, rate: '27.7%' },
+          { month: '2026.09', label: '9월', signups: 22, newSubs: 7, revenue: 11 * pricePerMonth, rate: '31.8%' },
+          { month: '2026.10', label: '10월', signups: 14, newSubs: 5, revenue: activeSubscribers * pricePerMonth, rate: '35.7%' }
+        ];
+      } else {
+        const nowObj = new Date();
+        for (let i = 5; i >= 0; i--) {
+          const d = new Date(nowObj.getFullYear(), nowObj.getMonth() - i, 1);
+          const y = d.getFullYear();
+          const m = String(d.getMonth() + 1).padStart(2, '0');
+          const monthKey = `${y}.${m}`;
+          const monthLabel = `${d.getMonth() + 1}월`;
+
+          const monthUsers = activeUsers.filter(u => {
+            if (!u.updated_at) return false;
+            return u.updated_at.startsWith(`${y}-${m}`);
+          });
+          const mSignups = (i === 0 && monthUsers.length === 0) ? totalSignups : monthUsers.length;
+          const mSubs = (i === 0 && monthUsers.length === 0) ? activeSubscribers : monthUsers.filter(u => u.subscription_tier === 'pro').length;
+          const mRate = mSignups > 0 ? ((mSubs / mSignups) * 100).toFixed(1) + '%' : '0.0%';
+
+          chronGrowth.push({
+            month: monthKey,
+            label: monthLabel,
+            signups: mSignups,
+            newSubs: mSubs,
+            revenue: mSubs * pricePerMonth,
+            rate: mRate
+          });
+        }
+      }
+
+      if (adminDashboardState.selectedMonthIdx === null || adminDashboardState.selectedMonthIdx < 0 || adminDashboardState.selectedMonthIdx >= chronGrowth.length) {
+        adminDashboardState.selectedMonthIdx = chronGrowth.length - 1;
+      }
+      const activeGrowthMonth = chronGrowth[adminDashboardState.selectedMonthIdx];
+
+      // SVG 곡선/영역 그래프 계산
+      const graphW = 340;
+      const graphH = 150;
+      const gPadL = 26;
+      const gPadR = 18;
+      const gPadT = 22;
+      const gPadB = 26;
+      const plotW = graphW - gPadL - gPadR;
+      const plotH = graphH - gPadT - gPadB;
+
+      const maxSignupVal = Math.max(...chronGrowth.map(d => d.signups), 1);
+      const maxSubVal = Math.max(...chronGrowth.map(d => d.newSubs), 1);
+      const maxVal = Math.max(maxSignupVal, maxSubVal, 10);
+      const scaleMax = Math.ceil(maxVal / 5) * 5;
+      const scaleMid = Math.round(scaleMax / 2);
+
+      const ptsSignup = chronGrowth.map((d, i) => ({
+        x: gPadL + (i / (chronGrowth.length - 1)) * plotW,
+        y: gPadT + plotH - (d.signups / scaleMax) * plotH,
+        val: d.signups,
+        month: d.month,
+        label: d.label
+      }));
+
+      const ptsSub = chronGrowth.map((d, i) => ({
+        x: gPadL + (i / (chronGrowth.length - 1)) * plotW,
+        y: gPadT + plotH - (d.newSubs / scaleMax) * plotH,
+        val: d.newSubs,
+        month: d.month,
+        label: d.label
+      }));
+
+      function buildCurve(pts) {
+        if (pts.length <= 1) return '';
+        let d = `M ${pts[0].x.toFixed(1)} ${pts[0].y.toFixed(1)}`;
+        for (let i = 0; i < pts.length - 1; i++) {
+          const p0 = pts[i === 0 ? i : i - 1];
+          const p1 = pts[i];
+          const p2 = pts[i + 1];
+          const p3 = pts[i + 2] || p2;
+          const cp1x = p1.x + (p2.x - p0.x) / 6;
+          const cp1y = p1.y + (p2.y - p0.y) / 6;
+          const cp2x = p2.x - (p3.x - p1.x) / 6;
+          const cp2y = p2.y - (p3.y - p1.y) / 6;
+          d += ` C ${cp1x.toFixed(1)} ${cp1y.toFixed(1)}, ${cp2x.toFixed(1)} ${cp2y.toFixed(1)}, ${p2.x.toFixed(1)} ${p2.y.toFixed(1)}`;
+        }
+        return d;
+      }
+
+      const pathSignup = buildCurve(ptsSignup);
+      const pathSub = buildCurve(ptsSub);
+      const baseY = (gPadT + plotH).toFixed(1);
+      const areaSignup = `${pathSignup} L ${ptsSignup[ptsSignup.length - 1].x.toFixed(1)} ${baseY} L ${ptsSignup[0].x.toFixed(1)} ${baseY} Z`;
+      const areaSub = `${pathSub} L ${ptsSub[ptsSub.length - 1].x.toFixed(1)} ${baseY} L ${ptsSub[0].x.toFixed(1)} ${baseY} Z`;
+
+      const selIdx = adminDashboardState.selectedMonthIdx;
+      const selX = ptsSignup[selIdx].x;
+      const colTouchW = plotW / (chronGrowth.length - 1);
 
       container.innerHTML = `
         <div class="space-y-4">
@@ -4143,56 +4241,153 @@
             </div>
           </div>
 
-          <!-- 3. 매달 가입자 및 구독자 변동 통계 (월별 성장 추이) -->
-          <div class="${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900 border-neutral-800'} border p-4 rounded-3xl space-y-3 shadow-sm">
+          <!-- 3. 매달 가입자 및 구독자 변동 통계 (월별 성장 추이 인터랙티브 그래프) -->
+          <div class="${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900 border-neutral-800'} border p-4 rounded-3xl space-y-3.5 shadow-sm">
             <div class="flex justify-between items-center">
               <div>
                 <h3 class="text-xs font-bold ${isLightMode ? 'text-neutral-900' : 'text-white'} flex items-center space-x-1.5">
-                  <svg class="w-3.5 h-3.5 text-blue-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                  <svg class="w-3.5 h-3.5 text-blue-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>
                   <span>월별 가입자·구독자 변동 통계</span>
                 </h3>
-                <p class="text-[10px] text-neutral-400">월별 신규 가입 대비 Pro 구독 성장 지표</p>
+                <p class="text-[10px] text-neutral-400">월별 신규 가입 대비 Pro 구독 성장 그래프</p>
               </div>
               <span class="text-[9px] font-semibold px-2 py-0.5 rounded-full ${isLightMode ? 'bg-neutral-100 text-neutral-600' : 'bg-neutral-800 text-neutral-400'}">
                 최근 6개월
               </span>
             </div>
 
-            <!-- 미니 막대 차트 (가입자 바 & 구독자 바) -->
-            <div class="space-y-3 pt-2">
-              ${monthlyGrowth.map(item => {
-                const maxVal = Math.max(...monthlyGrowth.map(m => m.signups), 1);
-                const signupPct = Math.min(100, Math.round((item.signups / maxVal) * 100));
-                const subPct = Math.min(100, Math.round((item.newSubs / maxVal) * 100));
-                return `
-                  <div class="space-y-1 text-xs">
-                    <div class="flex justify-between items-center text-[11px]">
-                      <span class="font-bold ${isLightMode ? 'text-neutral-800' : 'text-neutral-200'}">${item.month}</span>
-                      <div class="flex items-center space-x-2 font-mono text-[10px]">
-                        <span class="text-blue-400">가입 ${item.signups}명</span>
-                        <span class="text-neutral-500">|</span>
-                        <span class="text-purple-400 font-bold">구독 +${item.newSubs}건</span>
-                        <span class="text-neutral-500">|</span>
-                        <span class="font-bold ${isLightMode ? 'text-neutral-900' : 'text-white'}">₩${item.revenue.toLocaleString()}</span>
-                      </div>
-                    </div>
-                    <div class="w-full h-2 bg-neutral-800/60 rounded-full overflow-hidden flex space-x-0.5">
-                      <div class="h-full bg-blue-500 rounded-l-full transition-all duration-500" style="width: ${signupPct}%" title="가입자"></div>
-                      <div class="h-full bg-purple-500 rounded-r-full transition-all duration-500" style="width: ${subPct}%" title="구독자"></div>
-                    </div>
-                  </div>
-                `;
-              }).join('')}
+            <!-- 선택된 월 상세 지표 헤더 바 -->
+            <div class="p-3 rounded-2xl ${isLightMode ? 'bg-neutral-50 border border-neutral-200/80' : 'bg-neutral-950/70 border border-neutral-800/80'} flex items-center justify-between">
+              <div>
+                <div class="text-[10px] text-neutral-400 font-medium">선택 월 지표</div>
+                <div class="text-xs font-black font-mono ${isLightMode ? 'text-neutral-900' : 'text-white'}">
+                  ${activeGrowthMonth.month} (${activeGrowthMonth.label})
+                </div>
+              </div>
+              <div class="flex items-center space-x-3 text-right font-mono">
+                <div>
+                  <div class="text-[9px] text-blue-400 font-semibold">신규 가입</div>
+                  <div class="text-xs font-black text-blue-500">${activeGrowthMonth.signups}명</div>
+                </div>
+                <div class="h-6 w-px ${isLightMode ? 'bg-neutral-200' : 'bg-neutral-800'}"></div>
+                <div>
+                  <div class="text-[9px] text-purple-400 font-semibold">신규 구독</div>
+                  <div class="text-xs font-black text-purple-400">+${activeGrowthMonth.newSubs}건</div>
+                </div>
+                <div class="h-6 w-px ${isLightMode ? 'bg-neutral-200' : 'bg-neutral-800'}"></div>
+                <div>
+                  <div class="text-[9px] text-amber-400 font-semibold">전환 매출</div>
+                  <div class="text-xs font-black ${isLightMode ? 'text-neutral-900' : 'text-white'}">₩${activeGrowthMonth.revenue.toLocaleString()}</div>
+                </div>
+              </div>
             </div>
 
-            <div class="flex items-center justify-end space-x-3 text-[10px] text-neutral-400 pt-1 border-t ${isLightMode ? 'border-neutral-100' : 'border-neutral-800'}">
-              <div class="flex items-center space-x-1">
-                <span class="w-2 h-2 rounded-full bg-blue-500"></span>
-                <span>신규 가입자</span>
+            <!-- 인터랙티브 SVG 곡선/영역 그래프 -->
+            <div class="pt-1">
+              <svg viewBox="0 0 ${graphW} ${graphH}" class="w-full h-44 overflow-visible select-none">
+                <defs>
+                  <!-- 가입자 그라디언트 채우기 -->
+                  <linearGradient id="adminSignupArea" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.32" />
+                    <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.0" />
+                  </linearGradient>
+                  <!-- 구독자 그라디언트 채우기 -->
+                  <linearGradient id="adminSubArea" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#a855f7" stop-opacity="0.4" />
+                    <stop offset="100%" stop-color="#a855f7" stop-opacity="0.0" />
+                  </linearGradient>
+                </defs>
+
+                <!-- 가이드 격자선 -->
+                <line x1="${gPadL}" y1="${gPadT}" x2="${graphW - gPadR}" y2="${gPadT}" stroke="${isLightMode ? '#e5e7eb' : 'rgba(255,255,255,0.08)'}" stroke-width="1" stroke-dasharray="3 3" />
+                <line x1="${gPadL}" y1="${(gPadT + plotH / 2).toFixed(1)}" x2="${graphW - gPadR}" y2="${(gPadT + plotH / 2).toFixed(1)}" stroke="${isLightMode ? '#e5e7eb' : 'rgba(255,255,255,0.08)'}" stroke-width="1" stroke-dasharray="3 3" />
+                <line x1="${gPadL}" y1="${baseY}" x2="${graphW - gPadR}" y2="${baseY}" stroke="${isLightMode ? '#cbd5e1' : 'rgba(255,255,255,0.15)'}" stroke-width="1" />
+
+                <!-- Y축 수치 라벨 -->
+                <text x="${gPadL - 5}" y="${gPadT + 3}" text-anchor="end" font-size="8" font-family="monospace" font-weight="600" fill="${isLightMode ? '#94a3b8' : '#64748b'}">${scaleMax}</text>
+                <text x="${gPadL - 5}" y="${(gPadT + plotH / 2 + 3).toFixed(1)}" text-anchor="end" font-size="8" font-family="monospace" font-weight="600" fill="${isLightMode ? '#94a3b8' : '#64748b'}">${scaleMid}</text>
+                <text x="${gPadL - 5}" y="${Number(baseY) + 3}" text-anchor="end" font-size="8" font-family="monospace" font-weight="600" fill="${isLightMode ? '#94a3b8' : '#64748b'}">0</text>
+
+                <!-- 선택된 월 하이라이트 배경 및 커서 라인 -->
+                <rect x="${(selX - colTouchW / 2 + 2).toFixed(1)}" y="${gPadT - 4}" width="${(colTouchW - 4).toFixed(1)}" height="${plotH + 8}" rx="8" fill="${isLightMode ? 'rgba(59, 130, 246, 0.08)' : 'rgba(59, 130, 246, 0.14)'}" />
+                <line x1="${selX.toFixed(1)}" y1="${gPadT - 4}" x2="${selX.toFixed(1)}" y2="${baseY}" stroke="${isLightMode ? '#60a5fa' : '#3b82f6'}" stroke-width="1.5" stroke-dasharray="2 2" />
+
+                <!-- 그라디언트 영역 면적 -->
+                <path d="${areaSignup}" fill="url(#adminSignupArea)" />
+                <path d="${areaSub}" fill="url(#adminSubArea)" />
+
+                <!-- 추세 곡선 라인 -->
+                <path d="${pathSignup}" fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+                <path d="${pathSub}" fill="none" stroke="#a855f7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+
+                <!-- 데이터 포인트 원 및 수치 라벨 -->
+                ${ptsSignup.map((p, i) => {
+                  const isSel = (i === selIdx);
+                  return `
+                    ${isSel ? `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="7" fill="none" stroke="#3b82f6" stroke-width="1.5" opacity="0.6" />` : ''}
+                    <circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${isSel ? '4.5' : '3.5'}" fill="#3b82f6" stroke="${isLightMode ? '#ffffff' : '#171717'}" stroke-width="1.5" />
+                    <text x="${p.x.toFixed(1)}" y="${(p.y - 7).toFixed(1)}" text-anchor="middle" font-size="${isSel ? '9' : '8'}" font-weight="700" font-family="monospace" fill="${isSel ? '#3b82f6' : (isLightMode ? '#60a5fa' : '#93c5fd')}">${p.val}</text>
+                  `;
+                }).join('')}
+
+                ${ptsSub.map((p, i) => {
+                  const isSel = (i === selIdx);
+                  return `
+                    ${isSel ? `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="7" fill="none" stroke="#a855f7" stroke-width="1.5" opacity="0.6" />` : ''}
+                    <circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${isSel ? '4.5' : '3.5'}" fill="#a855f7" stroke="${isLightMode ? '#ffffff' : '#171717'}" stroke-width="1.5" />
+                    <text x="${p.x.toFixed(1)}" y="${(p.y + 13).toFixed(1)}" text-anchor="middle" font-size="${isSel ? '9' : '8'}" font-weight="700" font-family="monospace" fill="${isSel ? '#a855f7' : (isLightMode ? '#c084fc' : '#d8b4fe')}">${p.val}</text>
+                  `;
+                }).join('')}
+
+                <!-- X축 월 라벨 -->
+                ${ptsSignup.map((p, i) => {
+                  const isSel = (i === selIdx);
+                  return `
+                    <text x="${p.x.toFixed(1)}" y="${graphH - 7}" text-anchor="middle" font-size="${isSel ? '10' : '9'}" font-weight="${isSel ? '800' : '500'}" fill="${isSel ? (isLightMode ? '#1e293b' : '#ffffff') : (isLightMode ? '#64748b' : '#9ca3af')}">
+                      ${p.label}
+                    </text>
+                  `;
+                }).join('')}
+
+                <!-- 터치/클릭 감지 투명 히트박스 -->
+                ${ptsSignup.map((p, i) => {
+                  const tLeft = i === 0 ? gPadL - 8 : p.x - colTouchW / 2;
+                  const tWidth = (i === 0 || i === chronGrowth.length - 1) ? colTouchW / 2 + 8 : colTouchW;
+                  return `
+                    <rect x="${tLeft.toFixed(1)}" y="0" width="${tWidth.toFixed(1)}" height="${graphH}" fill="transparent" class="cursor-pointer" onclick="window.selectAdminGrowthMonth(${i})" />
+                  `;
+                }).join('')}
+              </svg>
+            </div>
+
+            <!-- 하단 범례 및 6개월 비교 미니 그리드 -->
+            <div class="space-y-2 pt-2 border-t ${isLightMode ? 'border-neutral-100' : 'border-neutral-800'}">
+              <div class="flex items-center justify-between text-[10px]">
+                <div class="flex items-center space-x-3 text-neutral-400">
+                  <div class="flex items-center space-x-1.5">
+                    <span class="w-2.5 h-1 rounded-full bg-blue-500"></span>
+                    <span class="font-medium">신규 가입자</span>
+                  </div>
+                  <div class="flex items-center space-x-1.5">
+                    <span class="w-2.5 h-1 rounded-full bg-purple-500"></span>
+                    <span class="font-medium">신규 구독자</span>
+                  </div>
+                </div>
+                <span class="text-[9px] text-neutral-500">각 월을 터치하면 상세 지표 확인</span>
               </div>
-              <div class="flex items-center space-x-1">
-                <span class="w-2 h-2 rounded-full bg-purple-500"></span>
-                <span>신규 구독자</span>
+
+              <!-- 6개월 비교 미니 그리드 버튼 -->
+              <div class="grid grid-cols-6 gap-1 pt-1 text-center">
+                ${chronGrowth.map((item, idx) => {
+                  const isSel = (idx === selIdx);
+                  return `
+                    <button onclick="window.selectAdminGrowthMonth(${idx})" class="p-1.5 rounded-xl transition ${isSel ? (isLightMode ? 'bg-blue-50 border border-blue-300' : 'bg-neutral-800 border border-neutral-700 shadow-sm') : (isLightMode ? 'bg-neutral-100/70 hover:bg-neutral-100' : 'bg-neutral-950/40 hover:bg-neutral-800/40')}">
+                      <div class="text-[9px] font-bold ${isSel ? (isLightMode ? 'text-blue-600' : 'text-blue-400') : 'text-neutral-400'}">${item.label}</div>
+                      <div class="text-[10px] font-bold text-blue-500 font-mono">${item.signups}</div>
+                      <div class="text-[9px] font-bold text-purple-400 font-mono">+${item.newSubs}</div>
+                    </button>
+                  `;
+                }).join('')}
               </div>
             </div>
           </div>
