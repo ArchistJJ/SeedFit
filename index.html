@@ -376,8 +376,8 @@
         <div class="flex justify-between items-start">
           <div>
             <div class="flex items-center space-x-1.5">
-              <span id="settleCategoryBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400">승무패</span>
-              <span id="settleFoldBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-400">1폴</span>
+              <span id="settleCategoryBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400">일반투자</span>
+              <span id="settleFoldBadge" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-400">단일</span>
             </div>
             <h3 class="text-base font-bold text-white mt-1">결과 정산하기</h3>
             <p id="settleSummaryText" class="text-xs text-neutral-400 mt-0.5">투입 금액: 50,000원</p>
@@ -494,17 +494,17 @@
         <div class="space-y-1.5">
           <label class="text-xs font-semibold text-neutral-300">카테고리 1 (유형)</label>
           <div class="grid grid-cols-2 gap-2" id="categoryButtons">
-            <button type="button" onclick="window.selectCategory('승무패')" class="category-btn py-2.5 rounded-xl text-xs font-semibold bg-blue-600 text-white border border-blue-500">승무패</button>
-            <button type="button" onclick="window.selectCategory('언옵&핸디')" class="category-btn py-2.5 rounded-xl text-xs font-semibold bg-neutral-800 text-neutral-300 border border-neutral-700">언옵&핸디</button>
+            <button type="button" onclick="window.selectCategory('일반투자')" class="category-btn py-2.5 rounded-xl text-xs font-semibold bg-blue-600 text-white border border-blue-500">일반투자</button>
+            <button type="button" onclick="window.selectCategory('전략투자')" class="category-btn py-2.5 rounded-xl text-xs font-semibold bg-neutral-800 text-neutral-300 border border-neutral-700">전략투자</button>
           </div>
         </div>
 
         <div class="space-y-1.5">
-          <label class="text-xs font-semibold text-neutral-300">카테고리 2 (폴더 수)</label>
+          <label class="text-xs font-semibold text-neutral-300">카테고리 2 (조합 분산)</label>
           <div class="grid grid-cols-3 gap-2" id="foldButtons">
-            <button type="button" onclick="window.selectFold('1폴')" class="fold-btn py-2 rounded-xl text-xs font-semibold bg-indigo-600 text-white border border-indigo-500">1폴</button>
-            <button type="button" onclick="window.selectFold('2폴')" class="fold-btn py-2 rounded-xl text-xs font-semibold bg-neutral-800 text-neutral-300 border border-neutral-700">2폴</button>
-            <button type="button" onclick="window.selectFold('3폴')" class="fold-btn py-2 rounded-xl text-xs font-semibold bg-neutral-800 text-neutral-300 border border-neutral-700">3폴</button>
+            <button type="button" onclick="window.selectFold('단일')" class="fold-btn py-2 rounded-xl text-xs font-semibold bg-indigo-600 text-white border border-indigo-500">단일</button>
+            <button type="button" onclick="window.selectFold('2조합')" class="fold-btn py-2 rounded-xl text-xs font-semibold bg-neutral-800 text-neutral-300 border border-neutral-700">2조합</button>
+            <button type="button" onclick="window.selectFold('3조합')" class="fold-btn py-2 rounded-xl text-xs font-semibold bg-neutral-800 text-neutral-300 border border-neutral-700">3조합</button>
           </div>
         </div>
 
@@ -516,8 +516,8 @@
         </div>
 
         <div class="space-y-1.5">
-          <label class="text-xs font-semibold text-neutral-300">메모 / 경기 내용</label>
-          <input type="text" id="inputRecordMemo" placeholder="예: 토트넘 승 / 2.5 오버" class="w-full bg-neutral-800 border border-neutral-700 rounded-xl px-3.5 py-2 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-blue-500" />
+          <label class="text-xs font-semibold text-neutral-300">메모 / 상세 내용</label>
+          <input type="text" id="inputRecordMemo" placeholder="예: 주력 종목 분산 / 전략 투자 메모" class="w-full bg-neutral-800 border border-neutral-700 rounded-xl px-3.5 py-2 text-xs text-white placeholder-neutral-500 focus:outline-none focus:border-blue-500" />
         </div>
 
         <div id="newRecordCooldownWarning" class="hidden p-2.5 rounded-xl bg-amber-500/15 border border-amber-500/30 text-[11px] text-amber-300 flex items-center space-x-2">
@@ -668,7 +668,7 @@
             <span class="w-2 h-2 rounded-full bg-purple-400 mt-1.5 shrink-0"></span>
             <div>
               <div class="font-bold text-white text-xs">카테고리별 정밀 교차분석 매트릭스</div>
-              <div class="text-[11px] text-neutral-400 mt-0.5">승무패, 핸디캡, 언더오버 등 세부 유형별 실질 수익성과 최적 조합 도출</div>
+              <div class="text-[11px] text-neutral-400 mt-0.5">일반투자, 전략투자 등 세부 전략 유형별 실질 수익성과 최적 분산 조합 도출</div>
             </div>
           </div>
           <div class="flex items-start space-x-3 p-3 rounded-2xl bg-neutral-950/60 border border-neutral-800">
@@ -765,7 +765,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.8.0').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.8.1').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -942,18 +942,17 @@
         safeStorage.set('SEEDFIT_AUTH_USER', JSON.stringify(userObj));
         safeStorage.set('SEEDFIT_GUEST_MODE', 'false');
 
-        // 관리자 계정 감지 시 즉시 관리자 권한 및 Pro 권한 자동 부여
+        // 오직 wpdntm0428@gmail.com 계정에만 관리자 및 Pro 권한 자동 부여
         const email = (userObj.email || '').toLowerCase().trim();
-        const name = (userObj.name || '').toLowerCase().trim();
-        if (
-          (typeof ADMIN_ACCOUNTS !== 'undefined' && ADMIN_ACCOUNTS.includes(email)) ||
-          email.includes('archist') || name.includes('archist') || name.includes('박재준')
-        ) {
+        if (email === 'wpdntm0428@gmail.com') {
           safeStorage.set('SEEDFIT_IS_ADMIN', 'true');
           safeStorage.set('SEEDFIT_IS_PRO', 'true');
+        } else {
+          safeStorage.set('SEEDFIT_IS_ADMIN', 'false');
         }
       } else {
         safeStorage.set('SEEDFIT_AUTH_USER', '');
+        safeStorage.set('SEEDFIT_IS_ADMIN', 'false');
       }
 
       if (typeof updateBottomTabBar === 'function') {
@@ -1044,18 +1043,9 @@
     }
 
     let syncDebounceTimer = null;
-    window.syncToCloud = async function(showToastNotice = false) {
+    window.syncToCloud = async function(showToastNotice = false, isInitialAuth = false) {
       const authUser = getAuthUser();
       if (!authUser || !authUser.id) return;
-
-      // SeedFit Pro 전용 혜택: 클라우드 실시간 자동 동기화
-      if (!isUserPro()) {
-        if (showToastNotice) {
-          window.openSubscriptionModal();
-          showToast('멀티 기기 클라우드 실시간 동기화는 SeedFit Pro 전용 기능입니다.');
-        }
-        return;
-      }
 
       const userIdKey = `${authUser.provider || 'user'}:${authUser.id}`;
       const sb = getSupabase(userIdKey);
@@ -1064,13 +1054,24 @@
         return;
       }
 
+      const isPro = isUserPro();
+
+      // 무료 회원이 수동으로 [지금 동기화] 버튼을 클릭한 경우 Pro 안내 모달 오픈
+      if (!isPro && !isInitialAuth && showToastNotice) {
+        window.openSubscriptionModal();
+        showToast('멀티 기기 클라우드 실시간 동기화는 SeedFit Pro 전용 기능입니다.');
+        return;
+      }
+
+      // Supabase seedfit_user_data 테이블에 회원 기본 프로필 및 가입 상태는 Free/Pro 무관하게 100% 등록
       const payload = {
         user_id: userIdKey,
         provider: authUser.provider || 'unknown',
         email: authUser.email || '',
         name: authUser.name || '',
-        records: records || [],
-        projects: projects || [],
+        subscription_tier: isPro ? 'pro' : 'free',
+        records: isPro ? (records || []) : [],
+        projects: isPro ? (projects || []) : [],
         settings: mentalCareSettings || {},
         updated_at: new Date().toISOString()
       };
@@ -1079,10 +1080,10 @@
         const { error } = await sb.from('seedfit_user_data').upsert(payload, { onConflict: 'user_id' });
         if (error) {
           console.warn('Cloud sync error:', error);
-          if (showToastNotice) showToast('클라우드 동기화 실패: ' + (error.message || '네트워크 확인'));
+          if (showToastNotice && isPro) showToast('클라우드 동기화 실패: ' + (error.message || '네트워크 확인'));
         } else {
           safeStorage.set('SEEDFIT_LAST_SYNC_TIME', new Date().toISOString());
-          if (showToastNotice) showToast('클라우드에 안전하게 동기화되었습니다! ☁️');
+          if (showToastNotice && isPro) showToast('클라우드에 안전하게 동기화되었습니다! ☁️');
           if (currentTab === 'settings') {
             const area = document.getElementById('contentArea');
             if (area) renderSettingsTab(area);
@@ -1126,7 +1127,7 @@
             hasUpdated = true;
           }
 
-          if (data.subscription_tier === 'pro') {
+          if (data.subscription_tier === 'pro' || isAdminUser()) {
             safeStorage.set('SEEDFIT_IS_PRO', 'true');
           } else {
             safeStorage.set('SEEDFIT_IS_PRO', 'false');
@@ -1138,10 +1139,10 @@
             safeStorage.set('SEEDFIT_LAST_SYNC_TIME', data.updated_at || new Date().toISOString());
             if (!silent) showToast('클라우드 데이터를 안전하게 불러왔습니다! ☁️');
           } else {
-            await window.syncToCloud(false);
+            await window.syncToCloud(false, true);
           }
         } else {
-          await window.syncToCloud(false);
+          await window.syncToCloud(false, true);
         }
       } catch (e) {
         console.warn('syncFromCloud exception:', e);
@@ -1298,47 +1299,20 @@
     const LEMON_CHECKOUT_URL = 'https://seedfit.lemonsqueezy.com/checkout/buy/1ae381b5-3605-427c-b11d-dbac560468f8';
 
     // 마스터 관리자 식별자 목록 (개발자 & 운영자 계정 자동 감지)
-    const ADMIN_ACCOUNTS = [
-      'admin@seedfit.pro',
-      'archistjj@gmail.com',
-      'archistjj@naver.com'
-    ];
+    // 마스터 관리자 공식 단독 계정 (오직 이 계정에만 관리자 권한 부여)
+    const MASTER_ADMIN_EMAIL = 'wpdntm0428@gmail.com';
 
     function isAdminUser() {
-      if (safeStorage.get('SEEDFIT_IS_ADMIN') === 'true') return true;
       const authUser = getAuthUser();
-      if (!authUser) return false;
-      const email = (authUser.email || '').toLowerCase().trim();
-      const name = (authUser.name || '').toLowerCase().trim();
-      if (email && ADMIN_ACCOUNTS.includes(email)) return true;
-      if (email.includes('archist') || name.includes('archist') || name.includes('박재준')) return true;
-      return false;
+      if (!authUser || !authUser.email) return false;
+      return authUser.email.toLowerCase().trim() === MASTER_ADMIN_EMAIL;
     }
 
     function isUserPro() {
-      // 마스터 관리자 계정은 구독 결제 없이도 모든 Pro 기능 무제한 이용 & 테스트 가능
+      // 마스터 관리자(wpdntm0428@gmail.com)는 구독 결제 없이도 모든 Pro 기능 무제한 이용 & 테스트 가능
       if (isAdminUser()) return true;
       return safeStorage.get('SEEDFIT_IS_PRO') === 'true';
     }
-
-    // 마스터 관리자 모드 토글 (언제든 설정에서 활성화/비활성화 가능)
-    window.toggleAdminMode = function(explicitState = null) {
-      const currentState = isAdminUser();
-      const nextState = (explicitState !== null) ? explicitState : !currentState;
-      safeStorage.set('SEEDFIT_IS_ADMIN', nextState ? 'true' : 'false');
-      if (nextState) {
-        safeStorage.set('SEEDFIT_IS_PRO', 'true');
-        showToast('👑 마스터 관리자 권한이 활성화되었습니다! (모든 기능 무제한 & 관리 탭 개방)');
-      } else {
-        showToast('일반 사용자 모드로 전환되었습니다.');
-      }
-      if (typeof updateBottomTabBar === 'function') updateBottomTabBar();
-      if (currentTab === 'admin' && !isAdminUser()) {
-        window.switchTab('settings');
-      } else {
-        renderCurrentTab();
-      }
-    };
 
     window.openSubscriptionModal = function(customNotice = '') {
       const modal = document.getElementById('subscriptionModal');
@@ -1449,7 +1423,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.8.0';
+    const CURRENT_APP_VERSION = 'v1.8.1';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');
@@ -1493,12 +1467,19 @@
         }
       }
 
-      // 호환성 보장: fold, expectedReturn 및 category 마이그레이션 (언옵, 핸디 -> 언옵&핸디)
+      // 호환성 보장: category 및 fold 마이그레이션 (투자 전략 전문 용어로 통일)
       records.forEach(r => {
-        if (!r.fold) r.fold = '1폴';
-        if (r.category === '언옵' || r.category === '핸디') {
-          r.category = '언옵&핸디';
-        }
+        // 카테고리 1 (유형)
+        if (r.category === '승무패') r.category = '일반투자';
+        if (r.category === '언옵&핸디' || r.category === '언옵' || r.category === '핸디') r.category = '전략투자';
+        if (!r.category) r.category = '일반투자';
+
+        // 카테고리 2 (조합 수)
+        if (r.fold === '1폴') r.fold = '단일';
+        if (r.fold === '2폴') r.fold = '2조합';
+        if (r.fold === '3폴' || r.fold === '4폴' || r.fold === '4폴이상') r.fold = '3조합';
+        if (!r.fold) r.fold = '단일';
+
         if (r.expectedReturn === undefined) {
           r.expectedReturn = (r.returnAmount && r.returnAmount > 0) ? r.returnAmount : Math.round(r.investAmount * 1.9);
         }
@@ -2069,7 +2050,7 @@
         } else {
           catMatch = (r.category === recordFilterCategory);
         }
-        const foldMatch = recordFilterFold === 'ALL' || (r.fold || '1폴') === recordFilterFold;
+        const foldMatch = recordFilterFold === 'ALL' || (r.fold || '단일') === recordFilterFold;
         return catMatch && foldMatch;
       });
 
@@ -2099,7 +2080,7 @@
           <!-- 1차: 유형 및 대기중 필터 -->
           <div class="space-y-1">
             <div class="flex items-center justify-between px-1">
-              <span class="text-[10px] text-neutral-400 font-semibold">카테고리 1 (유형 / 대기)</span>
+              <span class="text-[10px] text-neutral-400 font-semibold">카테고리 1 (전략 유형)</span>
               ${isAnyFilterActive ? `
                 <button onclick="window.setRecordFilter('ALL'); window.setRecordFoldFilter('ALL');" class="text-[10px] text-blue-400 font-bold hover:underline">
                   필터 초기화
@@ -2110,8 +2091,8 @@
               ${[
                 { id: 'ALL', label: '전체 보기' },
                 { id: 'PENDING', label: `정산 대기중 ⏳${pendingCount > 0 ? ` (${pendingCount})` : ''}` },
-                { id: '승무패', label: '승무패' },
-                { id: '언옵&핸디', label: '언옵&핸디' }
+                { id: '일반투자', label: '일반투자' },
+                { id: '전략투자', label: '전략투자' }
               ].map(item => `
                 <button onclick="window.setRecordFilter('${item.id}')" class="px-3 py-1.5 rounded-full font-semibold transition shrink-0 ${recordFilterCategory === item.id ? (item.id === 'PENDING' ? 'bg-amber-500 text-black shadow-md font-bold' : 'bg-blue-600 text-white shadow-sm') : (isLightMode ? 'bg-white text-neutral-600 border border-neutral-200' : 'bg-neutral-900 text-neutral-400 border border-neutral-800')}">
                   ${item.label}
@@ -2120,15 +2101,15 @@
             </div>
           </div>
 
-          <!-- 2차: 폴더 수 필터 -->
+          <!-- 2차: 조합 분산 필터 -->
           <div class="space-y-1">
             <div class="flex items-center justify-between px-1">
-              <span class="text-[10px] text-neutral-400 font-semibold">카테고리 2 (폴더 수)</span>
+              <span class="text-[10px] text-neutral-400 font-semibold">카테고리 2 (조합 분산)</span>
             </div>
             <div class="flex space-x-1.5 overflow-x-auto pb-1 custom-scroll text-xs">
-              ${['ALL', '1폴', '2폴', '3폴'].map(fold => `
+              ${['ALL', '단일', '2조합', '3조합'].map(fold => `
                 <button onclick="window.setRecordFoldFilter('${fold}')" class="px-3 py-1.5 rounded-full font-semibold transition shrink-0 ${recordFilterFold === fold ? 'bg-indigo-600 text-white shadow-sm' : (isLightMode ? 'bg-white text-neutral-600 border border-neutral-200' : 'bg-neutral-900 text-neutral-400 border border-neutral-800')}">
-                  ${fold === 'ALL' ? '전체 폴더' : fold}
+                  ${fold === 'ALL' ? '전체 조합' : fold}
                 </button>
               `).join('')}
             </div>
@@ -2163,7 +2144,7 @@
                 <div class="flex justify-between items-center">
                   <div class="flex items-center space-x-1.5">
                     <span class="text-[11px] font-bold px-2 py-0.5 rounded-lg ${getCategoryColorClass(r.category)}">${r.category}</span>
-                    <span class="text-[11px] font-bold px-2 py-0.5 rounded-lg ${getFoldColorClass(r.fold || '1폴')}">${r.fold || '1폴'}</span>
+                    <span class="text-[11px] font-bold px-2 py-0.5 rounded-lg ${getFoldColorClass(r.fold || '단일')}">${r.fold || '단일'}</span>
                     ${project ? `<span class="text-[9px] bg-purple-500/15 text-purple-400 border border-purple-500/30 px-1.5 py-0.5 rounded font-medium truncate max-w-[100px]">${project.name}</span>` : ''}
                   </div>
                   ${statusBadge}
@@ -2195,15 +2176,15 @@
     }
 
     function getCategoryColorClass(cat) {
-      if (cat === '승무패') return 'bg-blue-500/20 text-blue-400 border border-blue-500/30';
-      if (cat === '언옵&핸디' || cat === '언옵' || cat === '핸디') return 'bg-purple-500/20 text-purple-400 border border-purple-500/30';
+      if (cat === '일반투자' || cat === '승무패') return 'bg-blue-500/20 text-blue-400 border border-blue-500/30';
+      if (cat === '전략투자' || cat === '언옵&핸디' || cat === '언옵' || cat === '핸디') return 'bg-purple-500/20 text-purple-400 border border-purple-500/30';
       return 'bg-neutral-800 text-neutral-300 border border-neutral-700';
     }
 
     function getFoldColorClass(fold) {
-      if (fold === '1폴') return 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30';
-      if (fold === '2폴') return 'bg-violet-500/20 text-violet-400 border border-violet-500/30';
-      if (fold === '3폴') return 'bg-fuchsia-500/20 text-fuchsia-400 border border-fuchsia-500/30';
+      if (fold === '단일' || fold === '1폴') return 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30';
+      if (fold === '2조합' || fold === '2폴') return 'bg-violet-500/20 text-violet-400 border border-violet-500/30';
+      if (fold === '3조합' || fold === '3폴' || fold === '4폴' || fold === '4폴이상') return 'bg-fuchsia-500/20 text-fuchsia-400 border border-fuchsia-500/30';
       return 'bg-neutral-800 text-neutral-300';
     }
 
@@ -2536,7 +2517,7 @@
                 <div class="flex justify-between items-center">
                   <div class="flex items-center space-x-1.5">
                     <span class="text-[11px] font-bold px-2 py-0.5 rounded-lg ${getCategoryColorClass(r.category)}">${r.category}</span>
-                    <span class="text-[11px] font-bold px-2 py-0.5 rounded-lg ${getFoldColorClass(r.fold || '1폴')}">${r.fold || '1폴'}</span>
+                    <span class="text-[11px] font-bold px-2 py-0.5 rounded-lg ${getFoldColorClass(r.fold || '단일')}">${r.fold || '단일'}</span>
                   </div>
                   ${statusBadge}
                 </div>
@@ -2751,13 +2732,13 @@
         periodRecords = periodRecords.filter(r => r.createdAt && r.createdAt.startsWith(targetYearStr));
       }
 
-      // 2. 카테고리 1(유형) x 카테고리 2(폴더 수) 다차원 교차 필터링
+      // 2. 카테고리 1(전략) x 카테고리 2(조합 분산) 다차원 교차 필터링
       let comboRecords = periodRecords;
       if (statsCategoryFilter !== 'ALL') {
         comboRecords = comboRecords.filter(r => r.category === statsCategoryFilter);
       }
       if (statsFoldFilter !== 'ALL') {
-        comboRecords = comboRecords.filter(r => (r.fold || '1폴') === statsFoldFilter);
+        comboRecords = comboRecords.filter(r => (r.fold || '단일') === statsFoldFilter);
       }
 
       // 3. 선택 조합 기준 KPI 통계 계산
@@ -2826,13 +2807,13 @@
         svgGraphHtml = `<div class="h-20 flex items-center justify-center text-xs text-neutral-500">선택된 조건의 정산 기록이 쌓이면 손익 곡선이 나타납니다.</div>`;
       }
 
-      // 5. 2x3 교차 분석 매트릭스 데이터 생성 (승무패/언옵&핸디 x 1폴/2폴/3폴)
-      const categories = ['승무패', '언옵&핸디'];
-      const folds = ['1폴', '2폴', '3폴'];
+      // 5. 2x3 교차 분석 매트릭스 데이터 생성 (일반투자/전략투자 x 단일/2조합/3조합)
+      const categories = ['일반투자', '전략투자'];
+      const folds = ['단일', '2조합', '3조합'];
 
       const matrixData = categories.map(cat => {
         const rowCells = folds.map(f => {
-          const cellRecs = periodRecords.filter(r => r.category === cat && (r.fold || '1폴') === f);
+          const cellRecs = periodRecords.filter(r => (r.category === cat || (cat === '일반투자' && r.category === '승무패') || (cat === '전략투자' && (r.category === '언옵&핸디' || r.category === '언옵' || r.category === '핸디'))) && (r.fold === f || (f === '단일' && (!r.fold || r.fold === '1폴')) || (f === '2조합' && r.fold === '2폴') || (f === '3조합' && (r.fold === '3폴' || r.fold === '4폴'))));
           const cWin = cellRecs.filter(r => r.status === 'WIN').length;
           const cLose = cellRecs.filter(r => r.status === 'LOSE').length;
           const cSettled = cWin + cLose;
@@ -2857,7 +2838,7 @@
 
       // 6. 단일 차원 요약 카드 데이터 (카테고리 1별 & 카테고리 2별)
       const catSummaryStats = categories.map(cat => {
-        const catRecs = periodRecords.filter(r => r.category === cat);
+        const catRecs = periodRecords.filter(r => r.category === cat || (cat === '일반투자' && r.category === '승무패') || (cat === '전략투자' && (r.category === '언옵&핸디' || r.category === '언옵' || r.category === '핸디')));
         let cInvest = 0, cReturn = 0, cWin = 0, cLose = 0;
         catRecs.forEach(r => {
           cInvest += r.investAmount;
@@ -2871,7 +2852,7 @@
       });
 
       const foldSummaryStats = folds.map(f => {
-        const foldRecs = periodRecords.filter(r => (r.fold || '1폴') === f);
+        const foldRecs = periodRecords.filter(r => r.fold === f || (f === '단일' && (!r.fold || r.fold === '1폴')) || (f === '2조합' && r.fold === '2폴') || (f === '3조합' && (r.fold === '3폴' || r.fold === '4폴')));
         let fInvest = 0, fReturn = 0, fWin = 0, fLose = 0;
         foldRecs.forEach(r => {
           fInvest += r.investAmount;
@@ -2886,13 +2867,13 @@
 
       // 7. 필터 상태 라벨링
       const isFilterActive = (statsCategoryFilter !== 'ALL' || statsFoldFilter !== 'ALL');
-      let filterBadgeText = '전체 유형 + 전체 폴더 통계';
+      let filterBadgeText = '전체 전략 + 전체 분산 조합';
       if (statsCategoryFilter !== 'ALL' && statsFoldFilter !== 'ALL') {
-        filterBadgeText = `[${statsCategoryFilter}] + [${statsFoldFilter}] 교차 분석 통계`;
+        filterBadgeText = `[${statsCategoryFilter}] + [${statsFoldFilter}] 교차 분석`;
       } else if (statsCategoryFilter !== 'ALL') {
-        filterBadgeText = `[${statsCategoryFilter}] 전체 폴더 분석 통계`;
+        filterBadgeText = `[${statsCategoryFilter}] 전략 분석`;
       } else if (statsFoldFilter !== 'ALL') {
-        filterBadgeText = `전체 유형 [${statsFoldFilter}] 분석 통계`;
+        filterBadgeText = `[${statsFoldFilter}] 분산 조합 분석`;
       }
 
       // 기간 상세 탐색 라벨 계산 (미니멀 텍스트 단독 표시)
@@ -3026,23 +3007,23 @@
               ` : ''}
             </div>
             <div class="flex space-x-1.5 overflow-x-auto pb-0.5 custom-scroll text-xs">
-              ${['ALL', '승무패', '언옵&핸디'].map(cat => `
+              ${['ALL', '일반투자', '전략투자'].map(cat => `
                 <button onclick="window.setStatsCategoryFilter('${cat}')" class="px-3 py-1.5 rounded-full font-semibold transition shrink-0 ${statsCategoryFilter === cat ? 'bg-blue-600 text-white shadow-sm' : (isLightMode ? 'bg-neutral-100 text-neutral-600 border border-neutral-200' : 'bg-neutral-800 text-neutral-400 border border-neutral-700/60')}">
-                  ${cat === 'ALL' ? '전체 유형' : cat}
+                  ${cat === 'ALL' ? '전체 전략' : cat}
                 </button>
               `).join('')}
             </div>
           </div>
 
-          <!-- 2차: 폴더 수 필터 -->
+          <!-- 2차: 조합 분산 필터 -->
           <div class="space-y-1">
             <div class="flex items-center justify-between px-0.5">
-              <span class="text-[10px] text-neutral-400 font-bold uppercase tracking-wider">카테고리 2 (폴더 수)</span>
+              <span class="text-[10px] text-neutral-400 font-bold uppercase tracking-wider">카테고리 2 (조합 분산)</span>
             </div>
             <div class="flex space-x-1.5 overflow-x-auto pb-0.5 custom-scroll text-xs">
-              ${['ALL', '1폴', '2폴', '3폴'].map(fold => `
+              ${['ALL', '단일', '2조합', '3조합'].map(fold => `
                 <button onclick="window.setStatsFoldFilter('${fold}')" class="px-3 py-1.5 rounded-full font-semibold transition shrink-0 ${statsFoldFilter === fold ? 'bg-indigo-600 text-white shadow-sm' : (isLightMode ? 'bg-neutral-100 text-neutral-600 border border-neutral-200' : 'bg-neutral-800 text-neutral-400 border border-neutral-700/60')}">
-                  ${fold === 'ALL' ? '전체 폴더' : fold}
+                  ${fold === 'ALL' ? '전체 조합' : fold}
                 </button>
               `).join('')}
             </div>
@@ -3066,7 +3047,7 @@
         <!-- KPI 4분할 그리드 (현재 선택된 조건 기준 실시간 반영) -->
         <div class="grid grid-cols-2 gap-2.5">
           <div class="${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900/90 border-neutral-800'} border p-3 rounded-2xl space-y-1 shadow-sm overflow-hidden">
-            <span class="text-[10px] text-neutral-400 font-medium">승률 (적중률)</span>
+            <span class="text-[10px] text-neutral-400 font-medium">승률</span>
             <div class="text-xl font-black font-mono ${isLightMode ? 'text-neutral-900' : 'text-white'}">${winRate}%</div>
             <div class="text-[10px] text-neutral-400 truncate">${winCount}적중 / ${loseCount}미적중</div>
           </div>
@@ -3085,7 +3066,7 @@
           <div class="${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900/90 border-neutral-800'} border p-3 rounded-2xl space-y-1 shadow-sm overflow-hidden">
             <span class="text-[10px] text-neutral-400 font-medium">총 출금(회수)금액</span>
             <div class="text-base sm:text-lg font-bold font-mono tracking-tight whitespace-nowrap truncate text-emerald-400">${totalReturned.toLocaleString()}원</div>
-            <div class="text-[10px] text-neutral-400 truncate">환급 완료 기준</div>
+            <div class="text-[10px] text-neutral-400 truncate">적중 완료 기준</div>
           </div>
         </div>
 
@@ -3108,7 +3089,7 @@
                 SEEDFIT PRO 전용
               </span>
               <h4 class="text-xs font-bold text-white mb-1">카테고리별 정밀 교차분석 잠금 해제</h4>
-              <p class="text-[11px] text-neutral-400 max-w-xs mb-3 leading-tight">유형과 폴더 간 3×3 정밀 매트릭스로 가장 승률과 수익성이 높은 최적 조합을 도출하세요.</p>
+              <p class="text-[11px] text-neutral-400 max-w-xs mb-3 leading-tight">일반/전략 유형과 분산 조합 간 2×3 정밀 매트릭스로 가장 승률과 수익성이 높은 최적 조합을 도출하세요.</p>
               <button class="py-1.5 px-4 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold rounded-xl text-xs shadow-md transition active:scale-95">
                 Pro 멤버십으로 보기
               </button>
@@ -3134,7 +3115,7 @@
               <thead>
                 <tr class="border-b ${isLightMode ? 'border-neutral-200 text-neutral-500' : 'border-neutral-800 text-neutral-400'}">
                   <th onclick="window.resetStatsFilters()" class="p-2 text-left font-semibold text-[10px] cursor-pointer hover:text-white">
-                    유형 ╲ 폴더
+                    전략 ╲ 조합
                   </th>
                   ${folds.map(f => `
                     <th onclick="window.setStatsCombo('ALL', '${f}')" class="p-2 text-center font-bold cursor-pointer transition hover:text-white ${statsFoldFilter === f ? 'text-indigo-400 underline' : ''}">
@@ -3177,10 +3158,10 @@
           </div>
         </div>
 
-        <!-- 카테고리 1 (유형별) 성과 카드 리스트 -->
+        <!-- 카테고리 1 (전략 유형별) 성과 카드 리스트 -->
         <div class="space-y-2 pt-1">
           <div class="flex justify-between items-center px-1">
-            <span class="text-xs font-bold ${isLightMode ? 'text-neutral-900' : 'text-white'}">유형별 성과 (터치하여 필터)</span>
+            <span class="text-xs font-bold ${isLightMode ? 'text-neutral-900' : 'text-white'}">전략 유형별 성과 (터치하여 필터)</span>
             <span class="text-[10px] text-blue-400">카테고리 1</span>
           </div>
           <div class="space-y-2">
@@ -3194,7 +3175,7 @@
                 </div>
                 <div class="space-y-1">
                   <div class="flex justify-between text-[11px] text-neutral-400">
-                    <span>적중률 ${c.winRate}% (${c.count}건)</span>
+                    <span>승률 ${c.winRate}% (${c.count}건)</span>
                     <span class="font-mono">투입: ${c.invest.toLocaleString()}원</span>
                   </div>
                   <div class="w-full h-1.5 bg-neutral-800 rounded-full overflow-hidden">
@@ -3206,10 +3187,10 @@
           </div>
         </div>
 
-        <!-- 카테고리 2 (폴더별) 성과 카드 리스트 -->
+        <!-- 카테고리 2 (조합 분산별) 성과 카드 리스트 -->
         <div class="space-y-2 pt-1">
           <div class="flex justify-between items-center px-1">
-            <span class="text-xs font-bold ${isLightMode ? 'text-neutral-900' : 'text-white'}">폴더 수별 성과 (터치하여 필터)</span>
+            <span class="text-xs font-bold ${isLightMode ? 'text-neutral-900' : 'text-white'}">조합 분산별 성과 (터치하여 필터)</span>
             <span class="text-[10px] text-indigo-400">카테고리 2</span>
           </div>
           <div class="space-y-2">
@@ -3223,7 +3204,7 @@
                 </div>
                 <div class="space-y-1">
                   <div class="flex justify-between text-[11px] text-neutral-400">
-                    <span>적중률 ${f.winRate}% (${f.count}건)</span>
+                    <span>승률 ${f.winRate}% (${f.count}건)</span>
                     <span class="font-mono">투입: ${f.invest.toLocaleString()}원</span>
                   </div>
                   <div class="w-full h-1.5 bg-neutral-800 rounded-full overflow-hidden">
@@ -3517,36 +3498,27 @@
             </button>
           </div>
 
-          <!-- 마스터 관리자 모드 제어 카드 -->
-          <div class="${isLightMode ? 'bg-gradient-to-br from-amber-500/10 via-white to-amber-500/5 border-amber-300/80 shadow-sm' : 'bg-gradient-to-br from-amber-950/20 via-neutral-900 to-amber-900/10 border-amber-500/30'} border rounded-3xl p-4 space-y-3">
-            <div class="flex justify-between items-center text-xs">
-              <div class="flex items-center space-x-1.5">
-                <span class="text-base">👑</span>
-                <span class="font-bold ${isLightMode ? 'text-neutral-900' : 'text-neutral-200'}">마스터 관리자 권한</span>
+          ${isAdmin ? `
+            <!-- 마스터 관리자 전용 바로가기 카드 (오직 wpdntm0428@gmail.com에만 노출) -->
+            <div class="${isLightMode ? 'bg-gradient-to-br from-amber-500/10 via-white to-amber-500/5 border-amber-300/80 shadow-sm' : 'bg-gradient-to-br from-amber-950/20 via-neutral-900 to-amber-900/10 border-amber-500/30'} border rounded-3xl p-4 space-y-3">
+              <div class="flex justify-between items-center text-xs">
+                <div class="flex items-center space-x-1.5">
+                  <span class="text-base">👑</span>
+                  <span class="font-bold ${isLightMode ? 'text-neutral-900' : 'text-neutral-200'}">마스터 관리자 권한</span>
+                </div>
+                <span class="font-mono text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                  wpdntm0428@gmail.com
+                </span>
               </div>
-              <span class="font-mono text-[10px] font-bold px-2 py-0.5 rounded-full ${isAdmin ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-neutral-800 text-neutral-400'}">
-                ${isAdmin ? '👑 관리자 활성' : '일반 모드'}
-              </span>
-            </div>
-            <p class="text-[11px] text-neutral-400 leading-relaxed">
-              관리자 모드에서는 <b>구독 없이도 모든 Pro 기능(통계·무제한 프로젝트·고급 분석)을 100% 무료 이용 & 테스트</b>할 수 있으며, 하단에 <b>[관리]</b> 탭이 열려 실시간 가입·구독 비즈니스 대시보드를 확인할 수 있습니다.
-            </p>
-            <div class="grid grid-cols-2 gap-2 pt-1">
-              <button onclick="window.toggleAdminMode()" class="py-2.5 ${isAdmin ? 'bg-neutral-800 hover:bg-neutral-700 text-neutral-300' : 'bg-amber-500 hover:bg-amber-400 text-black font-extrabold shadow-md'} font-semibold rounded-xl text-xs transition active:scale-95 flex items-center justify-center space-x-1">
-                <span>${isAdmin ? '일반 모드로 전환' : '관리자 권한 켜기'}</span>
+              <p class="text-[11px] text-neutral-400 leading-relaxed">
+                현재 계정에 마스터 관리자 권한이 부여되어 있습니다. <b>구독 없이 모든 Pro 기능 무제한 이용 & 테스트</b>가 가능하며, 하단 <b>[관리]</b> 탭에서 가입자 및 수익 대시보드를 즉시 열람할 수 있습니다.
+              </p>
+              <button onclick="window.switchTab('admin')" class="w-full py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-extrabold rounded-xl text-xs transition active:scale-95 flex items-center justify-center space-x-1.5 shadow-md">
+                <span>관리자 비즈니스 대시보드 열기</span>
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
               </button>
-              ${isAdmin ? `
-                <button onclick="window.switchTab('admin')" class="py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold rounded-xl text-xs transition active:scale-95 flex items-center justify-center space-x-1 shadow-md">
-                  <span>관리 대시보드</span>
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
-                </button>
-              ` : `
-                <button onclick="window.switchTab('admin')" class="py-2.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-400 rounded-xl text-xs transition active:scale-95 flex items-center justify-center space-x-1">
-                  <span>관리 탭 안내</span>
-                </button>
-              `}
             </div>
-          </div>
+          ` : ''}
 
           <div class="pt-2">
             <button onclick="resetAllData()" class="w-full py-3 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-semibold rounded-2xl text-xs transition border border-rose-500/30">
@@ -4098,7 +4070,7 @@
       }
       const foldBadge = document.getElementById('settleFoldBadge');
       if (foldBadge) {
-        const fold = rec.fold || '1폴';
+        const fold = rec.fold || '단일';
         foldBadge.textContent = fold;
         foldBadge.className = `text-[10px] font-bold px-2 py-0.5 rounded-full ${getFoldColorClass(fold)}`;
       }
@@ -4224,8 +4196,8 @@
       renderCurrentTab();
     }
 
-    let selectedCategory = '승무패';
-    let selectedFold = '1폴';
+    let selectedCategory = '일반투자';
+    let selectedFold = '단일';
 
     function checkCooldownNoticeInModal() {
       const warnEl = document.getElementById('newRecordCooldownWarning');
@@ -4312,8 +4284,8 @@
       document.getElementById('recordModalHeaderTitle').textContent = '새로운 기록 작성';
       document.getElementById('recordProjectContainer').classList.remove('hidden');
       document.getElementById('selectRecordProject').value = '';
-      window.selectCategory('승무패');
-      window.selectFold('1폴');
+      window.selectCategory('일반투자');
+      window.selectFold('단일');
       updateExpectedProfitNotice();
       checkCooldownNoticeInModal();
       document.getElementById('newRecordModal').classList.remove('hidden');
@@ -4328,8 +4300,8 @@
       document.getElementById('recordModalHeaderTitle').textContent = p ? `[${p.name}] 기록 작성` : '프로젝트 기록 작성';
       document.getElementById('recordProjectContainer').classList.add('hidden');
       document.getElementById('selectRecordProject').value = projectId;
-      window.selectCategory('승무패');
-      window.selectFold('1폴');
+      window.selectCategory('일반투자');
+      window.selectFold('단일');
       updateExpectedProfitNotice();
       checkCooldownNoticeInModal();
       document.getElementById('newRecordModal').classList.remove('hidden');
