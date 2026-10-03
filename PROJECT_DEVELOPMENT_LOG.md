@@ -1,5 +1,38 @@
 # 프로젝트 개발 로그 (PROJECT DEVELOPMENT LOG)
 
+## [2026-10-04] v1.9.2 브라우저 기본 팝업(alert/confirm) 전면 배제 및 Apple HIG 커스텀 모달 다이얼로그 시스템 구축
+
+### 1. 요구사항 및 기획 의도
+1. **브라우저 기본 시스템 창(alert/confirm) 완전 퇴출**:
+   - 구독 취소 및 각종 확인/삭제 시 브라우저 기본 팝업창(`confirm`, `alert`)이 호출되어 앱의 몰입도와 상용 서비스 완성도를 해치던 문제를 전면 해결.
+   - 서비스 전역에서 브라우저 네이티브 다이얼로그의 사용을 100% 영구 금지하고, Apple HIG 글래스모피즘 기반의 통일된 커스텀 다이얼로그 모달(`appleConfirmModal`) 시스템 도입.
+2. **Apple HIG 스타일 확인/안내 다이얼로그 시스템 구축**:
+   - `window.showConfirmDialog`: 다크/라이트 모드 자동 지원, 미니멀 라인 SVG 아이콘, 볼드 제목, 설명, 유예/주의 안내 박스, 파괴적(위험) 액션 구분(로즈 레드 / 블루), 확인/취소 커스텀 라벨 지원 (Promise 기반 비동기 대기).
+   - `window.showAlertDialog`: 확인 전용 1버튼 안내 모달.
+   - 구독 취소(`confirmCancelSubscription`), 기록 개별 삭제(`deleteRecord`), 프로젝트 삭제(`deleteProject`), 로그아웃(`logoutSeedFit`), 전체 데이터 초기화(`resetAllData`), 앱 설치 안내 등에 100% 커스텀 모달 및 토스트 연동.
+   - 향후 코드 및 서드파티 라이브러리에서의 예기치 않은 네이티브 팝업 호출을 방지하기 위해 `window.confirm` 및 `window.alert`를 커스텀 인터페이스로 전면 가로채기(오버라이드) 처리.
+3. **영구 원칙 반영**:
+   - `AGENTS.md` 9대 절대 엄수 원칙에 브라우저 기본 팝업 영구 금지 및 Apple HIG 커스텀 모달 일원화 명문화.
+
+### 2. 구현 내역
+1. **`index.html`**:
+   - `#appleConfirmModal`: Apple 순정 스타일 글래스모피즘 다이얼로그 컴포넌트 마크업 추가.
+   - `window.showConfirmDialog`, `window.showAlertDialog`: Promise 기반 비동기 커스텀 다이얼로그 엔진 구현.
+   - `window.confirmCancelSubscription`: 7일 데이터 보존 유예 안내 및 위험 액션 버튼이 적용된 커스텀 모달로 개편.
+   - `window.deleteRecord`, `window.deleteProject`, `window.logoutSeedFit`, `resetAllData`: 커스텀 확인 모달 비동기 연동.
+   - `window.confirm`, `window.alert`: 네이티브 팝업 차단 및 커스텀 토스트/모달 우회 가드 설정.
+   - 버전 갱신: `CURRENT_APP_VERSION = 'v1.9.2'`, `sw.js?v=1.9.2`.
+2. **`sw.js` & `package.json`**:
+   - `seedfit-cache-v1.9.2`, 버전 `1.9.2` 동기화.
+3. **`AGENTS.md`**:
+   - 9번 절대 엄수 원칙(브라우저 기본 팝업 전면 금지 및 Apple HIG 커스텀 모달 일원화) 추가.
+
+### 3. 검증
+- 금지 단어('스마트', '베팅', '배팅', '적중률') 0건 완전 무결 검증.
+- 이모티콘 0건(전역 100% Apple HIG SVG 아이콘) 유지 검증.
+- JS 구문 파싱 100% 무결점 통과.
+- `confirm(`, `alert(` 호출 0건 확인 및 구독 취소/삭제/로그아웃 시 Apple HIG 커스텀 모달이 유려하게 동작함을 검증.
+
 ## [2026-10-03] v1.9.1 결과 정산 모달 적중·미적중 텍스트 삭제 및 아이콘·금액 중심 미니멀 UI 개편
 
 ### 1. 요구사항 및 기획 의도

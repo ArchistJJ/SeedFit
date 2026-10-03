@@ -806,6 +806,35 @@
       </div>
     </div>
 
+    <!-- Apple HIG Custom Confirm & Alert Dialog Modal (네이티브 브라우저 팝업 대체) -->
+    <div id="appleConfirmModal" class="absolute inset-0 bg-black/80 backdrop-blur-md z-[60] hidden flex items-center justify-center p-4 transition-opacity">
+      <div id="appleConfirmCard" class="w-full max-w-xs rounded-[28px] p-5 shadow-2xl space-y-3.5 border bg-neutral-900 border-neutral-800 text-white transition-all transform scale-100">
+        <!-- Icon & Header -->
+        <div class="text-center space-y-2 pt-1">
+          <div id="appleConfirmIconWrap" class="w-12 h-12 rounded-2xl mx-auto flex items-center justify-center bg-rose-500/15 text-rose-400 border border-rose-500/25">
+            <!-- SVG Icon dynamically set via JS -->
+          </div>
+          <h3 id="appleConfirmTitle" class="text-base font-bold text-white tracking-tight leading-snug">확인</h3>
+          <p id="appleConfirmMessage" class="text-xs text-neutral-400 leading-relaxed whitespace-pre-line"></p>
+        </div>
+
+        <!-- Detailed Notice / Caution Box -->
+        <div id="appleConfirmNoticeBox" class="hidden p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-left space-y-1">
+          <p id="appleConfirmNoticeText" class="text-[11px] text-neutral-300 leading-relaxed whitespace-pre-line"></p>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="space-y-2 pt-1">
+          <button id="btnAppleConfirmOk" class="w-full py-3 font-bold rounded-2xl text-xs transition active:scale-[0.98] shadow-md flex items-center justify-center space-x-1.5 bg-rose-600 hover:bg-rose-500 text-white">
+            <span id="appleConfirmOkText">확인</span>
+          </button>
+          <button id="btnAppleConfirmCancel" class="w-full py-2.5 font-medium rounded-2xl text-xs transition active:scale-[0.98] bg-neutral-800 hover:bg-neutral-700 text-neutral-300">
+            <span id="appleConfirmCancelText">취소</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
 
     <!-- Bottom Navigation Bar -->
     <nav id="bottomTabBar" class="shrink-0 pb-safe pt-1 glass-dark border-t border-neutral-800/80 flex justify-around items-center px-2 z-30 select-none">
@@ -865,7 +894,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.9.1').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.9.2').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -1000,7 +1029,13 @@
       }
 
       // beforeinstallprompt가 아직 없거나 브라우저 권한 제한인 경우 (오류 크래시 100% 방지 폴백)
-      alert("갤럭시 브라우저 메뉴에서 간편하게 설치할 수 있습니다!\n\n1. 브라우저 우측 상단 점 3개(⋮) 또는 우측 하단 삼선(≡) 터치\n2. [앱 설치] 또는 [홈 화면에 추가] 선택\n\n누르시면 3초 만에 폰에 정식 앱으로 설치됩니다.");
+      window.showAlertDialog({
+        title: '앱 간편 설치 안내',
+        message: '브라우저 메뉴에서 간편하게 홈 화면에 추가할 수 있습니다.',
+        notice: '1. 브라우저 우측 상단 점 3개(⋮) 또는 하단 삼선(≡) 터치\n2. [앱 설치] 또는 [홈 화면에 추가] 선택\n\n선택하시면 3초 만에 폰에 정식 공식 웹앱으로 설치됩니다.',
+        confirmText: '확인',
+        icon: 'info'
+      });
     };
 
     window.skipLandingAndExplore = function() {
@@ -1074,8 +1109,17 @@
     }
 
     // 로그아웃
-    window.logoutSeedFit = function() {
-      if (confirm('정말 로그아웃 하시겠습니까? 로그아웃 시 로컬 세션이 안전하게 정리되고 로그인 화면으로 이동합니다.')) {
+    window.logoutSeedFit = async function() {
+      const confirmed = await window.showConfirmDialog({
+        title: '로그아웃',
+        message: '정말 로그아웃 하시겠습니까?',
+        notice: '로그아웃 시 현재 기기의 로컬 세션이 안전하게 정리되고 로그인 화면으로 이동합니다.',
+        confirmText: '로그아웃',
+        cancelText: '취소',
+        isDestructive: false,
+        icon: 'logout'
+      });
+      if (confirmed) {
         safeStorage.set('SEEDFIT_AUTH_USER', '');
         safeStorage.set('SEEDFIT_GUEST_MODE', 'false');
         safeStorage.set('SEEDFIT_LAST_SYNC_TIME', '');
@@ -1601,14 +1645,15 @@
     }
 
     window.confirmCancelSubscription = async function() {
-      const confirmed = confirm(
-        "[안내] SeedFit Pro 구독 취소 및 7일 데이터 보존\n\n" +
-        "• 구독을 취소하시면 다음 결제 주기부터 자동 결제가 중단됩니다.\n" +
-        "• [중요] 기존에 등록하신 모든 투자 기록 및 프로젝트 데이터는 '해지일로부터 7일 동안만 임시 보존'됩니다.\n" +
-        "• 7일 이내에 다시 구독하시면 기존의 모든 데이터가 즉시 연동 복원됩니다.\n" +
-        "• 7일이 경과하면 클라우드에서 기존 데이터가 영구 삭제되어 복구할 수 없습니다.\n\n" +
-        "정말 구독을 취소하시겠습니까?"
-      );
+      const confirmed = await window.showConfirmDialog({
+        title: 'SeedFit Pro 구독 취소',
+        message: '정말 구독을 취소하시겠습니까?\n다음 결제 주기부터 자동 결제가 중단됩니다.',
+        notice: '기존에 등록하신 모든 투자 기록 및 프로젝트 데이터는 해지일로부터 7일 동안만 임시 보존됩니다.\n• 7일 이내에 다시 구독하시면 기존의 모든 데이터가 즉시 연동 복원됩니다.\n• 7일이 경과하면 클라우드에서 영구 삭제되어 복구할 수 없습니다.',
+        confirmText: '구독 취소 (7일 유예 적용)',
+        cancelText: '구독 유지하기',
+        isDestructive: true,
+        icon: 'warning'
+      });
 
       if (!confirmed) return;
 
@@ -1741,7 +1786,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.9.1';
+    const CURRENT_APP_VERSION = 'v1.9.2';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');
@@ -1759,6 +1804,146 @@
         toast.classList.add('opacity-0', '-translate-y-2');
       }, 2000);
     }
+
+    // Apple HIG 스타일 커스텀 확인 다이얼로그 (네이티브 브라우저 팝업 완전 배제)
+    window.showConfirmDialog = function({
+      title = '확인',
+      message = '',
+      notice = '',
+      confirmText = '확인',
+      cancelText = '취소',
+      isDestructive = false,
+      icon = 'warning'
+    } = {}) {
+      return new Promise((resolve) => {
+        const modal = document.getElementById('appleConfirmModal');
+        const card = document.getElementById('appleConfirmCard');
+        const titleEl = document.getElementById('appleConfirmTitle');
+        const msgEl = document.getElementById('appleConfirmMessage');
+        const noticeBox = document.getElementById('appleConfirmNoticeBox');
+        const noticeText = document.getElementById('appleConfirmNoticeText');
+        const okBtn = document.getElementById('btnAppleConfirmOk');
+        const cancelBtn = document.getElementById('btnAppleConfirmCancel');
+        const okText = document.getElementById('appleConfirmOkText');
+        const cancelTextEl = document.getElementById('appleConfirmCancelText');
+        const iconWrap = document.getElementById('appleConfirmIconWrap');
+
+        if (!modal) {
+          resolve(false);
+          return;
+        }
+
+        // 테마별 클래스 적용
+        if (card) {
+          if (isLightMode) {
+            card.className = 'w-full max-w-xs rounded-[28px] p-5 shadow-2xl space-y-3.5 border bg-white border-neutral-200 text-neutral-900 transition-all';
+            titleEl.className = 'text-base font-bold text-neutral-900 tracking-tight leading-snug';
+            msgEl.className = 'text-xs text-neutral-600 leading-relaxed whitespace-pre-line';
+            cancelBtn.className = 'w-full py-2.5 font-medium rounded-2xl text-xs transition active:scale-[0.98] bg-neutral-100 hover:bg-neutral-200 text-neutral-700';
+            if (noticeBox) noticeBox.className = 'p-3 rounded-2xl bg-amber-50 border border-amber-200 text-left space-y-1';
+            if (noticeText) noticeText.className = 'text-[11px] text-amber-900 leading-relaxed whitespace-pre-line';
+          } else {
+            card.className = 'w-full max-w-xs rounded-[28px] p-5 shadow-2xl space-y-3.5 border bg-neutral-900 border-neutral-800 text-white transition-all';
+            titleEl.className = 'text-base font-bold text-white tracking-tight leading-snug';
+            msgEl.className = 'text-xs text-neutral-400 leading-relaxed whitespace-pre-line';
+            cancelBtn.className = 'w-full py-2.5 font-medium rounded-2xl text-xs transition active:scale-[0.98] bg-neutral-800 hover:bg-neutral-700 text-neutral-300';
+            if (noticeBox) noticeBox.className = 'p-3 rounded-2xl bg-amber-500/10 border border-amber-500/25 text-left space-y-1';
+            if (noticeText) noticeText.className = 'text-[11px] text-neutral-300 leading-relaxed whitespace-pre-line';
+          }
+        }
+
+        titleEl.textContent = title;
+        msgEl.textContent = message;
+
+        if (notice && notice.trim()) {
+          noticeText.textContent = notice;
+          noticeBox.classList.remove('hidden');
+        } else {
+          noticeBox.classList.add('hidden');
+        }
+
+        okText.textContent = confirmText;
+        cancelTextEl.textContent = cancelText;
+
+        if (isDestructive) {
+          okBtn.className = 'w-full py-3 font-bold rounded-2xl text-xs transition active:scale-[0.98] shadow-md flex items-center justify-center space-x-1.5 bg-rose-600 hover:bg-rose-500 text-white shadow-rose-900/30';
+        } else {
+          okBtn.className = 'w-full py-3 font-bold rounded-2xl text-xs transition active:scale-[0.98] shadow-md flex items-center justify-center space-x-1.5 bg-blue-600 hover:bg-blue-500 text-white shadow-blue-900/30';
+        }
+
+        let iconSvg = '';
+        if (icon === 'trash' || icon === 'danger') {
+          iconWrap.className = 'w-12 h-12 rounded-2xl mx-auto flex items-center justify-center bg-rose-500/15 text-rose-400 border border-rose-500/25';
+          iconSvg = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>';
+        } else if (icon === 'logout') {
+          iconWrap.className = 'w-12 h-12 rounded-2xl mx-auto flex items-center justify-center bg-blue-500/15 text-blue-400 border border-blue-500/25';
+          iconSvg = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>';
+        } else if (icon === 'info') {
+          iconWrap.className = 'w-12 h-12 rounded-2xl mx-auto flex items-center justify-center bg-blue-500/15 text-blue-400 border border-blue-500/25';
+          iconSvg = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
+        } else {
+          iconWrap.className = isDestructive
+            ? 'w-12 h-12 rounded-2xl mx-auto flex items-center justify-center bg-rose-500/15 text-rose-400 border border-rose-500/25'
+            : 'w-12 h-12 rounded-2xl mx-auto flex items-center justify-center bg-amber-500/15 text-amber-400 border border-amber-500/25';
+          iconSvg = '<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>';
+        }
+        iconWrap.innerHTML = iconSvg;
+
+        cancelBtn.classList.remove('hidden');
+        modal.classList.remove('hidden');
+
+        const cleanUp = () => {
+          modal.classList.add('hidden');
+          okBtn.onclick = null;
+          cancelBtn.onclick = null;
+        };
+
+        okBtn.onclick = () => {
+          cleanUp();
+          resolve(true);
+        };
+
+        cancelBtn.onclick = () => {
+          cleanUp();
+          resolve(false);
+        };
+      });
+    };
+
+    // Apple HIG 스타일 커스텀 안내 알림창 (확인 1버튼)
+    window.showAlertDialog = function({
+      title = '안내',
+      message = '',
+      notice = '',
+      confirmText = '확인',
+      icon = 'info'
+    } = {}) {
+      return new Promise((resolve) => {
+        const cancelBtn = document.getElementById('btnAppleConfirmCancel');
+        window.showConfirmDialog({
+          title,
+          message,
+          notice,
+          confirmText,
+          isDestructive: false,
+          icon
+        }).then(resolve);
+
+        if (cancelBtn) cancelBtn.classList.add('hidden');
+      });
+    };
+
+    // 브라우저 기본 팝업 영구 차단 (웹앱 몰입도 100% 보장)
+    window.confirm = function(msg) {
+      console.warn('[SeedFit] Browser native confirm is prohibited. Use window.showConfirmDialog instead.');
+      return false;
+    };
+    window.alert = function(msg) {
+      console.warn('[SeedFit] Browser native alert is prohibited. Use showToast or window.showAlertDialog instead.');
+      if (typeof showToast === 'function') {
+        showToast(msg);
+      }
+    };
 
     const DEFAULT_RECORDS = [];
     const DEFAULT_PROJECTS = [];
@@ -2566,13 +2751,21 @@
       renderCurrentTab();
     };
 
-    window.deleteRecord = function(recordId) {
+    window.deleteRecord = async function(recordId) {
       if (!recordId) return;
       const target = records.find(r => r.id === recordId);
       if (!target) return;
 
-      const confirmMsg = `해당 기록을 삭제하시겠습니까?\n(${target.category} · ${target.fold || '단일'} · 투입 ${target.investAmount.toLocaleString()}원)`;
-      if (!confirm(confirmMsg)) return;
+      const confirmed = await window.showConfirmDialog({
+        title: '투자 기록 삭제',
+        message: `${target.category} · ${target.fold || '단일'} · 투입 ${target.investAmount.toLocaleString()}원`,
+        notice: '해당 기록을 삭제하시겠습니까? 삭제된 기록은 복구할 수 없습니다.',
+        confirmText: '기록 삭제',
+        cancelText: '취소',
+        isDestructive: true,
+        icon: 'trash'
+      });
+      if (!confirmed) return;
 
       records = records.filter(r => r.id !== recordId);
       saveState();
@@ -2587,15 +2780,24 @@
       showToast('기록이 삭제되었습니다.');
     };
 
-    window.deleteProject = function(projectId) {
+    window.deleteProject = async function(projectId) {
       const target = projects.find(p => p.id === projectId);
       if (!target) return;
       const projRecords = records.filter(r => r.projectId === projectId);
-      let confirmMsg = `'${target.name}' 프로젝트를 삭제하시겠습니까?`;
-      if (projRecords.length > 0) {
-        confirmMsg += `\n(프로젝트에 등록된 ${projRecords.length}건의 기록은 일반 기록으로 안전하게 보존됩니다)`;
-      }
-      if (!confirm(confirmMsg)) return;
+      const noticeMsg = projRecords.length > 0
+        ? `프로젝트에 등록된 ${projRecords.length}건의 기록은 일반 기록으로 안전하게 보존됩니다.`
+        : '해당 프로젝트를 삭제하시겠습니까?';
+
+      const confirmed = await window.showConfirmDialog({
+        title: `'${target.name}' 프로젝트 삭제`,
+        message: '프로젝트를 삭제하시겠습니까?',
+        notice: noticeMsg,
+        confirmText: '프로젝트 삭제',
+        cancelText: '취소',
+        isDestructive: true,
+        icon: 'trash'
+      });
+      if (!confirmed) return;
 
       projects = projects.filter(p => p.id !== projectId);
       records.forEach(r => {
@@ -4480,23 +4682,33 @@
             if (parsed.mentalCareSettings) mentalCareSettings = Object.assign(mentalCareSettings, parsed.mentalCareSettings);
             saveState();
             renderCurrentTab();
-            alert('성공적으로 데이터를 복원했습니다!');
+            showToast('성공적으로 데이터를 복원했습니다.');
           } else {
-            alert('올바르지 않은 백업 파일 형식입니다.');
+            showToast('올바르지 않은 백업 파일 형식입니다.');
           }
         } catch (err) {
-          alert('파일을 읽는 중 오류가 발생했습니다.');
+          showToast('파일을 읽는 중 오류가 발생했습니다.');
         }
       };
       reader.readAsText(file);
     }
 
-    function resetAllData() {
-      if (confirm('정말로 모든 기록과 프로젝트를 초기화하시겠습니까? 이 작업은 되돌릴 수 없습니다.')) {
+    async function resetAllData() {
+      const confirmed = await window.showConfirmDialog({
+        title: '모든 데이터 초기화',
+        message: '정말로 모든 투자 기록과 프로젝트를 초기화하시겠습니까?',
+        notice: '이 작업은 되돌릴 수 없으며, 모든 로컬 데이터가 영구 삭제됩니다.',
+        confirmText: '초기화 실행',
+        cancelText: '취소',
+        isDestructive: true,
+        icon: 'danger'
+      });
+      if (confirmed) {
         records = [];
         projects = [];
         saveState();
         renderCurrentTab();
+        showToast('모든 데이터가 초기화되었습니다.');
       }
     }
 
