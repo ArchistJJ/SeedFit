@@ -724,6 +724,11 @@
         <span class="text-[10px] font-semibold mt-0.5">통계·분석</span>
       </button>
 
+      <button onclick="window.switchTab('admin')" id="nav-admin" class="hidden flex flex-col items-center text-neutral-500 hover:text-neutral-300 transition py-1">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        <span class="text-[10px] font-semibold mt-0.5">관리</span>
+      </button>
+
       <button onclick="window.switchTab('settings')" id="nav-settings" class="flex flex-col items-center text-neutral-500 hover:text-neutral-300 transition py-1">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
         <span class="text-[10px] font-semibold mt-0.5">설정</span>
@@ -760,7 +765,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.7.9').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.8.0').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -936,20 +941,36 @@
       if (userObj) {
         safeStorage.set('SEEDFIT_AUTH_USER', JSON.stringify(userObj));
         safeStorage.set('SEEDFIT_GUEST_MODE', 'false');
+
+        // 관리자 계정 감지 시 즉시 관리자 권한 및 Pro 권한 자동 부여
+        const email = (userObj.email || '').toLowerCase().trim();
+        const name = (userObj.name || '').toLowerCase().trim();
+        if (
+          (typeof ADMIN_ACCOUNTS !== 'undefined' && ADMIN_ACCOUNTS.includes(email)) ||
+          email.includes('archist') || name.includes('archist') || name.includes('박재준')
+        ) {
+          safeStorage.set('SEEDFIT_IS_ADMIN', 'true');
+          safeStorage.set('SEEDFIT_IS_PRO', 'true');
+        }
       } else {
         safeStorage.set('SEEDFIT_AUTH_USER', '');
       }
+
+      if (typeof updateBottomTabBar === 'function') {
+        updateBottomTabBar();
+      }
+
       const authView = document.getElementById('authOnboardingView');
       if (authView) {
         authView.classList.add('hidden');
       }
       if (userObj) {
-        showToast((userObj.name || '사용자') + '님, 환영합니다!');
+        const isAdmin = (typeof isAdminUser === 'function' && isAdminUser());
+        showToast((userObj.name || '사용자') + '님, 환영합니다!' + (isAdmin ? ' (👑 관리자 모드)' : ''));
         window.syncFromCloud(userObj);
       }
-      if (currentTab === 'settings') {
-        const area = document.getElementById('contentArea');
-        if (area) renderSettingsTab(area);
+      if (typeof renderCurrentTab === 'function') {
+        renderCurrentTab();
       }
     }
 
@@ -960,6 +981,10 @@
         safeStorage.set('SEEDFIT_GUEST_MODE', 'false');
         safeStorage.set('SEEDFIT_LAST_SYNC_TIME', '');
         safeStorage.set('SEEDFIT_IS_PRO', 'false');
+        safeStorage.set('SEEDFIT_IS_ADMIN', 'false');
+        if (typeof updateBottomTabBar === 'function') {
+          updateBottomTabBar();
+        }
         supabaseClient = null;
         currentSupabaseUserKey = null;
         // 계정 간 데이터 유출 및 오염 방지를 위해 로컬 상태를 안전하게 초기화
@@ -1272,9 +1297,48 @@
     // SeedFit Pro 공식 보안 결제 (Lemon Squeezy) 연동
     const LEMON_CHECKOUT_URL = 'https://seedfit.lemonsqueezy.com/checkout/buy/1ae381b5-3605-427c-b11d-dbac560468f8';
 
+    // 마스터 관리자 식별자 목록 (개발자 & 운영자 계정 자동 감지)
+    const ADMIN_ACCOUNTS = [
+      'admin@seedfit.pro',
+      'archistjj@gmail.com',
+      'archistjj@naver.com'
+    ];
+
+    function isAdminUser() {
+      if (safeStorage.get('SEEDFIT_IS_ADMIN') === 'true') return true;
+      const authUser = getAuthUser();
+      if (!authUser) return false;
+      const email = (authUser.email || '').toLowerCase().trim();
+      const name = (authUser.name || '').toLowerCase().trim();
+      if (email && ADMIN_ACCOUNTS.includes(email)) return true;
+      if (email.includes('archist') || name.includes('archist') || name.includes('박재준')) return true;
+      return false;
+    }
+
     function isUserPro() {
+      // 마스터 관리자 계정은 구독 결제 없이도 모든 Pro 기능 무제한 이용 & 테스트 가능
+      if (isAdminUser()) return true;
       return safeStorage.get('SEEDFIT_IS_PRO') === 'true';
     }
+
+    // 마스터 관리자 모드 토글 (언제든 설정에서 활성화/비활성화 가능)
+    window.toggleAdminMode = function(explicitState = null) {
+      const currentState = isAdminUser();
+      const nextState = (explicitState !== null) ? explicitState : !currentState;
+      safeStorage.set('SEEDFIT_IS_ADMIN', nextState ? 'true' : 'false');
+      if (nextState) {
+        safeStorage.set('SEEDFIT_IS_PRO', 'true');
+        showToast('👑 마스터 관리자 권한이 활성화되었습니다! (모든 기능 무제한 & 관리 탭 개방)');
+      } else {
+        showToast('일반 사용자 모드로 전환되었습니다.');
+      }
+      if (typeof updateBottomTabBar === 'function') updateBottomTabBar();
+      if (currentTab === 'admin' && !isAdminUser()) {
+        window.switchTab('settings');
+      } else {
+        renderCurrentTab();
+      }
+    };
 
     window.openSubscriptionModal = function(customNotice = '') {
       const modal = document.getElementById('subscriptionModal');
@@ -1385,7 +1449,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.7.9';
+    const CURRENT_APP_VERSION = 'v1.8.0';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');
@@ -1864,11 +1928,29 @@
     let statsCategoryFilter = 'ALL';
     let statsFoldFilter = 'ALL';
 
+    function updateBottomTabBar() {
+      const adminBtn = document.getElementById('nav-admin');
+      if (adminBtn) {
+        if (isAdminUser()) {
+          adminBtn.classList.remove('hidden');
+        } else {
+          adminBtn.classList.add('hidden');
+        }
+      }
+    }
+
     window.switchTab = function(tab) {
+      if (tab === 'admin' && !isAdminUser()) {
+        showToast('관리자 권한이 필요한 메뉴입니다.');
+        tab = 'settings';
+      }
+
       currentTab = tab;
       if (tab !== 'projects') selectedProjectId = null;
 
-      ['records', 'projects', 'stats', 'settings'].forEach(t => {
+      updateBottomTabBar();
+
+      ['records', 'projects', 'stats', 'admin', 'settings'].forEach(t => {
         const btn = document.getElementById(`nav-${t}`);
         if (!btn) return;
         if (t === tab) {
@@ -1913,6 +1995,8 @@
       const actionBar = document.getElementById('bottomActionBar');
       if (!area || !actionBar) return;
 
+      updateBottomTabBar();
+
       if (currentTab === 'records') {
         updateHeaderUI('기록', '실시간 현황', false);
         renderRecordsTab(area, actionBar);
@@ -1932,6 +2016,11 @@
           : '통계 & 분석';
         updateHeaderUI(filterTitle, '성과 지표 및 교차 분석', isFilterActive, window.resetStatsFilters);
         renderStatsTab(area);
+      } else if (currentTab === 'admin') {
+        actionBar.innerHTML = '';
+        actionBar.classList.add('hidden');
+        updateHeaderUI('관리자 콘솔', '구독 & 수익 비즈니스 대시보드', false);
+        renderAdminTab(area);
       } else if (currentTab === 'settings') {
         updateHeaderUI('설정', '데이터 및 환경', false);
         actionBar.innerHTML = '';
@@ -3153,6 +3242,7 @@
       const authUser = getAuthUser();
       const isGuest = safeStorage.get('SEEDFIT_GUEST_MODE') === 'true';
       const isProMember = isUserPro();
+      const isAdmin = isAdminUser();
 
       container.innerHTML = `
         <div class="space-y-4">
@@ -3174,11 +3264,14 @@
                     </div>
                   </div>
                   <div>
-                    <h3 class="text-xs font-bold ${isLightMode ? 'text-neutral-900' : 'text-white'} flex items-center space-x-1.5">
+                    <h3 class="text-xs font-bold ${isLightMode ? 'text-neutral-900' : 'text-white'} flex items-center space-x-1.5 flex-wrap gap-y-1">
                       <span>${authUser.name || '사용자'}</span>
                       <span class="text-[10px] px-1.5 py-0.2 rounded font-semibold ${authUser.provider === 'kakao' ? 'bg-[#FEE500]/20 text-[#d4ad00]' : (authUser.provider === 'google' ? 'bg-blue-500/15 text-blue-400' : 'bg-emerald-500/15 text-emerald-400')}">
                         ${authUser.provider === 'kakao' ? '카카오 연동' : (authUser.provider === 'google' ? 'Google 연동' : '체험 계정')}
                       </span>
+                      ${isAdmin ? `
+                        <span class="text-[9px] px-1.5 py-0.2 rounded font-black bg-amber-500/20 text-amber-400 border border-amber-500/30">👑 관리자</span>
+                      ` : ''}
                     </h3>
                     <p class="text-[10px] text-neutral-400">${authUser.email || '클라우드 동기화 활성화됨'}</p>
                   </div>
@@ -3189,7 +3282,7 @@
                   <div>
                     <h3 class="text-xs font-bold ${isLightMode ? 'text-neutral-900' : 'text-white'} flex items-center space-x-1.5">
                       <span>게스트 모드</span>
-                      <span class="text-[10px] px-1.5 py-0.2 rounded font-semibold ${isLightMode ? 'bg-amber-100 text-amber-800 border border-amber-300' : 'bg-amber-500/20 text-amber-400'}">비로그인</span>
+                      <span class="text-[10px] px-1.5 py-0.2 rounded font-semibold ${isLightMode ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-amber-500/20 text-amber-400'}">비로그인</span>
                     </h3>
                     <p class="text-[10px] text-neutral-400">데이터가 기기 브라우저에만 저장 중입니다</p>
                   </div>
@@ -3208,7 +3301,7 @@
                 <div class="flex items-center space-x-1.5">
                   <span class="w-2 h-2 rounded-full ${isProMember ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}"></span>
                   <span class="font-medium ${isLightMode ? 'text-neutral-700' : 'text-neutral-300'}">
-                    ${isProMember ? '클라우드 실시간 동기화됨' : '로컬 보존 모드 (클라우드 Pro)'}
+                    ${isAdmin ? '마스터 관리자 프리패스 연동됨' : (isProMember ? '클라우드 실시간 동기화됨' : '로컬 보존 모드 (클라우드 Pro)')}
                   </span>
                 </div>
                 ${isProMember ? `
@@ -3246,16 +3339,23 @@
             <div class="flex justify-between items-start">
               <div>
                 <div class="flex items-center space-x-2">
-                  <span class="text-xs font-black tracking-wide bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">SEEDFIT PRO</span>
-                  <span class="text-[9px] font-bold px-2 py-0.5 rounded-full ${isProMember ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : (isLightMode ? 'bg-indigo-100 text-indigo-700' : 'bg-indigo-500/20 text-indigo-300')}">
-                    ${isProMember ? 'PRO 활성화됨' : '무료 플랜 (Free)'}
+                  <span class="text-xs font-black tracking-wide bg-gradient-to-r ${isAdmin ? 'from-amber-400 to-amber-500' : 'from-indigo-400 to-purple-400'} bg-clip-text text-transparent">
+                    ${isAdmin ? 'SEEDFIT MASTER' : 'SEEDFIT PRO'}
+                  </span>
+                  <span class="text-[9px] font-bold px-2 py-0.5 rounded-full ${isAdmin ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30 font-black' : (isProMember ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : (isLightMode ? 'bg-indigo-100 text-indigo-700' : 'bg-indigo-500/20 text-indigo-300'))}">
+                    ${isAdmin ? '👑 관리자 프리패스' : (isProMember ? 'PRO 활성화됨' : '무료 플랜 (Free)')}
                   </span>
                 </div>
                 <p class="text-[11px] text-neutral-400 mt-1">
-                  ${isProMember ? '모든 고급 분석 및 클라우드 무제한 기능을 이용 중입니다.' : '실시간 클라우드 자동 보존과 고급 분석을 제한 없이 누려보세요.'}
+                  ${isAdmin ? '관리자 권한으로 모든 Pro 기능과 비즈니스 대시보드가 무제한 개방되었습니다.' : (isProMember ? '모든 고급 분석 및 클라우드 무제한 기능을 이용 중입니다.' : '실시간 클라우드 자동 보존과 고급 분석을 제한 없이 누려보세요.')}
                 </p>
               </div>
-              ${!isProMember ? `
+              ${isAdmin ? `
+                <button onclick="window.switchTab('admin')" class="py-1.5 px-3 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-extrabold rounded-xl text-xs shadow-md transition active:scale-95 shrink-0 flex items-center space-x-1">
+                  <span>관리 대시보드</span>
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                </button>
+              ` : (!isProMember ? `
                 <button onclick="window.openSubscriptionModal()" class="py-1.5 px-3 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold rounded-xl text-xs shadow-md transition active:scale-95 shrink-0">
                   Pro 구독
                 </button>
@@ -3263,7 +3363,7 @@
                 <button onclick="window.openSubscriptionModal()" class="py-1 px-2.5 rounded-lg text-[10px] font-semibold ${isLightMode ? 'bg-neutral-100 hover:bg-neutral-200 text-neutral-700' : 'bg-neutral-800 hover:bg-neutral-700 text-neutral-300'} transition shrink-0">
                   멤버십 관리
                 </button>
-              `}
+              `)}
             </div>
             
             <!-- Quick Features (이모티콘 전면 배제) -->
@@ -3417,10 +3517,513 @@
             </button>
           </div>
 
+          <!-- 마스터 관리자 모드 제어 카드 -->
+          <div class="${isLightMode ? 'bg-gradient-to-br from-amber-500/10 via-white to-amber-500/5 border-amber-300/80 shadow-sm' : 'bg-gradient-to-br from-amber-950/20 via-neutral-900 to-amber-900/10 border-amber-500/30'} border rounded-3xl p-4 space-y-3">
+            <div class="flex justify-between items-center text-xs">
+              <div class="flex items-center space-x-1.5">
+                <span class="text-base">👑</span>
+                <span class="font-bold ${isLightMode ? 'text-neutral-900' : 'text-neutral-200'}">마스터 관리자 권한</span>
+              </div>
+              <span class="font-mono text-[10px] font-bold px-2 py-0.5 rounded-full ${isAdmin ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-neutral-800 text-neutral-400'}">
+                ${isAdmin ? '👑 관리자 활성' : '일반 모드'}
+              </span>
+            </div>
+            <p class="text-[11px] text-neutral-400 leading-relaxed">
+              관리자 모드에서는 <b>구독 없이도 모든 Pro 기능(통계·무제한 프로젝트·고급 분석)을 100% 무료 이용 & 테스트</b>할 수 있으며, 하단에 <b>[관리]</b> 탭이 열려 실시간 가입·구독 비즈니스 대시보드를 확인할 수 있습니다.
+            </p>
+            <div class="grid grid-cols-2 gap-2 pt-1">
+              <button onclick="window.toggleAdminMode()" class="py-2.5 ${isAdmin ? 'bg-neutral-800 hover:bg-neutral-700 text-neutral-300' : 'bg-amber-500 hover:bg-amber-400 text-black font-extrabold shadow-md'} font-semibold rounded-xl text-xs transition active:scale-95 flex items-center justify-center space-x-1">
+                <span>${isAdmin ? '일반 모드로 전환' : '관리자 권한 켜기'}</span>
+              </button>
+              ${isAdmin ? `
+                <button onclick="window.switchTab('admin')" class="py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold rounded-xl text-xs transition active:scale-95 flex items-center justify-center space-x-1 shadow-md">
+                  <span>관리 대시보드</span>
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                </button>
+              ` : `
+                <button onclick="window.switchTab('admin')" class="py-2.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-400 rounded-xl text-xs transition active:scale-95 flex items-center justify-center space-x-1">
+                  <span>관리 탭 안내</span>
+                </button>
+              `}
+            </div>
+          </div>
+
           <div class="pt-2">
             <button onclick="resetAllData()" class="w-full py-3 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-semibold rounded-2xl text-xs transition border border-rose-500/30">
               모든 데이터 초기화 (주의)
             </button>
+          </div>
+        </div>
+      `;
+    }
+
+    // ==========================================
+    // 마스터 관리자 비즈니스 & 구독 대시보드 모듈
+    // ==========================================
+    let adminDashboardState = {
+      loading: false,
+      users: [],
+      lastFetched: null,
+      viewMode: 'real', // 'real' 또는 'demo'
+      filterPlan: 'ALL', // 'ALL', 'pro', 'free'
+      searchKeyword: ''
+    };
+
+    // 실시간 Supabase 유저 & 구독 데이터 로드
+    window.fetchAdminDashboardData = async function(showToastNotice = false) {
+      adminDashboardState.loading = true;
+      if (currentTab === 'admin') renderAdminTab(document.getElementById('contentArea'));
+
+      const sb = getSupabase();
+      if (!sb) {
+        adminDashboardState.loading = false;
+        if (showToastNotice) showToast('클라우드 DB에 연결할 수 없습니다.');
+        if (currentTab === 'admin') renderAdminTab(document.getElementById('contentArea'));
+        return;
+      }
+
+      try {
+        const { data, error } = await sb
+          .from('seedfit_user_data')
+          .select('user_id, provider, email, name, subscription_tier, updated_at, records, projects')
+          .order('updated_at', { ascending: false });
+
+        if (error) {
+          console.warn('Admin fetch error:', error);
+          if (showToastNotice) showToast('대시보드 데이터 조회 실패: ' + (error.message || '네트워크 오류'));
+        } else {
+          let fetchedUsers = Array.isArray(data) ? [...data] : [];
+          
+          // 현재 로그인한 본인 계정이 DB에 아직 등록되지 않은 경우 로컬 데이터로 병합
+          const authUser = getAuthUser();
+          if (authUser && authUser.id) {
+            const currentUserId = `${authUser.provider || 'user'}:${authUser.id}`;
+            const exists = fetchedUsers.some(u => u.user_id === currentUserId);
+            if (!exists) {
+              fetchedUsers.unshift({
+                user_id: currentUserId,
+                provider: authUser.provider || 'admin',
+                email: authUser.email || 'admin@seedfit.pro',
+                name: authUser.name || '마스터 관리자',
+                subscription_tier: 'pro',
+                updated_at: new Date().toISOString(),
+                records: records || [],
+                projects: projects || []
+              });
+            }
+          }
+
+          adminDashboardState.users = fetchedUsers;
+          adminDashboardState.lastFetched = new Date().toISOString();
+          if (showToastNotice) showToast('실시간 비즈니스 데이터를 최신화했습니다! 📊');
+        }
+      } catch (err) {
+        console.error('Admin dashboard fetch exception:', err);
+      } finally {
+        adminDashboardState.loading = false;
+        if (currentTab === 'admin') renderAdminTab(document.getElementById('contentArea'));
+      }
+    };
+
+    // 관리자 유저 플랜 변경 (Free <-> Pro 수동 토글)
+    window.adminToggleUserPlan = async function(userId, currentTier) {
+      const nextTier = (currentTier === 'pro') ? 'free' : 'pro';
+      const confirmMsg = (nextTier === 'pro')
+        ? `'${userId}' 유저를 PRO 정기구독 회원으로 승격하시겠습니까?`
+        : `'${userId}' 유저의 PRO 구독을 해지(무료 플랜 전환)하시겠습니까?`;
+
+      if (!confirm(confirmMsg)) return;
+
+      const sb = getSupabase();
+      if (!sb) {
+        showToast('클라우드 연결 상태를 확인해주세요.');
+        return;
+      }
+
+      showToast('구독 플랜을 변경하고 있습니다...');
+      try {
+        const { error } = await sb
+          .from('seedfit_user_data')
+          .update({ subscription_tier: nextTier, updated_at: new Date().toISOString() })
+          .eq('user_id', userId);
+
+        if (error) {
+          showToast('플랜 변경 실패: ' + error.message);
+          return;
+        }
+
+        // 로컬 상태 즉시 반영
+        const target = adminDashboardState.users.find(u => u.user_id === userId);
+        if (target) target.subscription_tier = nextTier;
+
+        // 본인 계정인 경우 로컬 스토리지도 함께 동기화
+        const authUser = getAuthUser();
+        if (authUser && `${authUser.provider || 'user'}:${authUser.id}` === userId) {
+          safeStorage.set('SEEDFIT_IS_PRO', nextTier === 'pro' ? 'true' : 'false');
+        }
+
+        showToast(`'${userId}' 유저가 ${nextTier.toUpperCase()} 플랜으로 변경되었습니다!`);
+        renderAdminTab(document.getElementById('contentArea'));
+      } catch (e) {
+        showToast('플랜 변경 중 오류가 발생했습니다.');
+      }
+    };
+
+    // 관리자 대시보드 뷰 모드 토글 (실제 DB <-> 시뮬레이션 데모)
+    window.toggleAdminViewMode = function() {
+      adminDashboardState.viewMode = (adminDashboardState.viewMode === 'real') ? 'demo' : 'real';
+      showToast(adminDashboardState.viewMode === 'demo' ? '가상 시뮬레이션 데모 모드로 전환되었습니다.' : '실시간 실제 클라우드 DB 데이터 모드로 전환되었습니다.');
+      renderAdminTab(document.getElementById('contentArea'));
+    };
+
+    // 관리자 유저 필터 설정
+    window.setAdminFilterPlan = function(plan) {
+      adminDashboardState.filterPlan = plan;
+      renderAdminTab(document.getElementById('contentArea'));
+    };
+
+    // 관리자 검색어 설정
+    window.setAdminSearchKeyword = function(keyword) {
+      adminDashboardState.searchKeyword = keyword.trim().toLowerCase();
+      renderAdminTab(document.getElementById('contentArea'));
+    };
+
+    // 관리자 대시보드 탭 렌더링
+    function renderAdminTab(container) {
+      if (!container) return;
+
+      // 최초 진입 시 데이터가 없으면 자동 1회 조회
+      if (!adminDashboardState.lastFetched && !adminDashboardState.loading) {
+        window.fetchAdminDashboardData(false);
+      }
+
+      const isDemo = (adminDashboardState.viewMode === 'demo');
+
+      // 데모용 샘플 데이터셋 (출시 초기에도 전체 통계/차트 기능을 완벽하게 점검할 수 있도록 지원)
+      const demoUsers = [
+        { user_id: 'kakao:3001', provider: 'kakao', name: '박대표 (운영자)', email: 'archistjj@gmail.com', subscription_tier: 'pro', updated_at: '2026-10-03T09:00:00Z', records: [1,2,3,4,5], projects: [1,2] },
+        { user_id: 'google:102', provider: 'google', name: '김투자', email: 'investor.kim@gmail.com', subscription_tier: 'pro', updated_at: '2026-10-02T14:20:00Z', records: [1,2,3], projects: [1] },
+        { user_id: 'kakao:3003', provider: 'kakao', name: '이시드', email: 'seed.lee@daum.net', subscription_tier: 'pro', updated_at: '2026-09-28T11:15:00Z', records: [1,2,3,4], projects: [1,2] },
+        { user_id: 'google:104', provider: 'google', name: '최자금', email: 'choi.seed@gmail.com', subscription_tier: 'free', updated_at: '2026-09-25T16:40:00Z', records: [1,2], projects: [1] },
+        { user_id: 'kakao:3005', provider: 'kakao', name: '정성공', email: 'jung.fit@naver.com', subscription_tier: 'pro', updated_at: '2026-09-18T08:30:00Z', records: [1,2,3,4,5,6], projects: [1] },
+        { user_id: 'google:106', provider: 'google', name: '강수익', email: 'kang.profit@gmail.com', subscription_tier: 'free', updated_at: '2026-09-10T19:00:00Z', records: [1], projects: [] },
+        { user_id: 'kakao:3007', provider: 'kakao', name: '윤멘탈', email: 'yoon.mental@kakao.com', subscription_tier: 'pro', updated_at: '2026-08-29T12:00:00Z', records: [1,2,3], projects: [1] },
+        { user_id: 'google:108', provider: 'google', name: '한투자', email: 'han.invest@gmail.com', subscription_tier: 'free', updated_at: '2026-08-15T15:20:00Z', records: [], projects: [] },
+        { user_id: 'kakao:3009', provider: 'kakao', name: '오시드핏', email: 'oh.seedfit@naver.com', subscription_tier: 'pro', updated_at: '2026-07-22T10:10:00Z', records: [1,2,3,4], projects: [1] },
+        { user_id: 'google:110', provider: 'google', name: '송자산', email: 'song.asset@gmail.com', subscription_tier: 'free', updated_at: '2026-07-05T14:00:00Z', records: [1], projects: [] },
+      ];
+
+      // 데이터 소스 결정
+      let activeUsers = isDemo ? demoUsers : adminDashboardState.users;
+      if (!isDemo && activeUsers.length === 0) {
+        // 실제 데이터가 0건일 때 기본 본인 관리자 1명 생성
+        const authUser = getAuthUser();
+        activeUsers = [{
+          user_id: authUser ? `${authUser.provider || 'user'}:${authUser.id}` : 'admin:master',
+          provider: authUser ? authUser.provider : 'admin',
+          name: authUser ? (authUser.name || '마스터 관리자') : '마스터 관리자',
+          email: authUser ? (authUser.email || 'admin@seedfit.pro') : 'admin@seedfit.pro',
+          subscription_tier: 'pro',
+          updated_at: new Date().toISOString(),
+          records: records || [],
+          projects: projects || []
+        }];
+      }
+
+      // 핵심 KPI 계산
+      const totalSignups = activeUsers.length;
+      const activeSubscribers = activeUsers.filter(u => u.subscription_tier === 'pro').length;
+      const conversionRate = totalSignups > 0 ? ((activeSubscribers / totalSignups) * 100).toFixed(1) : '0.0';
+      const pricePerMonth = 9900; // 월 구독료 (₩9,900원 기준)
+      const monthlyRevenue = activeSubscribers * pricePerMonth;
+
+      // 월별 가입자 & 구독자 변동 통계 (최근 6개월)
+      const monthlyGrowth = isDemo ? [
+        { month: '2026.10', signups: 14, newSubs: 5, activeSubs: activeSubscribers, revenue: activeSubscribers * pricePerMonth, rate: '35.7%' },
+        { month: '2026.09', signups: 22, newSubs: 7, activeSubs: 11, revenue: 11 * pricePerMonth, rate: '31.8%' },
+        { month: '2026.08', signups: 18, newSubs: 5, activeSubs: 7, revenue: 7 * pricePerMonth, rate: '27.7%' },
+        { month: '2026.07', signups: 15, newSubs: 4, activeSubs: 4, revenue: 4 * pricePerMonth, rate: '26.6%' },
+        { month: '2026.06', signups: 9,  newSubs: 2, activeSubs: 2, revenue: 2 * pricePerMonth, rate: '22.2%' },
+        { month: '2026.05', signups: 5,  newSubs: 1, activeSubs: 1, revenue: 1 * pricePerMonth, rate: '20.0%' },
+      ] : [
+        { month: '2026.10 (당월)', signups: totalSignups, newSubs: activeSubscribers, activeSubs: activeSubscribers, revenue: monthlyRevenue, rate: `${conversionRate}%` }
+      ];
+
+      // 필터링된 유저 목록
+      let filteredUsers = activeUsers.filter(u => {
+        if (adminDashboardState.filterPlan === 'pro' && u.subscription_tier !== 'pro') return false;
+        if (adminDashboardState.filterPlan === 'free' && u.subscription_tier === 'pro') return false;
+        if (adminDashboardState.searchKeyword) {
+          const kw = adminDashboardState.searchKeyword;
+          const matchName = (u.name || '').toLowerCase().includes(kw);
+          const matchEmail = (u.email || '').toLowerCase().includes(kw);
+          const matchId = (u.user_id || '').toLowerCase().includes(kw);
+          if (!matchName && !matchEmail && !matchId) return false;
+        }
+        return true;
+      });
+
+      container.innerHTML = `
+        <div class="space-y-4">
+          <!-- 1. 관리자 상단 제어 바 -->
+          <div class="${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900 border-neutral-800'} border rounded-3xl p-4 space-y-3 shadow-sm">
+            <div class="flex justify-between items-center">
+              <div class="flex items-center space-x-2">
+                <span class="text-lg">👑</span>
+                <div>
+                  <h2 class="text-sm font-black ${isLightMode ? 'text-neutral-900' : 'text-white'} flex items-center space-x-1.5">
+                    <span>비즈니스 & 구독 대시보드</span>
+                    <span class="text-[9px] px-1.5 py-0.2 rounded font-bold ${isDemo ? 'bg-amber-500/20 text-amber-400 border border-amber-500/30' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'}">
+                      ${isDemo ? '데모 시뮬레이션' : '클라우드 실시간'}
+                    </span>
+                  </h2>
+                  <p class="text-[10px] text-neutral-400">
+                    ${adminDashboardState.lastFetched ? `동기화: ${new Date(adminDashboardState.lastFetched).toLocaleTimeString()}` : '실시간 데이터 준비 중'}
+                  </p>
+                </div>
+              </div>
+
+              <div class="flex items-center space-x-1.5">
+                <button onclick="window.toggleAdminViewMode()" class="px-2.5 py-1.5 rounded-xl text-[10px] font-bold ${isDemo ? 'bg-amber-500 text-black' : (isLightMode ? 'bg-neutral-100 text-neutral-700' : 'bg-neutral-800 text-neutral-300')} transition active:scale-95">
+                  ${isDemo ? '실제 데이터 보기' : '데모 시뮬레이션'}
+                </button>
+                <button onclick="window.fetchAdminDashboardData(true)" ${adminDashboardState.loading ? 'disabled' : ''} class="p-1.5 rounded-xl ${isLightMode ? 'bg-neutral-100 hover:bg-neutral-200 text-neutral-700' : 'bg-neutral-800 hover:bg-neutral-700 text-neutral-300'} transition active:scale-95 flex items-center justify-center">
+                  <svg class="w-4 h-4 ${adminDashboardState.loading ? 'animate-spin text-blue-500' : ''}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                </button>
+              </div>
+            </div>
+
+            <!-- 안내 배너 -->
+            <div class="p-2.5 rounded-2xl ${isLightMode ? 'bg-blue-50 border-blue-200 text-blue-900' : 'bg-blue-950/30 border-blue-800/40 text-blue-300'} border text-[11px] flex items-center space-x-2">
+              <span class="text-sm">💡</span>
+              <span class="leading-tight">
+                현재 계정은 마스터 권한이 부여되어 <b>무료/결제 여부와 무관하게 모든 Pro 기능이 무제한 활성화</b>되어 있습니다.
+              </span>
+            </div>
+          </div>
+
+          <!-- 2. 핵심 비즈니스 KPI 그리드 (4구 카드) -->
+          <div class="grid grid-cols-2 gap-3">
+            <!-- KPI 1: 현재 구독수 -->
+            <div class="${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900 border-neutral-800'} border p-4 rounded-3xl space-y-1 shadow-sm relative overflow-hidden">
+              <div class="flex justify-between items-center text-neutral-400 text-[11px]">
+                <span>현재 구독수</span>
+                <span class="text-xs">💳</span>
+              </div>
+              <div class="flex items-baseline space-x-1.5 pt-1">
+                <span class="text-2xl font-black font-mono tracking-tight ${isLightMode ? 'text-neutral-900' : 'text-white'}">
+                  ${activeSubscribers}
+                </span>
+                <span class="text-xs font-semibold text-emerald-400">건</span>
+              </div>
+              <p class="text-[10px] text-neutral-400 truncate">활성 유료 Pro 멤버</p>
+              <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-emerald-500 to-teal-400"></div>
+            </div>
+
+            <!-- KPI 2: 총 가입수 -->
+            <div class="${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900 border-neutral-800'} border p-4 rounded-3xl space-y-1 shadow-sm relative overflow-hidden">
+              <div class="flex justify-between items-center text-neutral-400 text-[11px]">
+                <span>총 가입수</span>
+                <span class="text-xs">👥</span>
+              </div>
+              <div class="flex items-baseline space-x-1.5 pt-1">
+                <span class="text-2xl font-black font-mono tracking-tight ${isLightMode ? 'text-neutral-900' : 'text-white'}">
+                  ${totalSignups}
+                </span>
+                <span class="text-xs font-semibold text-blue-400">명</span>
+              </div>
+              <p class="text-[10px] text-neutral-400 truncate">전체 등록 회원</p>
+              <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-blue-500 to-indigo-500"></div>
+            </div>
+
+            <!-- KPI 3: 가입 후 구독 전환율 -->
+            <div class="${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900 border-neutral-800'} border p-4 rounded-3xl space-y-1 shadow-sm relative overflow-hidden">
+              <div class="flex justify-between items-center text-neutral-400 text-[11px]">
+                <span>구독 전환율</span>
+                <span class="text-xs">📈</span>
+              </div>
+              <div class="flex items-baseline space-x-1.5 pt-1">
+                <span class="text-2xl font-black font-mono tracking-tight bg-gradient-to-r from-purple-400 to-indigo-400 bg-clip-text text-transparent">
+                  ${conversionRate}
+                </span>
+                <span class="text-xs font-semibold text-purple-400">%</span>
+              </div>
+              <p class="text-[10px] text-neutral-400 truncate">가입자 대비 유료 전환</p>
+              <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-purple-500 to-pink-500"></div>
+            </div>
+
+            <!-- KPI 4: 매달 발생하는 구독료 (MRR) -->
+            <div class="${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900 border-neutral-800'} border p-4 rounded-3xl space-y-1 shadow-sm relative overflow-hidden">
+              <div class="flex justify-between items-center text-neutral-400 text-[11px]">
+                <span>월 구독 매출 (MRR)</span>
+                <span class="text-xs">💰</span>
+              </div>
+              <div class="flex items-baseline space-x-1 pt-1 truncate">
+                <span class="text-lg font-black font-mono tracking-tight ${isLightMode ? 'text-neutral-900' : 'text-white'}">
+                  ₩${monthlyRevenue.toLocaleString()}
+                </span>
+                <span class="text-[10px] text-neutral-400">/월</span>
+              </div>
+              <p class="text-[10px] text-neutral-400 truncate">건당 9,900원 기준</p>
+              <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-500 to-yellow-400"></div>
+            </div>
+          </div>
+
+          <!-- 3. 매달 가입자 및 구독자 변동 통계 (월별 성장 추이) -->
+          <div class="${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900 border-neutral-800'} border p-4 rounded-3xl space-y-3 shadow-sm">
+            <div class="flex justify-between items-center">
+              <div>
+                <h3 class="text-xs font-bold ${isLightMode ? 'text-neutral-900' : 'text-white'} flex items-center space-x-1.5">
+                  <span>📊</span>
+                  <span>월별 가입자·구독자 변동 통계</span>
+                </h3>
+                <p class="text-[10px] text-neutral-400">월별 신규 가입 대비 Pro 구독 성장 지표</p>
+              </div>
+              <span class="text-[9px] font-semibold px-2 py-0.5 rounded-full ${isLightMode ? 'bg-neutral-100 text-neutral-600' : 'bg-neutral-800 text-neutral-400'}">
+                최근 6개월
+              </span>
+            </div>
+
+            <!-- 미니 막대 차트 (가입자 바 & 구독자 바) -->
+            <div class="space-y-3 pt-2">
+              ${monthlyGrowth.map(item => {
+                const maxVal = Math.max(...monthlyGrowth.map(m => m.signups), 1);
+                const signupPct = Math.min(100, Math.round((item.signups / maxVal) * 100));
+                const subPct = Math.min(100, Math.round((item.newSubs / maxVal) * 100));
+                return `
+                  <div class="space-y-1 text-xs">
+                    <div class="flex justify-between items-center text-[11px]">
+                      <span class="font-bold ${isLightMode ? 'text-neutral-800' : 'text-neutral-200'}">${item.month}</span>
+                      <div class="flex items-center space-x-2 font-mono text-[10px]">
+                        <span class="text-blue-400">가입 ${item.signups}명</span>
+                        <span class="text-neutral-500">|</span>
+                        <span class="text-purple-400 font-bold">구독 +${item.newSubs}건</span>
+                        <span class="text-neutral-500">|</span>
+                        <span class="font-bold ${isLightMode ? 'text-neutral-900' : 'text-white'}">₩${item.revenue.toLocaleString()}</span>
+                      </div>
+                    </div>
+                    <div class="w-full h-2 bg-neutral-800/60 rounded-full overflow-hidden flex space-x-0.5">
+                      <div class="h-full bg-blue-500 rounded-l-full transition-all duration-500" style="width: ${signupPct}%" title="가입자"></div>
+                      <div class="h-full bg-purple-500 rounded-r-full transition-all duration-500" style="width: ${subPct}%" title="구독자"></div>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+
+            <div class="flex items-center justify-end space-x-3 text-[10px] text-neutral-400 pt-1 border-t ${isLightMode ? 'border-neutral-100' : 'border-neutral-800'}">
+              <div class="flex items-center space-x-1">
+                <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                <span>신규 가입자</span>
+              </div>
+              <div class="flex items-center space-x-1">
+                <span class="w-2 h-2 rounded-full bg-purple-500"></span>
+                <span>신규 구독자</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 4. 실시간 회원 & 구독 관리 테이블 -->
+          <div class="${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900 border-neutral-800'} border p-4 rounded-3xl space-y-3 shadow-sm">
+            <div class="flex justify-between items-center flex-wrap gap-2">
+              <div>
+                <h3 class="text-xs font-bold ${isLightMode ? 'text-neutral-900' : 'text-white'} flex items-center space-x-1.5">
+                  <span>👥</span>
+                  <span>회원 및 구독자 실시간 관리</span>
+                </h3>
+                <p class="text-[10px] text-neutral-400">총 ${activeUsers.length}명 등록됨 (플랜 즉시 전환 지원)</p>
+              </div>
+
+              <!-- 플랜 필터 탭 -->
+              <div class="flex items-center space-x-1 bg-neutral-800/80 p-0.5 rounded-xl text-[10px]">
+                <button onclick="window.setAdminFilterPlan('ALL')" class="px-2 py-1 rounded-lg font-bold transition ${adminDashboardState.filterPlan === 'ALL' ? 'bg-blue-600 text-white shadow' : 'text-neutral-400'}">전체</button>
+                <button onclick="window.setAdminFilterPlan('pro')" class="px-2 py-1 rounded-lg font-bold transition ${adminDashboardState.filterPlan === 'pro' ? 'bg-purple-600 text-white shadow' : 'text-neutral-400'}">PRO</button>
+                <button onclick="window.setAdminFilterPlan('free')" class="px-2 py-1 rounded-lg font-bold transition ${adminDashboardState.filterPlan === 'free' ? 'bg-neutral-700 text-white shadow' : 'text-neutral-400'}">FREE</button>
+              </div>
+            </div>
+
+            <!-- 유저 검색 인풋 -->
+            <div>
+              <input type="text" placeholder="이름, 이메일, 유저 ID 검색..." value="${adminDashboardState.searchKeyword}" oninput="window.setAdminSearchKeyword(this.value)" class="w-full px-3 py-2 rounded-xl text-xs ${isLightMode ? 'bg-neutral-100 border-neutral-200 text-neutral-900' : 'bg-neutral-800/90 border-neutral-700 text-white'} border focus:outline-none focus:ring-1 focus:ring-blue-500" />
+            </div>
+
+            <!-- 회원 리스트 카드 -->
+            <div class="space-y-2 pt-1">
+              ${filteredUsers.length === 0 ? `
+                <div class="text-center py-6 text-xs text-neutral-400">
+                  해당 조건의 회원이 없습니다.
+                </div>
+              ` : filteredUsers.map(user => {
+                const isPro = (user.subscription_tier === 'pro');
+                const authUser = getAuthUser();
+                const isCurrentMe = (authUser && `${authUser.provider || 'user'}:${authUser.id}` === user.user_id);
+                const recordCount = Array.isArray(user.records) ? user.records.length : 0;
+                const projectCount = Array.isArray(user.projects) ? user.projects.length : 0;
+                const updatedTimeStr = user.updated_at ? new Date(user.updated_at).toLocaleDateString() : '-';
+
+                return `
+                  <div class="${isLightMode ? 'bg-neutral-50 border-neutral-200' : 'bg-neutral-950/60 border-neutral-800'} border p-3 rounded-2xl space-y-2 text-xs">
+                    <div class="flex justify-between items-start">
+                      <div class="flex items-center space-x-2">
+                        <div class="w-8 h-8 rounded-full ${user.provider === 'kakao' ? 'bg-[#FEE500] text-black' : (user.provider === 'google' ? 'bg-white text-neutral-800 border border-neutral-300' : 'bg-blue-600 text-white')} flex items-center justify-center font-bold text-xs">
+                          ${user.provider === 'kakao' ? 'K' : (user.provider === 'google' ? 'G' : '★')}
+                        </div>
+                        <div>
+                          <div class="flex items-center space-x-1.5">
+                            <span class="font-bold ${isLightMode ? 'text-neutral-900' : 'text-white'}">${user.name || '무명 회원'}</span>
+                            ${isCurrentMe ? `
+                              <span class="text-[9px] px-1.5 py-0.2 rounded font-extrabold bg-amber-500/20 text-amber-400 border border-amber-500/30">👑 내 계정</span>
+                            ` : ''}
+                          </div>
+                          <p class="text-[10px] text-neutral-400 truncate max-w-[180px]">${user.email || user.user_id}</p>
+                        </div>
+                      </div>
+
+                      <div class="flex items-center space-x-1.5">
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${isPro ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30' : 'bg-neutral-800 text-neutral-400 border border-neutral-700'}">
+                          ${isPro ? 'PRO 👑' : 'FREE'}
+                        </span>
+                        <button onclick="window.adminToggleUserPlan('${user.user_id}', '${user.subscription_tier}')" class="px-2 py-0.5 rounded-lg text-[10px] font-bold ${isPro ? 'bg-neutral-800 hover:bg-neutral-700 text-neutral-300' : 'bg-purple-600 hover:bg-purple-500 text-white'} transition active:scale-95">
+                          ${isPro ? 'Free 전환' : 'Pro 승격'}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div class="flex justify-between items-center text-[10px] text-neutral-400 pt-1 border-t ${isLightMode ? 'border-neutral-200' : 'border-neutral-800/80'}">
+                      <div class="space-x-2">
+                        <span>기록: <b class="${isLightMode ? 'text-neutral-800' : 'text-neutral-200'} font-mono">${recordCount}건</b></span>
+                        <span>프로젝트: <b class="${isLightMode ? 'text-neutral-800' : 'text-neutral-200'} font-mono">${projectCount}개</b></span>
+                      </div>
+                      <div>
+                        <span>최근 활동: ${updatedTimeStr}</span>
+                      </div>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+
+          <!-- 5. 관리자 빠른 도구 & 연동 현황 -->
+          <div class="${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900 border-neutral-800'} border p-4 rounded-3xl space-y-2.5 text-xs text-neutral-400">
+            <h4 class="font-bold ${isLightMode ? 'text-neutral-800' : 'text-neutral-200'} flex items-center space-x-1.5">
+              <span>⚙️</span>
+              <span>결제 시스템 연동 준비 현황</span>
+            </h4>
+            <div class="p-3 rounded-2xl bg-neutral-950/60 border border-neutral-800 space-y-1.5 text-[11px] leading-relaxed">
+              <div class="flex justify-between items-center text-neutral-300">
+                <span>• 국내 PG(페이앱 정기결제)</span>
+                <span class="text-amber-400 font-semibold">가맹 심사 대기 중</span>
+              </div>
+              <div class="flex justify-between items-center text-neutral-300">
+                <span>• 클라우드 DB(Supabase)</span>
+                <span class="text-emerald-400 font-semibold">정상 연결됨</span>
+              </div>
+              <div class="flex justify-between items-center text-neutral-300">
+                <span>• 결제 웹훅(Webhook) 엔드포인트</span>
+                <span class="text-blue-400 font-semibold">규격 설계 완료</span>
+              </div>
+            </div>
           </div>
         </div>
       `;
@@ -3895,6 +4498,7 @@
       document.getElementById('btnSaveNewRecord')?.addEventListener('click', saveNewRecord);
       document.getElementById('btnSaveNewProject')?.addEventListener('click', saveNewProject);
       applyThemeUI();
+      updateBottomTabBar();
       renderCurrentTab();
       initInstallLandingGate();
       initKakaoSdk();
@@ -3904,6 +4508,7 @@
     });
 
     applyThemeUI();
+    updateBottomTabBar();
     renderCurrentTab();
     initInstallLandingGate();
     initKakaoSdk();
