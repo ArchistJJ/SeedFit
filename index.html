@@ -435,6 +435,10 @@
         </div>
 
         <div class="flex gap-2 pt-2">
+          <button type="button" onclick="window.deleteRecord(currentSettleRecordId)" class="py-3 px-3.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/20 rounded-xl text-xs font-semibold transition active:scale-95 flex items-center justify-center space-x-1 shrink-0" title="기록 삭제">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            <span>삭제</span>
+          </button>
           <button onclick="resetToPending()" id="btnResetPending" class="hidden flex-1 py-3 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 rounded-xl text-xs font-semibold transition">
             대기중으로 복구
           </button>
@@ -863,7 +867,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.8.8').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.8.9').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -1739,7 +1743,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.8.8';
+    const CURRENT_APP_VERSION = 'v1.8.9';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');
@@ -2487,7 +2491,12 @@
                     <span class="text-[11px] font-bold px-2 py-0.5 rounded-lg ${getFoldColorClass(r.fold || '단일')}">${r.fold || '단일'}</span>
                     ${project ? `<span class="text-[9px] bg-purple-500/15 text-purple-400 border border-purple-500/30 px-1.5 py-0.5 rounded font-medium truncate max-w-[100px]">${project.name}</span>` : ''}
                   </div>
-                  ${statusBadge}
+                  <div class="flex items-center space-x-1.5">
+                    ${statusBadge}
+                    <button type="button" onclick="event.stopPropagation(); window.deleteRecord(${r.id})" class="p-1 rounded-lg text-neutral-500 hover:text-rose-400 hover:bg-rose-500/10 transition active:scale-90" title="기록 삭제">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    </button>
+                  </div>
                 </div>
 
                 <div class="flex justify-between items-baseline pt-1">
@@ -2557,6 +2566,27 @@
     window.exitProjectDetail = function() {
       selectedProjectId = null;
       renderCurrentTab();
+    };
+
+    window.deleteRecord = function(recordId) {
+      if (!recordId) return;
+      const target = records.find(r => r.id === recordId);
+      if (!target) return;
+
+      const confirmMsg = `해당 기록을 삭제하시겠습니까?\n(${target.category} · ${target.fold || '단일'} · 투입 ${target.investAmount.toLocaleString()}원)`;
+      if (!confirm(confirmMsg)) return;
+
+      records = records.filter(r => r.id !== recordId);
+      saveState();
+
+      if (typeof currentSettleRecordId !== 'undefined' && currentSettleRecordId === recordId) {
+        if (typeof window.closeSettleModal === 'function') {
+          window.closeSettleModal();
+        }
+      }
+
+      renderCurrentTab();
+      showToast('기록이 삭제되었습니다.');
     };
 
     window.deleteProject = function(projectId) {
@@ -2859,7 +2889,12 @@
                     <span class="text-[11px] font-bold px-2 py-0.5 rounded-lg ${getCategoryColorClass(r.category)}">${r.category}</span>
                     <span class="text-[11px] font-bold px-2 py-0.5 rounded-lg ${getFoldColorClass(r.fold || '단일')}">${r.fold || '단일'}</span>
                   </div>
-                  ${statusBadge}
+                  <div class="flex items-center space-x-1.5">
+                    ${statusBadge}
+                    <button type="button" onclick="event.stopPropagation(); window.deleteRecord(${r.id})" class="p-1 rounded-lg text-neutral-500 hover:text-rose-400 hover:bg-rose-500/10 transition active:scale-90" title="기록 삭제">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    </button>
+                  </div>
                 </div>
 
                 <div class="flex justify-between items-baseline pt-1">
@@ -3429,9 +3464,6 @@
                 <h3 class="text-xs font-bold ${isLightMode ? 'text-neutral-900' : 'text-white'}">
                   카테고리별 교차분석
                 </h3>
-                ${!isPro ? `
-                  <span class="text-[9px] font-black px-1.5 py-0.2 rounded bg-indigo-500/15 text-indigo-400 border border-indigo-500/30">PRO</span>
-                ` : ''}
               </div>
               <p class="text-[10px] text-neutral-400 mt-0.5">셀을 터치하면 해당 조합 통계로 즉시 집중 전환됩니다.</p>
             </div>
