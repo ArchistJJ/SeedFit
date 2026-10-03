@@ -760,7 +760,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.7.8').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.7.9').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -1385,7 +1385,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.7.8';
+    const CURRENT_APP_VERSION = 'v1.7.9';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');
@@ -3878,12 +3878,13 @@
       projects.unshift(newProj);
       saveState();
       window.closeNewProjectModal();
-      selectedProjectId = newProj.id;
+      selectedProjectId = null;
       if (currentTab !== 'projects') {
         window.switchTab('projects');
       } else {
         renderCurrentTab();
       }
+      showToast(`'${name}' 프로젝트가 생성되었습니다.`);
     }
 
     window.addEventListener('DOMContentLoaded', () => {
