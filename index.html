@@ -890,6 +890,7 @@
         const host = window.location.hostname.toLowerCase();
         if (!host || window.location.protocol === 'file:') return true;
         if (AUTHORIZED_DOMAINS.includes(host)) return true;
+        if (host.endsWith('.pages.dev')) return true;
         if (host.endsWith('.local') || host.endsWith('.internal')) return true;
         return false;
       } catch (e) {
