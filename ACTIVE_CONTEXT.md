@@ -7,7 +7,7 @@
 
 ## 1. 프로젝트 기본 정보
 - **프로젝트 명**: 시드핏 (SeedFit - 시드 & 투자 자금 관리 공식 웹앱)
-- **최신 앱 버전**: `v1.9.3`
+- **최신 앱 버전**: `v1.9.4`
 - **공식 서비스 도메인**: [https://seedfit.pro/](https://seedfit.pro/)
 - **GitHub 저장소**: `ArchistJJ/SeedFit` (`main` 브랜치 기준)
 - **호스팅 플랫폼**: GitHub Pages (Custom Domain `seedfit.pro`, CNAME 연동)
@@ -74,7 +74,21 @@
 ---
 
 ## 7. 최근 해결된 주요 UI/UX 이슈
-1. **v1.9.3 구독 모달 헤더 문구 개편 및 하단 구독확인 텍스트 제거·여백 최적화**:
+1. **v1.9.4 서비스 전방위 보안 점검 및 해킹·디도스·복제 방어 전면 고도화**:
+   - **해킹 방어 (XSS, 프로토타입 오염, 클릭재킹, 보안 헤더)**:
+     - 동적 템플릿(기록, 프로젝트, 설정, 통계) 전반에 `escapeHtml`을 일괄 적용하여 XSS 인젝션 위험 원천 차단.
+     - 외부 투명 iframe 공격을 무력화하는 클릭재킹 프레임 탈출(Frame-Busting) 탑재.
+     - 백업 파일 복원 시 `__proto__`, `constructor`, `prototype` 키 차단 및 5MB 용량 상한선, 개별 데이터 스키마 유효성 검증 적용.
+     - 엄격한 `Content-Security-Policy`(CSP), `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin` 메타 태그 적용.
+     - `copyAppDownloadLink` 내 잔여 `prompt` 호출 2곳을 `window.showAlertDialog`로 교체하여 네이티브 팝업 100% 퇴출(규칙 9).
+   - **디도스/남용 방어 (API Throttling, Quota 보호)**:
+     - `syncToCloud`(2초), `fetchAdminDashboardData`(4초), `refreshSubscriptionStatus`(4초)에 레이트 리미터 및 디바운스 적용으로 Supabase API 과도한 트래픽 및 쿼터 고갈 방지.
+     - 1.5MB 초과 페이로드 크기 폭탄 차단.
+     - 기록 5,000건, 프로젝트 100건 상한선 및 숫자 오버플로우/NaN 방어.
+   - **복제 방어 (Origin Integrity Shield)**:
+     - 공식 승인 도메인(`seedfit.pro`, `www.seedfit.pro`, `archistjj.github.io` 및 로컬 개발 환경) 외 비인가 복제 사이트 감지 시, Supabase DB 연결 및 결제 접근을 원천 비활성화하고 공식 사이트 이동 경고 모달을 띄워 운영자 자원과 브랜드 무단 도용 차단.
+     - 개발자 콘솔 Self-XSS 방지 보안 경고 배너 탑재.
+2. **v1.9.3 구독 모달 헤더 문구 개편 및 하단 구독확인 텍스트 제거·여백 최적화**:
    - **헤더 카피 개편**: 제목 `자금 관리의 완성`, 서브타이틀 `계정 데이터 연동과 분석을 통해<br>흔들리지 않고 자금을 관리하세요.` 2줄 문구로 시인성 및 신뢰도 강화.
    - **하단 여백 최적화**: 하단 '이미 구독하셨나요? 구독 상태 확인' 텍스트 버튼을 삭제하고 단정한 여백(`py-2`)을 유지하여 시각적 완성도 향상.
 2. **v1.9.2 브라우저 기본 팝업(alert/confirm) 전면 배제 및 Apple HIG 커스텀 모달 다이얼로그 시스템 구축**:

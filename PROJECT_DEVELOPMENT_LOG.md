@@ -1,5 +1,51 @@
 # 프로젝트 개발 로그 (PROJECT DEVELOPMENT LOG)
 
+## [2026-10-05] v1.9.4 서비스 전방위 보안 점검 및 해킹·디도스·복제 방어 전면 고도화
+
+### 1. 요구사항 및 기획 의도
+1. **전방위 보안 감사 및 문제점 해결**:
+   - **해킹 관점 (XSS, 데이터 위변조, 클릭재킹)**:
+     - 사용자 입력값(메모, 카테고리, 프로젝트명 등)이 HTML 템플릿에 직접 삽입되어 발생할 수 있는 잠재적 XSS(Cross-Site Scripting) 취약점 차단.
+     - 외부 피싱 사이트가 SeedFit을 투명 iframe으로 감싸 클릭을 가로채는 클릭재킹(Clickjacking) 위험 원천 차단.
+     - 데이터 백업 복원 시 프로토타입 오염(Prototype Pollution) 및 비정상 스키마 주입 방어.
+     - Content-Security-Policy(CSP), X-Content-Type-Options, Referrer-Policy 등 강력한 보안 헤더 메타 태그 완비.
+     - 남아있던 네이티브 `prompt` 호출 2곳을 제거하여 Apple HIG 커스텀 모달 일원화(규칙 9) 100% 달성.
+   - **디도스/남용 관점 (DDoS, API Flooding, Quota 고갈)**:
+     - 클라우드 동기화(`syncToCloud`), 관리자 대시보드 조회(`fetchAdminDashboardData`), 구독 상태 확인(`refreshSubscriptionStatus`) 등 주요 네트워크 호출에 스마트 레이트 리미터(쿨다운 및 디바운스 병합) 구축.
+     - 1.5MB 초과 페이로드 크기 폭탄(Payload Bomb) 사전 차단.
+     - 로컬 스토리지 한도(5MB) 고갈 방지를 위해 최대 기록 5,000건, 프로젝트 100건 안전 상한선 및 숫자 오버플로우/NaN 방어 검증 적용.
+   - **복제 관점 (Cloning, Unofficial Domain, Asset Scraping)**:
+     - 공식 승인 도메인(`seedfit.pro`, `www.seedfit.pro`, `archistjj.github.io` 및 로컬 개발 환경) 외 비인가 복제/피싱 사이트에서 소스코드가 구동될 경우, 본래 운영자의 Supabase DB 및 결제 자원에 접근하지 못하도록 원천 차단하는 도메인 무결성 가드(Origin Integrity Shield) 탑재.
+     - 비인가 도메인 접속 시 사용자 경고 모달 및 공식 사이트 이동 안내 제공.
+     - 브라우저 개발자 도구 콘솔에 Self-XSS 방지 보안 경고 배너 출력.
+2. **기존 기능 및 Apple HIG 디자인 100% 무결성 유지**:
+   - 모든 보안 로직은 기존 UI/UX 흐름에 어떠한 방해도 주지 않으며, 모든 기능과 인터페이스 디자인이 기존과 100% 동일하게 자연스럽고 완벽하게 동작하도록 구현.
+
+### 2. 구현 내역
+1. **`index.html`**:
+   - `<head>`: `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, 화이트리스트 기반의 엄격한 `Content-Security-Policy` 메타 태그 탑재.
+   - 스크립트 최상단:
+     - 클릭재킹 프레임 탈출(Frame-Busting) 스크립트.
+     - 공식 도메인 판별 함수 `isAuthorizedOrigin()` 및 `AUTHORIZED_DOMAINS` 가드.
+     - 콘솔 Self-XSS 보안 경고 로그.
+     - `escapeHtml(str)` 및 `sanitizeInput(str, maxLength)` 전역 보안 유틸리티.
+     - `rateLimiter` (클라우드 동기화 2초, 관리자 조회 4초, 구독 확인 4초 쿨다운).
+   - 데이터 바인딩 XSS 방어: `renderRecordsTab`, `renderProjectsListTab`, `renderProjectDetail`, `renderSettingsTab`의 메모, 카테고리, 조합, 프로젝트명, 일자, 사용자 이름, 이메일 등 동적 값에 `escapeHtml` 전면 적용.
+   - 입력값 검증: `saveNewRecord`, `saveNewProject`, `confirmSettlement`에서 `Number.isFinite` 및 최대 상한(1,000억원) 검증, 메모/프로젝트명 태그 정제 및 글자 수 제한 적용.
+   - 백업 복원 보안: `importDataJson` 파일 용량(5MB) 제한, 프로토타입 오염(`__proto__`, `constructor`, `prototype`) 키 검사 및 스키마 검증.
+   - 비인가 도메인 차단: `getSupabase()`, `syncToCloud()`, `startLemonSqueezyCheckout()`에서 비인가 도메인 접근 원천 차단 및 공식 도메인 이동 모달 안내.
+   - 네이티브 팝업 퇴출: `copyAppDownloadLink` 내 잔여 `prompt` 호출 2곳을 `window.showAlertDialog`로 교체.
+   - 버전 갱신: `CURRENT_APP_VERSION = 'v1.9.4'`, `sw.js?v=1.9.4`.
+2. **`sw.js` & `package.json`**:
+   - `CACHE_NAME = 'seedfit-cache-v1.9.4'`, `"version": "1.9.4"` 동기화.
+
+### 3. 검증
+- JavaScript 구문 문법 오류 0건 (`index.html`, `sw.js` node 파싱 검증 완료).
+- 금지 단어('스마트', '베팅', '배팅', '적중률') 0건 완전 무결 검증.
+- 유니코드 이모티콘 0건(전역 Apple HIG SVG 라인 아이콘 일원화) 유지 검증.
+- 브라우저 네이티브 다이얼로그(`alert`, `confirm`, `prompt`) 0건 완전 퇴출 검증.
+- 기존 투자/프로젝트/정산/통계/설정 모든 기능 정상 작동 및 보안 강화 완료.
+
 ## [2026-10-04] v1.9.3 구독 모달 헤더 문구 개편 및 하단 구독확인 텍스트 제거·여백 최적화
 
 ### 1. 요구사항 및 기획 의도

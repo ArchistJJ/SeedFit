@@ -7,6 +7,9 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="SeedFit">
   <meta name="theme-color" content="#000000">
+  <meta http-equiv="X-Content-Type-Options" content="nosniff">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://developers.kakao.com https://t1.kakaocdn.net https://accounts.google.com https://cdn.jsdelivr.net https://assets.lemonsqueezy.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https:; font-src 'self' data: https:; connect-src 'self' https://qeuiqvisuscvkgjvqxpe.supabase.co wss://qeuiqvisuscvkgjvqxpe.supabase.co https://accounts.google.com https://www.googleapis.com https://kauth.kakao.com https://kapi.kakao.com https://api.lemonsqueezy.com https://assets.lemonsqueezy.com https://seedfit.lemonsqueezy.com; frame-src 'self' https://accounts.google.com https://kauth.kakao.com https://app.lemonsqueezy.com https://seedfit.lemonsqueezy.com; object-src 'none'; base-uri 'self';">
   <title>SeedFit - 시드 & 투자 자금 관리</title>
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="manifest" href="manifest.json">
@@ -864,6 +867,89 @@
   </div>
 
   <script>
+    // [보안 1] 클릭재킹(Clickjacking) 및 악의적 Iframe 임베드 탈출 방어
+    if (window.top !== window.self) {
+      try {
+        window.top.location = window.self.location;
+      } catch (e) {
+        document.documentElement.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#000;color:#fff;font-family:-apple-system,sans-serif;padding:24px;text-align:center;">보안 정책에 따라 외부 프레임 내 임베드가 차단되었습니다. 공식 웹앱(https://seedfit.pro)에서 직접 접속해주세요.</div>';
+      }
+    }
+
+    // [보안 2] 공식 도메인 무결성 검증 (Anti-Cloning & Unauthorized Host Shield)
+    const AUTHORIZED_DOMAINS = [
+      'seedfit.pro',
+      'www.seedfit.pro',
+      'archistjj.github.io',
+      'localhost',
+      '127.0.0.1',
+      '[::1]'
+    ];
+    function isAuthorizedOrigin() {
+      try {
+        const host = window.location.hostname.toLowerCase();
+        if (!host || window.location.protocol === 'file:') return true;
+        if (AUTHORIZED_DOMAINS.includes(host)) return true;
+        if (host.endsWith('.local') || host.endsWith('.internal')) return true;
+        return false;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    // [보안 3] 브라우저 콘솔 보안 경고 (Self-XSS 방어)
+    try {
+      console.log(
+        '%cSeedFit 보안 가드 작동 중\n%c경고: 여기에 출처를 알 수 없는 스크립트를 붙여넣지 마세요. 악의적인 공격자에게 계정 정보가 유출될 수 있습니다.',
+        'color: #3b82f6; font-size: 16px; font-weight: bold;',
+        'color: #ef4444; font-size: 12px; font-weight: bold;'
+      );
+    } catch (e) {}
+
+    // [보안 4] XSS 방어 및 문자열 정제(Sanitize) 유틸리티
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function sanitizeInput(str, maxLength = 200) {
+      if (!str) return '';
+      return String(str)
+        .replace(/[<>]/g, '')
+        .trim()
+        .slice(0, maxLength);
+    }
+
+    // [보안 5] 네트워크 API 요청 레이트 리미터 (DDoS 및 API 남용 방어)
+    const rateLimiter = {
+      lastSyncTime: 0,
+      lastAdminFetchTime: 0,
+      lastRefreshSubTime: 0,
+      canSync: function() {
+        const now = Date.now();
+        if (now - this.lastSyncTime < 2000) return false;
+        this.lastSyncTime = now;
+        return true;
+      },
+      canFetchAdmin: function() {
+        const now = Date.now();
+        if (now - this.lastAdminFetchTime < 4000) return false;
+        this.lastAdminFetchTime = now;
+        return true;
+      },
+      canRefreshSub: function() {
+        const now = Date.now();
+        if (now - this.lastRefreshSubTime < 4000) return false;
+        this.lastRefreshSubTime = now;
+        return true;
+      }
+    };
+
     window.forceAppReload = function() {
       if (typeof showToast === 'function') {
         showToast('최신 버전을 확인하고 새로고침합니다...');
@@ -891,7 +977,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.9.3').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.9.4').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -941,6 +1027,21 @@
 
     // 앱 진입 및 화면 라우팅 (자동 로그인 유지 & 설치 랜딩 게이트 & 간편 로그인 온보딩)
     function checkAppEntryFlow() {
+      // 비인가 복제 사이트 탐지 시 사용자 보호 안내
+      if (!isAuthorizedOrigin()) {
+        setTimeout(() => {
+          window.showAlertDialog({
+            title: '비공식 복제 사이트 감지',
+            message: '현재 접속하신 주소는 공식 웹앱이 아닌 비인가 복제 사이트입니다.',
+            notice: '개인정보 보호와 데이터 무단 유출 방지를 위해 클라우드 동기화와 결제 기능이 안전하게 차단되었습니다.\n\n안전한 공식 서비스(https://seedfit.pro)로 이동해주세요.',
+            confirmText: '공식 서비스로 이동',
+            icon: 'warning'
+          }).then(() => {
+            window.location.href = 'https://seedfit.pro/';
+          });
+        }, 800);
+      }
+
       const isStandalone = isRunningStandalone();
       const landing = document.getElementById('installLandingView');
       const authView = document.getElementById('authOnboardingView');
@@ -1162,6 +1263,10 @@
     let currentSupabaseUserKey = null;
 
     function getSupabase(targetUserKey) {
+      if (!isAuthorizedOrigin()) {
+        console.warn('비인가 도메인 접속: 클라우드 DB 연결이 보안을 위해 차단되었습니다.');
+        return null;
+      }
       const activeUser = targetUserKey || (getAuthUser() ? `${getAuthUser().provider || 'user'}:${getAuthUser().id}` : '');
       if (!window.supabase || typeof window.supabase.createClient !== 'function') return null;
 
@@ -1187,6 +1292,17 @@
     window.syncToCloud = async function(showToastNotice = false, isInitialAuth = false) {
       const authUser = getAuthUser();
       if (!authUser || !authUser.id) return;
+
+      if (!isAuthorizedOrigin()) {
+        if (showToastNotice) showToast('비공식 복제 사이트에서는 클라우드 동기화가 제한됩니다.');
+        return;
+      }
+
+      // 레이트 리미트 검증 (수동 동기화 요청 남용 방어)
+      if (showToastNotice && !isInitialAuth && !rateLimiter.canSync()) {
+        showToast('안전한 동기화를 위해 잠시 후 다시 시도해주세요.');
+        return;
+      }
 
       const userIdKey = `${authUser.provider || 'user'}:${authUser.id}`;
       const sb = getSupabase(userIdKey);
@@ -1216,6 +1332,13 @@
         settings: mentalCareSettings || {},
         updated_at: new Date().toISOString()
       };
+
+      // 페이로드 크기 폭탄 방어 (1.5MB 초과 시 전송 사전 차단)
+      const payloadJson = JSON.stringify(payload);
+      if (payloadJson.length > 1500000) {
+        if (showToastNotice) showToast('데이터 용량이 너무 커서 클라우드 전송이 제한되었습니다. 기록을 정리해주세요.');
+        return;
+      }
 
       try {
         const { error } = await sb.from('seedfit_user_data').upsert(payload, { onConflict: 'user_id' });
@@ -1443,12 +1566,24 @@
       const url = 'https://seedfit.pro/';
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(url).then(() => {
-          showToast('SeedFit 앱 링크가 클립보드에 복사되었습니다!');
+          showToast('SeedFit 공식 앱 링크가 클립보드에 복사되었습니다!');
         }).catch(() => {
-          prompt('아래 주소를 복사해주세요:', url);
+          window.showAlertDialog({
+            title: '공식 웹앱 링크',
+            message: '아래 주소를 복사하여 브라우저에 입력해주세요.',
+            notice: url,
+            confirmText: '확인',
+            icon: 'info'
+          });
         });
       } else {
-        prompt('아래 주소를 복사해주세요:', url);
+        window.showAlertDialog({
+          title: '공식 웹앱 링크',
+          message: '아래 주소를 복사하여 브라우저에 입력해주세요.',
+          notice: url,
+          confirmText: '확인',
+          icon: 'info'
+        });
       }
     };
 
@@ -1699,6 +1834,17 @@
     };
 
     window.startLemonSqueezyCheckout = function() {
+      if (!isAuthorizedOrigin()) {
+        window.showAlertDialog({
+          title: '결제 보안 안내',
+          message: '비공식 복제 사이트에서는 금융 보안을 위해 결제가 제한됩니다.',
+          notice: '공식 서비스(https://seedfit.pro)에서 안전하게 구독을 진행해주세요.',
+          confirmText: '확인',
+          icon: 'warning'
+        });
+        return;
+      }
+
       const authUser = getAuthUser();
       let checkoutUrl = LEMON_CHECKOUT_URL;
       
@@ -1745,6 +1891,12 @@
         showToast('구독 상태를 확인하려면 먼저 로그인을 진행해주세요.');
         return;
       }
+
+      if (!rateLimiter.canRefreshSub()) {
+        showToast('안전한 조회를 위해 잠시 후 다시 확인해주세요.');
+        return;
+      }
+
       const userIdKey = `${authUser.provider || 'user'}:${authUser.id}`;
       const sb = getSupabase(userIdKey);
       if (!sb) {
@@ -1783,7 +1935,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.9.3';
+    const CURRENT_APP_VERSION = 'v1.9.4';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');
@@ -2667,9 +2819,9 @@
               <div onclick="window.openSettleModal(${r.id})" class="cursor-pointer active:scale-[0.98] transition ${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900/80 hover:bg-neutral-900 border-neutral-800/90'} p-3.5 rounded-2xl border space-y-2 shadow-sm">
                 <div class="flex justify-between items-center">
                   <div class="flex items-center space-x-1.5">
-                    <span class="text-[11px] font-bold px-2 py-0.5 rounded-lg ${getCategoryColorClass(r.category)}">${r.category}</span>
-                    <span class="text-[11px] font-bold px-2 py-0.5 rounded-lg ${getFoldColorClass(r.fold || '단일')}">${r.fold || '단일'}</span>
-                    ${project ? `<span class="text-[9px] bg-purple-500/15 text-purple-400 border border-purple-500/30 px-1.5 py-0.5 rounded font-medium truncate max-w-[100px]">${project.name}</span>` : ''}
+                    <span class="text-[11px] font-bold px-2 py-0.5 rounded-lg ${getCategoryColorClass(r.category)}">${escapeHtml(r.category)}</span>
+                    <span class="text-[11px] font-bold px-2 py-0.5 rounded-lg ${getFoldColorClass(r.fold || '단일')}">${escapeHtml(r.fold || '단일')}</span>
+                    ${project ? `<span class="text-[9px] bg-purple-500/15 text-purple-400 border border-purple-500/30 px-1.5 py-0.5 rounded font-medium truncate max-w-[100px]">${escapeHtml(project.name)}</span>` : ''}
                   </div>
                   <div class="flex items-center space-x-1.5">
                     ${statusBadge}
@@ -2691,10 +2843,10 @@
                   </div>
                 </div>
 
-                ${r.memo ? `<div class="text-xs text-neutral-400 truncate">${r.memo}</div>` : ''}
+                ${r.memo ? `<div class="text-xs text-neutral-400 truncate">${escapeHtml(r.memo)}</div>` : ''}
 
                 <div class="flex justify-between items-center pt-1 border-t ${isLightMode ? 'border-neutral-100' : 'border-neutral-800/60'} text-[10px] text-neutral-500">
-                  <span>최초 기록: ${r.createdAt}</span>
+                  <span>최초 기록: ${escapeHtml(r.createdAt)}</span>
                   <span class="text-blue-400 font-medium">상세/정산 ></span>
                 </div>
               </div>
@@ -2879,18 +3031,18 @@
             const winRate = settledCount > 0 ? Math.round((winCount / settledCount) * 100) : 0;
 
             return `
-              <div onclick="window.selectProject('${p.id}')" class="cursor-pointer active:scale-[0.98] transition ${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900 border-neutral-800 hover:border-neutral-700'} rounded-3xl p-4 border space-y-3 shadow-sm group">
+              <div onclick="window.selectProject('${escapeHtml(p.id)}')" class="cursor-pointer active:scale-[0.98] transition ${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900 border-neutral-800 hover:border-neutral-700'} rounded-3xl p-4 border space-y-3 shadow-sm group">
                 
                 <div class="flex justify-between items-start">
                   <div>
-                    <h3 class="text-sm font-bold ${isLightMode ? 'text-neutral-900' : 'text-white'} group-hover:text-blue-400 transition">${p.name}</h3>
-                    <span class="text-[10px] text-neutral-400">시작일: ${p.createdAt}</span>
+                    <h3 class="text-sm font-bold ${isLightMode ? 'text-neutral-900' : 'text-white'} group-hover:text-blue-400 transition">${escapeHtml(p.name)}</h3>
+                    <span class="text-[10px] text-neutral-400">시작일: ${escapeHtml(p.createdAt)}</span>
                   </div>
                   <div class="flex items-center space-x-1.5">
                     <span class="text-[10px] font-bold px-2 py-0.5 rounded-full ${p.status === 'ACTIVE' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' : (p.status === 'SUCCESS' ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-400 border border-rose-500/30')}">
                       ${p.status === 'ACTIVE' ? '진행 중' : (p.status === 'SUCCESS' ? '성공' : '실패')}
                     </span>
-                    <button onclick="event.stopPropagation(); window.deleteProject('${p.id}')" class="p-1 rounded-lg text-neutral-500 hover:text-rose-400 hover:bg-rose-500/10 transition active:scale-90" title="프로젝트 삭제">
+                    <button onclick="event.stopPropagation(); window.deleteProject('${escapeHtml(p.id)}')" class="p-1 rounded-lg text-neutral-500 hover:text-rose-400 hover:bg-rose-500/10 transition active:scale-90" title="프로젝트 삭제">
                       <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                     </button>
                   </div>
@@ -2944,7 +3096,7 @@
         return;
       }
 
-      updateHeaderUI(p.name, '프로젝트 상세 및 전용 기록', true);
+      updateHeaderUI(escapeHtml(p.name), '프로젝트 상세 및 전용 기록', true);
       actionBar.classList.remove('hidden');
 
       const projRecords = records.filter(r => r.projectId === p.id);
@@ -2979,7 +3131,7 @@
         `;
       } else {
         actionBar.innerHTML = `
-          <button onclick="window.openNewRecordModalForProject('${p.id}')" class="w-full py-3.5 bg-blue-600 hover:bg-blue-500 active:scale-[0.98] text-white font-bold rounded-2xl shadow-lg flex items-center justify-center space-x-2 text-sm transition">
+          <button onclick="window.openNewRecordModalForProject('${escapeHtml(p.id)}')" class="w-full py-3.5 bg-blue-600 hover:bg-blue-500 active:scale-[0.98] text-white font-bold rounded-2xl shadow-lg flex items-center justify-center space-x-2 text-sm transition">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
             <span>이 프로젝트에 기록하기</span>
           </button>
@@ -3009,7 +3161,7 @@
         <!-- 프로젝트 관리 바 (삭제 액션) -->
         <div class="flex justify-between items-center px-1">
           <span class="text-xs text-neutral-400 font-medium">프로젝트 정보</span>
-          <button onclick="window.deleteProject('${p.id}')" class="text-xs text-rose-400 hover:text-rose-300 font-semibold px-2.5 py-1 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 transition active:scale-95 flex items-center space-x-1">
+          <button onclick="window.deleteProject('${escapeHtml(p.id)}')" class="text-xs text-rose-400 hover:text-rose-300 font-semibold px-2.5 py-1 rounded-xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 transition active:scale-95 flex items-center space-x-1">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
             <span>프로젝트 삭제</span>
           </button>
@@ -3083,8 +3235,8 @@
               <div onclick="window.openSettleModal(${r.id})" class="cursor-pointer active:scale-[0.98] transition ${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900/80 hover:bg-neutral-900 border-neutral-800/90'} p-3.5 rounded-2xl border space-y-2 shadow-sm">
                 <div class="flex justify-between items-center">
                   <div class="flex items-center space-x-1.5">
-                    <span class="text-[11px] font-bold px-2 py-0.5 rounded-lg ${getCategoryColorClass(r.category)}">${r.category}</span>
-                    <span class="text-[11px] font-bold px-2 py-0.5 rounded-lg ${getFoldColorClass(r.fold || '단일')}">${r.fold || '단일'}</span>
+                    <span class="text-[11px] font-bold px-2 py-0.5 rounded-lg ${getCategoryColorClass(r.category)}">${escapeHtml(r.category)}</span>
+                    <span class="text-[11px] font-bold px-2 py-0.5 rounded-lg ${getFoldColorClass(r.fold || '단일')}">${escapeHtml(r.fold || '단일')}</span>
                   </div>
                   <div class="flex items-center space-x-1.5">
                     ${statusBadge}
@@ -3106,10 +3258,10 @@
                   </div>
                 </div>
 
-                ${r.memo ? `<div class="text-xs text-neutral-400 truncate">${r.memo}</div>` : ''}
+                ${r.memo ? `<div class="text-xs text-neutral-400 truncate">${escapeHtml(r.memo)}</div>` : ''}
 
                 <div class="flex justify-between items-center pt-1 border-t ${isLightMode ? 'border-neutral-100' : 'border-neutral-800/60'} text-[10px] text-neutral-500">
-                  <span>${r.createdAt}</span>
+                  <span>${escapeHtml(r.createdAt)}</span>
                   <span class="text-blue-400 font-medium">상세/정산 ></span>
                 </div>
               </div>
@@ -3803,10 +3955,10 @@
                 ${authUser ? `
                   <div class="relative">
                     ${authUser.avatar ? `
-                      <img src="${authUser.avatar}" class="w-10 h-10 rounded-full object-cover border border-neutral-700 shadow" alt="Profile" />
+                      <img src="${escapeHtml(authUser.avatar)}" class="w-10 h-10 rounded-full object-cover border border-neutral-700 shadow" alt="Profile" />
                     ` : `
                       <div class="w-10 h-10 rounded-full bg-blue-600/20 text-blue-400 font-bold flex items-center justify-center text-sm border border-blue-500/30">
-                        ${(authUser.name || 'U').charAt(0)}
+                        ${escapeHtml((authUser.name || 'U').charAt(0))}
                       </div>
                     `}
                     <div class="absolute -bottom-0.5 -right-0.5 w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold ${authUser.provider === 'kakao' ? 'bg-[#FEE500] text-black' : (authUser.provider === 'google' ? 'bg-white text-neutral-800 border border-neutral-300' : 'bg-emerald-500 text-black')}">
@@ -3815,7 +3967,7 @@
                   </div>
                   <div>
                     <h3 class="text-xs font-bold ${isLightMode ? 'text-neutral-900' : 'text-white'} flex items-center space-x-1.5 flex-wrap gap-y-1">
-                      <span>${authUser.name || '사용자'}</span>
+                      <span>${escapeHtml(authUser.name || '사용자')}</span>
                       <span class="text-[10px] px-1.5 py-0.2 rounded font-semibold ${authUser.provider === 'kakao' ? 'bg-[#FEE500]/20 text-[#d4ad00]' : (authUser.provider === 'google' ? 'bg-blue-500/15 text-blue-400' : 'bg-emerald-500/15 text-emerald-400')}">
                         ${authUser.provider === 'kakao' ? '카카오 연동' : (authUser.provider === 'google' ? 'Google 연동' : '체험 계정')}
                       </span>
@@ -3823,7 +3975,7 @@
                         <span class="text-[9px] px-1.5 py-0.2 rounded font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">관리자</span>
                       ` : ''}
                     </h3>
-                    <p class="text-[10px] text-neutral-400">${authUser.email || '클라우드 동기화 활성화됨'}</p>
+                    <p class="text-[10px] text-neutral-400">${escapeHtml(authUser.email || '클라우드 동기화 활성화됨')}</p>
                   </div>
                 ` : `
                   <div class="w-10 h-10 rounded-full ${isLightMode ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-amber-500/15 text-amber-400 border-amber-500/30'} flex items-center justify-center border">
@@ -4148,6 +4300,10 @@
 
     // 실시간 Supabase 유저 & 구독 데이터 로드
     window.fetchAdminDashboardData = async function(showToastNotice = false) {
+      if (showToastNotice && !rateLimiter.canFetchAdmin()) {
+        showToast('너무 빈번한 요청입니다. 잠시 후 다시 조회해주세요.');
+        return;
+      }
       adminDashboardState.loading = true;
       if (currentTab === 'admin') renderAdminTab(document.getElementById('contentArea'));
 
@@ -4669,22 +4825,74 @@
     function importDataJson(event) {
       const file = event.target.files[0];
       if (!file) return;
+
+      // 파일 용량 제한 (최대 5MB) - 메모리 고갈 방어
+      if (file.size > 5 * 1024 * 1024) {
+        showToast('파일 크기가 너무 큽니다. (최대 5MB)');
+        event.target.value = '';
+        return;
+      }
+
       const reader = new FileReader();
       reader.onload = function(e) {
         try {
-          const parsed = JSON.parse(e.target.result);
-          if (parsed.records && parsed.projects) {
-            records = parsed.records;
-            projects = parsed.projects;
-            if (parsed.mentalCareSettings) mentalCareSettings = Object.assign(mentalCareSettings, parsed.mentalCareSettings);
+          const rawText = e.target.result;
+          // 프로토타입 오염(Prototype Pollution) 공격 원천 방어
+          if (rawText.includes('__proto__') || rawText.includes('constructor') || rawText.includes('prototype')) {
+            showToast('보안상 안전하지 않은 형식이 감지되어 복원이 취소되었습니다.');
+            return;
+          }
+
+          const parsed = JSON.parse(rawText);
+          if (parsed && Array.isArray(parsed.records) && Array.isArray(parsed.projects)) {
+            // 데이터 수량 상한 제한 (스토리지 폭탄 방어)
+            if (parsed.records.length > 5000 || parsed.projects.length > 100) {
+              showToast('복원 가능한 최대 데이터 개수(기록 5,000건, 프로젝트 100건)를 초과했습니다.');
+              return;
+            }
+
+            // 개별 레코드 스키마 검증 및 정제
+            records = parsed.records.map(r => ({
+              id: Number(r.id) || Date.now(),
+              investAmount: Number.isFinite(Number(r.investAmount)) ? Math.max(0, Math.min(100000000000, Number(r.investAmount))) : 0,
+              expectedReturn: Number.isFinite(Number(r.expectedReturn)) ? Math.max(0, Math.min(100000000000, Number(r.expectedReturn))) : 0,
+              returnAmount: r.returnAmount !== null && Number.isFinite(Number(r.returnAmount)) ? Math.max(0, Math.min(100000000000, Number(r.returnAmount))) : null,
+              category: sanitizeInput(r.category || '일반투자', 30),
+              fold: sanitizeInput(r.fold || '단일', 20),
+              status: ['PENDING', 'WIN', 'LOSE'].includes(r.status) ? r.status : 'PENDING',
+              memo: sanitizeInput(r.memo || '', 200),
+              createdAt: sanitizeInput(r.createdAt || '', 30),
+              projectId: r.projectId ? String(r.projectId).slice(0, 50) : null
+            }));
+
+            // 개별 프로젝트 스키마 검증 및 정제
+            projects = parsed.projects.map(p => ({
+              id: String(p.id).slice(0, 50),
+              name: sanitizeInput(p.name || '프로젝트', 50),
+              initialSeed: Number.isFinite(Number(p.initialSeed)) ? Math.max(0, Math.min(100000000000, Number(p.initialSeed))) : 0,
+              targetAmount: Number.isFinite(Number(p.targetAmount)) ? Math.max(0, Math.min(100000000000, Number(p.targetAmount))) : 0,
+              createdAt: sanitizeInput(p.createdAt || '', 30),
+              status: ['ACTIVE', 'SUCCESS', 'FAILED'].includes(p.status) ? p.status : 'ACTIVE'
+            }));
+
+            if (parsed.mentalCareSettings && typeof parsed.mentalCareSettings === 'object') {
+              mentalCareSettings = {
+                enabled: Boolean(parsed.mentalCareSettings.enabled),
+                lossStreakThreshold: Number(parsed.mentalCareSettings.lossStreakThreshold) || 3,
+                lossAmountThreshold: Number(parsed.mentalCareSettings.lossAmountThreshold) || 100000
+              };
+            }
+
             saveState();
             renderCurrentTab();
-            showToast('성공적으로 데이터를 복원했습니다.');
+            showToast('성공적으로 데이터를 검증하고 안전하게 복원했습니다.');
           } else {
             showToast('올바르지 않은 백업 파일 형식입니다.');
           }
         } catch (err) {
-          showToast('파일을 읽는 중 오류가 발생했습니다.');
+          showToast('백업 파일을 안전하게 읽는 중 오류가 발생했습니다.');
+        } finally {
+          event.target.value = '';
         }
       };
       reader.readAsText(file);
@@ -4826,7 +5034,7 @@
 
       if (selectedSettleType === 'WIN') {
         let retVal = Number(document.getElementById('winReturnInput').value);
-        if (isNaN(retVal) || retVal <= 0) {
+        if (isNaN(retVal) || !Number.isFinite(retVal) || retVal <= 0 || retVal > 100000000000) {
           retVal = rec.expectedReturn || Math.round(rec.investAmount * 1.9);
         }
         rec.status = 'WIN';
@@ -5028,6 +5236,10 @@
     }
 
     function saveNewRecord() {
+      if (records.length >= 5000) {
+        showToast('안정적인 데이터 보관을 위해 기록은 최대 5,000건까지 저장 가능합니다.');
+        return;
+      }
       if (!isUserPro() && records.length >= 20) {
         window.closeNewRecordModal();
         window.openSubscriptionModal('무료 플랜은 기록을 최대 20개까지만 등록할 수 있습니다.');
@@ -5035,13 +5247,18 @@
         return;
       }
       const amount = Number(document.getElementById('inputInvestAmount').value);
-      if (!amount || amount <= 0) {
-        showToast('올바른 투입 금액을 입력해주세요.');
+      if (!amount || !Number.isFinite(amount) || amount <= 0 || amount > 100000000000) {
+        showToast('올바른 투입 금액을 입력해주세요. (최대 1,000억원)');
         return;
       }
 
-      const expectedReturn = Number(document.getElementById('inputExpectedReturn').value) || 0;
-      const memo = document.getElementById('inputRecordMemo').value.trim();
+      const rawExpected = document.getElementById('inputExpectedReturn').value;
+      const expectedReturn = Number(rawExpected) || 0;
+      if (!Number.isFinite(expectedReturn) || expectedReturn < 0 || expectedReturn > 100000000000) {
+        showToast('올바른 예상 회수금을 입력해주세요.');
+        return;
+      }
+      const memo = sanitizeInput(document.getElementById('inputRecordMemo').value, 200);
       const projId = document.getElementById('selectRecordProject').value;
 
       const now = new Date();
@@ -5090,13 +5307,17 @@
     };
 
     function saveNewProject() {
+      if (projects.length >= 100) {
+        showToast('프로젝트는 최대 100개까지 생성 가능합니다.');
+        return;
+      }
       if (projects.length >= 1 && !isUserPro()) {
         window.closeNewProjectModal();
         window.openSubscriptionModal('프로 플랜을 구독해야 추가 프로젝트를 생성할 수 있습니다.');
         showToast('프로 플랜을 구독해야 추가 프로젝트를 생성할 수 있습니다.');
         return;
       }
-      const name = document.getElementById('inputProjectName').value.trim();
+      const name = sanitizeInput(document.getElementById('inputProjectName').value, 50);
       const initial = Number(document.getElementById('inputProjectInitial').value);
       const target = Number(document.getElementById('inputProjectTarget').value);
 
@@ -5104,12 +5325,12 @@
         showToast('프로젝트 이름을 입력해주세요.');
         return;
       }
-      if (!initial || initial <= 0) {
-        showToast('초기 시드금액을 올바르게 입력해주세요.');
+      if (!initial || !Number.isFinite(initial) || initial <= 0 || initial > 100000000000) {
+        showToast('초기 시드금액을 올바르게 입력해주세요. (최대 1,000억원)');
         return;
       }
-      if (!target || target <= initial) {
-        showToast('목표 달성금액은 초기금보다 커야 합니다.');
+      if (!target || !Number.isFinite(target) || target <= initial || target > 100000000000) {
+        showToast('목표 달성금액은 초기금보다 커야 합니다. (최대 1,000억원)');
         return;
       }
 
