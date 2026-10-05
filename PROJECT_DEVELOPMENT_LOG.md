@@ -1,5 +1,32 @@
 # 프로젝트 개발 로그 (PROJECT DEVELOPMENT LOG)
 
+## [2026-10-06] 인프라 고도화: GitHub 비공개(Private) 전환 및 Cloudflare Pages 이전 완료
+
+### 1. 요구사항 및 배경
+- 누군가 AI 또는 크롤러를 이용해 GitHub 저장소를 무단 복제하여 서비스를 유포하거나 자가 호스팅하는 위험을 원천 차단하기 위해 저장소 비공개(Private) 전환 필요.
+- GitHub Pages의 무료 플랜 한계(Private 저장소 배포 불가)를 극복하고, 무제한 대역폭과 엔터프라이즈급 DDoS/AI 크롤러 방어를 제공하는 Cloudflare Pages로 인프라 이전 단행.
+
+### 2. 이전 및 구현 내역
+1. **GitHub 저장소 비공개 전환 (`ArchistJJ/SeedFit`)**:
+   - 저장소 권한을 `Public`에서 `Private`으로 전환 완료.
+   - 외부인의 소스코드, 커밋 로그, 비즈니스 로직 열람 및 무단 복제 원천 차단.
+2. **Cloudflare Pages 프로젝트 구축 (`seedfit`)**:
+   - 비공개 GitHub 저장소와 Cloudflare Pages CI/CD 파이프라인 연동.
+   - `main` 브랜치 푸시 시 자동 빌드 및 전 세계 엣지 네트워크 무중단 배포 체계 완성.
+   - `index.html` 내 `isAuthorizedOrigin()`에 `*.pages.dev` 도메인 무결성 화이트리스트 사전 탑재.
+3. **Cloudflare DNS & 네임서버 전환**:
+   - 호스팅케이알(Hosting.kr) 네임서버를 Cloudflare 권한 네임서버(`aldo.ns.cloudflare.com`, `melody.ns.cloudflare.com`)로 이전.
+   - `seedfit.pro` 및 `www.seedfit.pro` 사용자 지정 도메인 연결 및 Anycast IP 프록시 적용 (원본 IP 은닉).
+   - Cloudflare Universal SSL/TLS 자동 발급 활성화로 영구 평생 보안 HTTPS 연결 확립.
+   - AI 학습용 크롤러 수집 차단(`Training: Block`) 보안 정책 활성화.
+
+### 3. 검증 결과
+- `https://seedfit.pro`: HTTP 200 OK (Server: cloudflare)
+- `https://www.seedfit.pro`: HTTP 200 OK (Server: cloudflare)
+- SSL/TLS 암호화 및 Apple HIG UI/UX 전체 기능 100% 정상 작동 검증 완료.
+
+---
+
 ## [2026-10-05] v1.9.5 2단계(소스코드 탈취·변조 방어) & 3단계(서버 권한 무결성 검증) 보안 고도화
 
 ### 1. 요구사항 및 기획 의도

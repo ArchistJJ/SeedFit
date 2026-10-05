@@ -9,17 +9,22 @@
 - **프로젝트 명**: 시드핏 (SeedFit - 시드 & 투자 자금 관리 공식 웹앱)
 - **최신 앱 버전**: `v1.9.5`
 - **공식 서비스 도메인**: [https://seedfit.pro/](https://seedfit.pro/)
-- **GitHub 저장소**: `ArchistJJ/SeedFit` (`main` 브랜치 기준)
-- **호스팅 플랫폼**: GitHub Pages (Custom Domain `seedfit.pro`, CNAME 연동)
-- **HTTPS 보안 상태**: Let's Encrypt 정식 TLS 인증서 발급 완료 (`seedfit.pro`, `www.seedfit.pro`), `https_enforced: true` (보안 접속 강제 활성화)
+- **GitHub 저장소**: `ArchistJJ/SeedFit` (비공개 Private 전환 완료, `main` 브랜치 기준)
+- **호스팅 플랫폼**: Cloudflare Pages (`seedfit` 프로젝트, 글로벌 Anycast 엣지 CDN)
+- **HTTPS 보안 상태**: Cloudflare Universal SSL/TLS 정식 인증서 활성화 (`seedfit.pro`, `www.seedfit.pro`), 평생 자동 갱신
+- **DDoS & 복제 방어**: Cloudflare 엔터프라이즈급 DDoS 방어, WAF, AI 크롤러 학습 스크래핑 차단 정책 가동
 
 ---
 
-## 2. 도메인 및 DNS 설정 (Hosting.kr)
-- **호스팅케이알 공식 네임서버(`ns1.hosting.co.kr`) 및 통신사 전파 완료 (5개 레코드)**:
-  - **A 레코드 4개**: `@` $\rightarrow$ `185.199.108.153`, `185.199.109.153`, `185.199.110.153`, `185.199.111.153` (TTL 180)
-  - **CNAME 레코드 1개**: `www` $\rightarrow$ `archistjj.github.io` (TTL 180)
-- **통신사 검증**: KT, SKT, LGU+, Google(8.8.8.8), Cloudflare(1.1.1.1) 전 서버 정상 IP 반환 확인 완료.
+## 2. 도메인 및 DNS 설정 (Cloudflare DNS)
+- **도메인**: `seedfit.pro` (호스팅케이알 등록)
+- **공식 권한 네임서버 (Cloudflare 2개 네임서버)**:
+  - **1차 네임서버**: `aldo.ns.cloudflare.com`
+  - **2차 네임서버**: `melody.ns.cloudflare.com`
+- **DNS 프록시(Proxy) 보안**:
+  - `seedfit.pro` $\rightarrow$ Cloudflare Pages 연동 (`Active`, SSL enabled)
+  - `www.seedfit.pro` $\rightarrow$ Cloudflare Pages 연동 (`Active`, SSL enabled)
+- **통신사 검증**: KT, SKT, LGU+, Google(8.8.8.8), Cloudflare(1.1.1.1) 전 세계 통신망 100% 정상 작동 확인 완료.
 
 ---
 
