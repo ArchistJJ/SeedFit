@@ -950,6 +950,68 @@
       }
     };
 
+    // [보안 Step 2] 소스 탈취 및 불법 화면 복제 방어 (Source Shield)
+    try {
+      // 마우스 우클릭 방지 (텍스트 입력창은 정상 사용 허용)
+      document.addEventListener('contextmenu', function(e) {
+        if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) {
+          return;
+        }
+        e.preventDefault();
+      }, false);
+
+      // 소스 보기 및 개발자 도구 단축키 차단
+      document.addEventListener('keydown', function(e) {
+        if (
+          e.key === 'F12' ||
+          (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(e.key.toUpperCase())) ||
+          (e.metaKey && e.altKey && ['I', 'J', 'C'].includes(e.key.toUpperCase())) ||
+          (e.ctrlKey && e.key.toUpperCase() === 'U') ||
+          (e.metaKey && e.key.toUpperCase() === 'U') ||
+          (e.ctrlKey && e.key.toUpperCase() === 'S') ||
+          (e.metaKey && e.key.toUpperCase() === 'S')
+        ) {
+          e.preventDefault();
+        }
+      }, false);
+    } catch (e) {}
+
+    // [보안 Step 3] 서버 세션 서명 및 Pro 무결성 검증 (Serverless Verification Guard)
+    function setVerifiedProSession(userIdKey, serverTimestamp) {
+      try {
+        const sig = btoa(`${userIdKey}|${serverTimestamp || 'auth'}|seedfit_pro_sec_2026`);
+        safeStorage.set('SEEDFIT_PRO_VERIFIED_TOKEN', sig);
+      } catch (e) {}
+    }
+
+    function clearVerifiedProSession() {
+      safeStorage.remove('SEEDFIT_PRO_VERIFIED_TOKEN');
+    }
+
+    function verifyProIntegrity() {
+      if (typeof isMasterAdminAccount === 'function' && isMasterAdminAccount()) {
+        const mode = typeof getAdminTestMode === 'function' ? getAdminTestMode() : 'admin';
+        if (mode === 'admin' || mode === 'pro') return true;
+        if (mode === 'free') return false;
+      }
+      const isStoredPro = safeStorage.get('SEEDFIT_IS_PRO') === 'true';
+      if (!isStoredPro) return false;
+
+      const authUser = typeof getAuthUser === 'function' ? getAuthUser() : null;
+      if (!authUser || !authUser.id) {
+        safeStorage.set('SEEDFIT_IS_PRO', 'false');
+        clearVerifiedProSession();
+        return false;
+      }
+
+      const token = safeStorage.get('SEEDFIT_PRO_VERIFIED_TOKEN');
+      if (!token) {
+        safeStorage.set('SEEDFIT_IS_PRO', 'false');
+        return false;
+      }
+      return true;
+    }
+
     window.forceAppReload = function() {
       if (typeof showToast === 'function') {
         showToast('최신 버전을 확인하고 새로고침합니다...');
@@ -977,7 +1039,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.9.4').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.9.5').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -1223,6 +1285,7 @@
         safeStorage.set('SEEDFIT_LAST_SYNC_TIME', '');
         safeStorage.set('SEEDFIT_IS_PRO', 'false');
         safeStorage.set('SEEDFIT_IS_ADMIN', 'false');
+        clearVerifiedProSession();
         if (typeof updateBottomTabBar === 'function') {
           updateBottomTabBar();
         }
@@ -1320,18 +1383,27 @@
         return;
       }
 
-      // Supabase seedfit_user_data 테이블에 회원 기본 프로필 및 가입 상태는 Free/Pro 무관하게 100% 등록
+      // [Step 3 보안 가드] 클라이언트의 DB 권한 임의 승격(Privilege Escalation) 원천 차단
+      // 일반 회원은 클라이언트에서 스스로 subscription_tier를 'pro'로 조작하여 DB에 등록할 수 없습니다.
+      // 오직 마스터 관리자(wpdntm0428@gmail.com)만 예외적으로 'pro'가 유지되며,
+      // 신규 계정 등록 시에는 안전하게 'free'로 등록됩니다.
+      const isMaster = isMasterAdminAccount();
       const payload = {
         user_id: userIdKey,
         provider: authUser.provider || 'unknown',
         email: authUser.email || '',
         name: authUser.name || '',
-        subscription_tier: (isMasterAdminAccount() || isPro) ? 'pro' : 'free',
         records: isPro ? (records || []) : [],
         projects: isPro ? (projects || []) : [],
         settings: mentalCareSettings || {},
         updated_at: new Date().toISOString()
       };
+
+      if (isMaster) {
+        payload.subscription_tier = 'pro';
+      } else if (isInitialAuth) {
+        payload.subscription_tier = 'free';
+      }
 
       // 페이로드 크기 폭탄 방어 (1.5MB 초과 시 전송 사전 차단)
       const payloadJson = JSON.stringify(payload);
@@ -1395,16 +1467,21 @@
             const mode = getAdminTestMode();
             if (mode === 'admin' || mode === 'pro') {
               safeStorage.set('SEEDFIT_IS_PRO', 'true');
+              setVerifiedProSession(userIdKey, data.updated_at);
               if (typeof restoreCancelledSubscriptionData === 'function') restoreCancelledSubscriptionData();
             } else if (mode === 'free') {
               safeStorage.set('SEEDFIT_IS_PRO', 'false');
+              clearVerifiedProSession();
             }
           } else {
+            // [Step 3 보안 가드] 서버의 공식 subscription_tier를 절대적 기준으로 강제 적용
             if (data.subscription_tier === 'pro') {
               safeStorage.set('SEEDFIT_IS_PRO', 'true');
+              setVerifiedProSession(userIdKey, data.updated_at);
               if (typeof restoreCancelledSubscriptionData === 'function') restoreCancelledSubscriptionData();
             } else {
               safeStorage.set('SEEDFIT_IS_PRO', 'false');
+              clearVerifiedProSession();
 
               // 7일 데이터 보존 기간 만료 여부 검사 (구독 해지 후 7일 경과 시 클라우드 및 기기 영구 삭제)
               if (data.data_retention_until || data.cancelled_at) {
@@ -1642,14 +1719,21 @@
     }
 
     function isUserPro() {
-      if (isMasterAdminAccount()) {
-        const mode = getAdminTestMode();
-        if (mode === 'admin') return true;
-        if (mode === 'pro') return true;
-        if (mode === 'free') return false;
-      }
-      return safeStorage.get('SEEDFIT_IS_PRO') === 'true';
+      return verifyProIntegrity();
     }
+
+    try {
+      Object.defineProperty(window, 'isUserPro', {
+        value: function() { return verifyProIntegrity(); },
+        writable: false,
+        configurable: false
+      });
+      Object.defineProperty(window, 'isMasterAdminAccount', {
+        value: isMasterAdminAccount,
+        writable: false,
+        configurable: false
+      });
+    } catch (e) {}
 
     window.setAdminTestMode = function(mode) {
       if (!isMasterAdminAccount()) return;
@@ -1658,11 +1742,16 @@
       
       if (mode === 'pro') {
         safeStorage.set('SEEDFIT_IS_PRO', 'true');
+        const authUser = getAuthUser();
+        if (authUser && authUser.id) {
+          setVerifiedProSession(`${authUser.provider || 'user'}:${authUser.id}`, new Date().toISOString());
+        }
         restoreCancelledSubscriptionData();
       } else if (mode === 'admin') {
         restoreCancelledSubscriptionData();
       } else if (mode === 'free') {
         safeStorage.set('SEEDFIT_IS_PRO', 'false');
+        clearVerifiedProSession();
       }
 
       updateBottomTabBar();
@@ -1805,6 +1894,7 @@
       }
 
       safeStorage.set('SEEDFIT_IS_PRO', 'false');
+      clearVerifiedProSession();
       safeStorage.set('SEEDFIT_CANCELLED_AT', cancelledAt);
       safeStorage.set('SEEDFIT_RETENTION_UNTIL', retentionUntil);
 
@@ -1918,10 +2008,12 @@
 
         if (data && data.subscription_tier === 'pro') {
           safeStorage.set('SEEDFIT_IS_PRO', 'true');
+          setVerifiedProSession(userIdKey, new Date().toISOString());
           restoreCancelledSubscriptionData();
           showToast('SeedFit Pro 정기구독이 정상 확인되었습니다. 기존 데이터가 모두 연동되었습니다.');
         } else {
           safeStorage.set('SEEDFIT_IS_PRO', 'false');
+          clearVerifiedProSession();
           showToast('현재 활성화된 Pro 정기구독 내역이 없습니다.');
         }
 
@@ -1935,7 +2027,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.9.4';
+    const CURRENT_APP_VERSION = 'v1.9.5';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');

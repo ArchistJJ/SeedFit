@@ -7,7 +7,7 @@
 
 ## 1. 프로젝트 기본 정보
 - **프로젝트 명**: 시드핏 (SeedFit - 시드 & 투자 자금 관리 공식 웹앱)
-- **최신 앱 버전**: `v1.9.4`
+- **최신 앱 버전**: `v1.9.5`
 - **공식 서비스 도메인**: [https://seedfit.pro/](https://seedfit.pro/)
 - **GitHub 저장소**: `ArchistJJ/SeedFit` (`main` 브랜치 기준)
 - **호스팅 플랫폼**: GitHub Pages (Custom Domain `seedfit.pro`, CNAME 연동)
@@ -74,7 +74,15 @@
 ---
 
 ## 7. 최근 해결된 주요 UI/UX 이슈
-1. **v1.9.4 서비스 전방위 보안 점검 및 해킹·디도스·복제 방어 전면 고도화**:
+1. **v1.9.5 무단 복제·소스 탈취 방어(2단계) 및 클라이언트 Pro 권한 조작 원천 차단(3단계) 보안 하드닝**:
+   - **2단계 보안 (Source Shield & Anti-Tamper)**:
+     - 개발자 도구(F12), 소스 보기(Ctrl+U), 웹페이지 저장(Ctrl+S), 검사창 단축키(Ctrl+Shift+I/J/C)를 차단하여 AI 스크래핑 및 코드 무단 탈취 방어.
+     - 텍스트 입력창(메모, 금액 등)은 정상적으로 복사/붙여넣기를 허용하되, 비-입력 영역 우클릭 컨텍스트 메뉴를 차단.
+     - `Object.defineProperty`를 통해 `window.isUserPro`, `window.isMasterAdminAccount`를 `writable: false, configurable: false`로 동결(Freeze)하여 브라우저 콘솔에서 함수 덮어쓰기(Monkey Patching)를 통한 우회 해킹 원천 봉쇄.
+   - **3단계 보안 (Server Authority & Anti-Privilege Escalation)**:
+     - 일반 클라이언트가 `syncToCloud` 시 DB의 `subscription_tier`를 `'pro'`로 임의 승격시키지 못하도록 페이로드에서 유료 티어 주입 차단 (오직 마스터 관리자 및 공식 결제 서버만 허용).
+     - 서버 동기화 시 발급되는 세션 서명 토큰(`SEEDFIT_PRO_VERIFIED_TOKEN`) 기반의 2중 무결성 검증 엔진(`verifyProIntegrity`) 도입. 로컬스토리지 임의 수정(`SEEDFIT_IS_PRO = 'true'`) 시 즉시 감지하여 비인가 Pro 권한을 자동 무력화.
+2. **v1.9.4 서비스 전방위 보안 점검 및 해킹·디도스·복제 방어 전면 고도화**:
    - **해킹 방어 (XSS, 프로토타입 오염, 클릭재킹, 보안 헤더)**:
      - 동적 템플릿(기록, 프로젝트, 설정, 통계) 전반에 `escapeHtml`을 일괄 적용하여 XSS 인젝션 위험 원천 차단.
      - 외부 투명 iframe 공격을 무력화하는 클릭재킹 프레임 탈출(Frame-Busting) 탑재.

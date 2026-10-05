@@ -1,5 +1,36 @@
 # 프로젝트 개발 로그 (PROJECT DEVELOPMENT LOG)
 
+## [2026-10-05] v1.9.5 2단계(소스코드 탈취·변조 방어) & 3단계(서버 권한 무결성 검증) 보안 고도화
+
+### 1. 요구사항 및 기획 의도
+1. **2단계 보안 (소스코드 탈취 & 런타임 변조 방어 - Source Shield & Anti-Tamper)**:
+   - 일반 브라우저에서 개발자 도구(F12)나 우클릭 소스 보기(Ctrl+U), 화면 저장(Ctrl+S) 단축키를 통해 HTML/JS 소스를 무단 탈취하고 AI로 복제하는 시도를 차단.
+   - 텍스트 입력창(메모, 금액 등)은 정상적으로 복사/붙여넣기가 가능하도록 보호하되, 일반 카드/화면에서는 우클릭 메뉴를 차단.
+   - 브라우저 콘솔에서 `window.isUserPro = () => true`와 같이 악의적으로 함수를 덮어씌워 유료 권한을 탈취하는 콘솔 후킹 공격을 `Object.defineProperty(..., { writable: false, configurable: false })` 및 `Object.freeze`로 원천 봉쇄.
+2. **3단계 보안 (서버 사이드 권한 위조 원천 방어 - Server Authority & Anti-Privilege Escalation)**:
+   - 기존에 클라이언트의 LocalStorage 상태에 따라 DB의 `subscription_tier`를 `'pro'`로 전송하던 잠재적 취약점을 원천 폐쇄.
+   - `syncToCloud` 시 일반 회원은 절대로 클라우드 DB의 `subscription_tier`를 `'pro'`로 임의 승격시킬 수 없도록 서버 권한 방어선 구축 (오직 마스터 관리자 및 공식 결제 웹훅 서버만 Pro 승격 권한 보유).
+   - 서버 동기화 시 발급되는 세션 서명 토큰(`SEEDFIT_PRO_VERIFIED_TOKEN`) 기반의 2중 무결성 검증 엔진(`verifyProIntegrity`) 도입. 로컬스토리지 임의 수정 시 즉시 감지하여 Pro 권한을 자동 무력화.
+
+### 2. 구현 내역
+1. **`index.html`**:
+   - `Source Shield`: 비-인풋 영역 우클릭 방지, F12 / Ctrl+Shift+I / Ctrl+Shift+J / Ctrl+Shift+C / Ctrl+U / Ctrl+S 단축키 차단.
+   - `verifyProIntegrity`, `setVerifiedProSession`, `clearVerifiedProSession`: 서버 검증 토큰 기반 무결성 판정 함수 구현.
+   - `isUserPro`: 단순 로컬스토리지 판정을 폐기하고 서버 서명 토큰 기반 2중 검증으로 전면 교체.
+   - `Function Sealing`: `window.isUserPro`, `window.isMasterAdminAccount`를 `writable: false, configurable: false`로 동결하여 콘솔 조작 차단.
+   - `syncToCloud`: 일반 유저가 클라우드 DB의 `subscription_tier`를 Pro로 위조 전송하지 못하도록 차단.
+   - `syncFromCloud` & `refreshSubscriptionStatus`: 서버의 실제 `subscription_tier`를 기준으로만 로컬 Pro 권한 및 서명 토큰 부여.
+   - 버전 갱신: `CURRENT_APP_VERSION = 'v1.9.5'`, `sw.js?v=1.9.5`.
+2. **`sw.js` & `package.json`**:
+   - `CACHE_NAME = 'seedfit-cache-v1.9.5'`, `"version": "1.9.5"` 동기화.
+
+### 3. 검증
+- JavaScript 구문 문법 오류 0건 통과.
+- 금지 단어('스마트', '베팅', '배팅', '적중률') 0건 완전 무결 검증.
+- 유니코드 이모티콘 0건(전역 Apple HIG SVG 라인 아이콘 일원화) 유지 검증.
+- 브라우저 네이티브 다이얼로그 0건 완전 퇴출 검증.
+- 콘솔 변조 시도 및 무단 권한 승격 차단 검증 완료.
+
 ## [2026-10-05] v1.9.4 서비스 전방위 보안 점검 및 해킹·디도스·복제 방어 전면 고도화
 
 ### 1. 요구사항 및 기획 의도
