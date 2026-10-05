@@ -8,4 +8,4 @@ Thumbs.db
 .env.*
 *.secret*
 AUTH_CREDENTIALS_LOCAL.md
-
+.agents/
