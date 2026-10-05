@@ -1,7 +1,24 @@
 # SeedFit 활성 개발 컨텍스트 (ACTIVE_CONTEXT.md)
 
-> 💡 **멀티 디바이스 인계 가이드 (Context Handoff)**  
-> 다른 컴퓨터나 새 대화 세션에서 작업을 이어받을 때, **이 문서를 가장 먼저 확인**하면 이전 작업의 모든 맥락, 인프라 세팅, 결제/보안 상태, 다음 작업 목표를 0초 만에 완벽하게 복원할 수 있습니다.
+> **멀티 디바이스 인계 가이드 (Context Handoff)**  
+> 다른 컴퓨터(사무실 PC 등)나 새 대화 세션에서 작업을 이어받을 때, **이 문서를 가장 먼저 확인**하면 이전 작업의 모든 맥락, 인프라 세팅, 결제/보안 상태, 다음 작업 목표를 0초 만에 완벽하게 복원할 수 있습니다.
+
+---
+
+## 0. 사무실 PC 작업 즉시 인계 가이드 (Office PC Quick Handoff)
+- **인계 시점**: 2026-10-06 03:15 KST
+- **현재 원격 저장소 동기화 상태**:
+  - GitHub 비공개 저장소(`ArchistJJ/SeedFit`), `main` 브랜치에 최신 커밋까지 100% 원격 푸시 완료.
+  - 최신 릴리즈 버전: **`v1.9.6`**
+  - Cloudflare Pages 프로덕션 무중단 배포 완료 (`https://seedfit.pro/`, `https://www.seedfit.pro/`).
+- **사무실 PC 작업 시작 3단계**:
+  1. 저장소 최신화: 작업 디렉토리에서 `git pull origin main` 실행 (Google Drive 스트리밍 폴더인 경우 자동 동기화 대기 후 git 상태 확인).
+  2. 로컬 보안 키 파일 확인: `.gitignore` 처리된 로컬 보안 파일(`AUTH_CREDENTIALS_LOCAL.md`)이 사무실 PC 로컬에 존재하는지 확인.
+  3. AI 어시스턴트에게 첫 프롬프트 전달:
+     > *"ACTIVE_CONTEXT.md 문서를 읽고 이전 세션에서 진행된 작업 맥락과 v1.9.6 상태를 파악한 뒤, 다음 작업(로드맵)을 이어서 진행해줘."*
+- **다음 작업 대기 항목 (Roadmap)**:
+  1. Lemon Squeezy 스토어 승인 상태 점검 (승인 메일 확인 시 라이브 결제 테스트).
+  2. Lemon Squeezy Webhook 연동을 통한 결제 시 `subscription_tier: 'pro'` 실시간 자동 승격 처리 (Supabase Edge Function 구축).
 
 ---
 
