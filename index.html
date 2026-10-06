@@ -4687,19 +4687,20 @@
       const totalSignups = activeUsers.length;
       const activeSubscribers = activeUsers.filter(u => u.subscription_tier === 'pro').length;
       const conversionRate = totalSignups > 0 ? ((activeSubscribers / totalSignups) * 100).toFixed(1) : '0.0';
-      const pricePerMonth = 9900; // 월 구독료 (₩9,900원 기준)
-      const monthlyRevenue = activeSubscribers * pricePerMonth;
+      const pricePerMonthUsd = 7.77; // 공식 월간 구독료 ($7.77 / month - Lemon Squeezy)
+      const monthlyRevenueUsd = activeSubscribers * pricePerMonthUsd;
+      const monthlyRevenueKrw = Math.round(monthlyRevenueUsd * 1350);
 
       // 월별 가입자 & 구독자 변동 통계 (최근 6개월) - 시간순 정렬: 과거 -> 현재
       let chronGrowth = [];
       if (isDemo) {
         chronGrowth = [
-          { month: '2026.05', label: '5월', signups: 5, newSubs: 1, revenue: 1 * pricePerMonth, rate: '20.0%' },
-          { month: '2026.06', label: '6월', signups: 9, newSubs: 2, revenue: 2 * pricePerMonth, rate: '22.2%' },
-          { month: '2026.07', label: '7월', signups: 15, newSubs: 4, revenue: 4 * pricePerMonth, rate: '26.6%' },
-          { month: '2026.08', label: '8월', signups: 18, newSubs: 5, revenue: 7 * pricePerMonth, rate: '27.7%' },
-          { month: '2026.09', label: '9월', signups: 22, newSubs: 7, revenue: 11 * pricePerMonth, rate: '31.8%' },
-          { month: '2026.10', label: '10월', signups: 14, newSubs: 5, revenue: activeSubscribers * pricePerMonth, rate: '35.7%' }
+          { month: '2026.05', label: '5월', signups: 5, newSubs: 1, revenueUsd: 1 * pricePerMonthUsd, rate: '20.0%' },
+          { month: '2026.06', label: '6월', signups: 9, newSubs: 2, revenueUsd: 2 * pricePerMonthUsd, rate: '22.2%' },
+          { month: '2026.07', label: '7월', signups: 15, newSubs: 4, revenueUsd: 4 * pricePerMonthUsd, rate: '26.6%' },
+          { month: '2026.08', label: '8월', signups: 18, newSubs: 5, revenueUsd: 7 * pricePerMonthUsd, rate: '27.7%' },
+          { month: '2026.09', label: '9월', signups: 22, newSubs: 7, revenueUsd: 11 * pricePerMonthUsd, rate: '31.8%' },
+          { month: '2026.10', label: '10월', signups: 14, newSubs: 5, revenueUsd: activeSubscribers * pricePerMonthUsd, rate: '35.7%' }
         ];
       } else {
         const nowObj = new Date();
@@ -4723,7 +4724,7 @@
             label: monthLabel,
             signups: mSignups,
             newSubs: mSubs,
-            revenue: mSubs * pricePerMonth,
+            revenueUsd: mSubs * pricePerMonthUsd,
             rate: mRate
           });
         }
@@ -4900,13 +4901,13 @@
                 <span>월 구독 매출 (MRR)</span>
                 <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
               </div>
-              <div class="flex items-baseline space-x-1 pt-1 truncate">
+              <div class="flex items-baseline space-x-1.5 pt-1 truncate">
                 <span class="text-lg font-black font-mono tracking-tight ${isLightMode ? 'text-neutral-900' : 'text-white'}">
-                  ₩${monthlyRevenue.toLocaleString()}
+                  $${monthlyRevenueUsd.toFixed(2)}
                 </span>
-                <span class="text-[10px] text-neutral-400">/월</span>
+                <span class="text-[10px] text-neutral-400 font-mono">(약 ₩${monthlyRevenueKrw.toLocaleString()})</span>
               </div>
-              <p class="text-[10px] text-neutral-400 truncate">건당 9,900원 기준</p>
+              <p class="text-[10px] text-neutral-400 truncate">건당 $7.77/월 기준 (Lemon Squeezy)</p>
               <div class="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-amber-500 to-yellow-400"></div>
             </div>
           </div>
@@ -4947,7 +4948,7 @@
                 <div class="h-6 w-px ${isLightMode ? 'bg-neutral-200' : 'bg-neutral-800'}"></div>
                 <div>
                   <div class="text-[9px] text-amber-400 font-semibold">전환 매출</div>
-                  <div class="text-xs font-black ${isLightMode ? 'text-neutral-900' : 'text-white'}">₩${activeGrowthMonth.revenue.toLocaleString()}</div>
+                  <div class="text-xs font-black ${isLightMode ? 'text-neutral-900' : 'text-white'}">$${(activeGrowthMonth.revenueUsd || 0).toFixed(2)}</div>
                 </div>
               </div>
             </div>
@@ -5070,16 +5071,16 @@
             </h4>
             <div class="p-3 rounded-2xl ${isLightMode ? 'bg-neutral-50 border-neutral-200' : 'bg-neutral-950/60 border-neutral-800'} border space-y-1.5 text-[11px] leading-relaxed">
               <div class="flex justify-between items-center ${isLightMode ? 'text-neutral-700' : 'text-neutral-300'}">
-                <span>• 국내 PG (페이앱 정기결제)</span>
-                <span class="text-amber-400 font-semibold">가맹 계약 및 심사 대기</span>
+                <span>• 글로벌 결제 (Lemon Squeezy)</span>
+                <span class="text-emerald-400 font-semibold">스토어 심사 승인 완료</span>
               </div>
               <div class="flex justify-between items-center ${isLightMode ? 'text-neutral-700' : 'text-neutral-300'}">
                 <span>• 클라우드 실시간 동기화 DB</span>
                 <span class="text-emerald-400 font-semibold">정상 연결됨</span>
               </div>
               <div class="flex justify-between items-center ${isLightMode ? 'text-neutral-700' : 'text-neutral-300'}">
-                <span>• 결제 웹훅(Webhook) 엔드포인트</span>
-                <span class="text-blue-400 font-semibold">규격 설계 완료</span>
+                <span>• 결제 웹훅 (Lemon Squeezy Webhook)</span>
+                <span class="text-blue-400 font-semibold">자동 승격 파이프라인 연동 대기</span>
               </div>
             </div>
           </div>
