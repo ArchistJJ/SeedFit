@@ -2054,6 +2054,12 @@
                 updated_at: new Date().toISOString()
               })
               .eq('user_id', userIdKey);
+
+            // Pro 알림 플래그 초기화 (향후 재구독 시 알림 재발송 보장)
+            safeStorage.remove('SEEDFIT_PRO_NOTIFIED_' + userIdKey);
+
+            // 운영자 텔레그램 구독 취소 알림 발송 (백그라운드 무음)
+            sendTelegramAdminNotification('cancellation');
           } catch (err) {
             console.warn('Subscription cancel db update failed:', err);
           }

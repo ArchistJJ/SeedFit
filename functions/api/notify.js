@@ -57,8 +57,12 @@ export async function onRequestPost(context) {
     }
 
     const event = payload.event || 'signup';
-    const isSignup = (event === 'signup');
-    const eventTitle = isSignup ? '신규 회원 가입' : 'SEEDFIT PRO 신규 구독';
+    let eventTitle = '신규 회원 가입';
+    if (event === 'subscription') {
+      eventTitle = 'SEEDFIT PRO 신규 구독';
+    } else if (event === 'cancellation') {
+      eventTitle = 'SEEDFIT PRO 구독 취소 (해지)';
+    }
 
     // Supabase RPC에서 실시간 비즈니스 통계 조회 (총 가입자수, Pro 구독자수, MRR)
     let totalUsers = null;

@@ -106,6 +106,7 @@
    - **유기적 이벤트 트리거 연동**:
      - 최초 클라우드 계정 생성 완료(`syncFromCloud` 신규 가입 판정 시) 시 1회 발송 (`SEEDFIT_SIGNUP_NOTIFIED`).
      - Pro 구독 확인(`refreshSubscriptionStatus` pro 확인 시) 및 공식 결제 완료(`Checkout.Success`) 시 1회 발송 (`SEEDFIT_PRO_NOTIFIED`).
+     - Pro 구독 취소(`confirmCancelSubscription`) 시 즉각 발송 및 향후 재구독 감지를 위한 캐시 플래그 자동 초기화.
 2. **v1.9.6 사용자 엣지 케이스 및 실사용 환경 6대 핵심 안정화 보강**:
    - **보강 1 (게스트 $\rightarrow$ 로그인 데이터 보존 & 지능형 병합)**:
      - 비로그인(게스트) 상태에서 로컬에 작성한 투자 기록 및 프로젝트가 로그인 시 덮어쓰여 유실되지 않도록 ID 기반 무손실 지능형 병합(Smart Merge) 엔진 탑재.
