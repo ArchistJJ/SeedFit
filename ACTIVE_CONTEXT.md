@@ -5,20 +5,26 @@
 
 ---
 
-## 0. 사무실 PC 작업 즉시 인계 가이드 (Office PC Quick Handoff)
-- **인계 시점**: 2026-10-06 03:15 KST
+## 0. 멀티 디바이스 작업 즉시 인계 가이드 (Multi-Device Quick Handoff)
+- **인계 시점**: 2026-10-07 02:25 KST
 - **현재 원격 저장소 동기화 상태**:
   - GitHub 비공개 저장소(`ArchistJJ/SeedFit`), `main` 브랜치에 최신 커밋까지 100% 원격 푸시 완료.
   - 최신 릴리즈 버전: **`v1.9.7`**
   - Cloudflare Pages 프로덕션 무중단 배포 완료 (`https://seedfit.pro/`, `https://www.seedfit.pro/`).
-- **사무실 PC 작업 시작 3단계**:
-  1. 저장소 최신화: 작업 디렉토리에서 `git pull origin main` 실행 (Google Drive 스트리밍 폴더인 경우 자동 동기화 대기 후 git 상태 확인).
-  2. 로컬 보안 키 파일 확인: `.gitignore` 처리된 로컬 보안 파일(`AUTH_CREDENTIALS_LOCAL.md`)이 사무실 PC 로컬에 존재하는지 확인.
+- **최근 완료된 핵심 작업 요약**:
+  1. **Lemon Squeezy 스토어 승인 & 회신**: 심사관 Shreya 공식 승인 수신, 신원인증(Live 모드) 활성화 요청 답장 발송 완료.
+  2. **운영자 전용 텔레그램 실시간 관제 봇 구축**: 3대 핵심 트리거(신규 가입, Pro 구독, Pro 구독 취소) 연동 및 실제 수신 테스트 100% 통과.
+  3. **Supabase 실시간 집계 RPC 연동**: `get_business_summary()` 함수를 통해 가입자수, Pro 구독자수, MRR 실시간 자동 집계.
+  4. **관리자 탭 결제 체계 $7.77 일원화**: 9,900원 및 국내 PG(페이앱 등) 내용 100% 삭제, 공식 $7.77 USD (원화 병기)로 통일.
+- **다른 PC에서 작업 시작 3단계**:
+  1. 저장소 최신화: 작업 디렉토리 터미널에서 `git pull origin main` 실행.
+  2. 로컬 보안 키 파일 확인: `.gitignore` 처리된 로컬 보안 파일(`AUTH_CREDENTIALS_LOCAL.md`)이 해당 PC에 존재하는지 확인.
   3. AI 어시스턴트에게 첫 프롬프트 전달:
      > *"ACTIVE_CONTEXT.md 문서를 읽고 이전 세션에서 진행된 작업 맥락과 v1.9.7 상태를 파악한 뒤, 다음 작업(로드맵)을 이어서 진행해줘."*
 - **다음 작업 대기 항목 (Roadmap)**:
-  1. Lemon Squeezy 스토어 승인 상태 점검 (승인 메일 확인 완료, 심사관 Shreya에게 신원인증 활성화 요청 회신 완료).
-  2. Lemon Squeezy Webhook 연동을 통한 결제 시 `subscription_tier: 'pro'` 실시간 자동 승격 처리 (Supabase Edge Function 구축).
+  1. Lemon Squeezy 심사관(Shreya) 회신 확인 $\rightarrow$ 대시보드 Live 모드 전환 확인.
+  2. Lemon Squeezy 웹훅(Webhook) 엔드포인트(`functions/api/lemon-webhook.js`) 구현 및 대시보드 Webhook 등록 $\rightarrow$ 결제 시 자동 Pro 승격 연동.
+  3. 라이브 모드 실제 $7.77 결제 1회 테스트.
 
 ---
 
@@ -227,7 +233,10 @@
 ---
 
 ## 8. 다음 작업 로드맵 (Next Action Items)
-1. **레몬스퀴즈(Lemon Squeezy) 스토어 최종 승인 확인**:
-   - 심사 완료 이메일 수신 시 라이브 모드 결제 테스트.
-2. **구독 결제 자동 권한 부여 (Webhook 연동)**:
-   - Lemon Squeezy 웹훅을 Supabase Edge Function과 연결하여 결제 발생 시 `seedfit_user_data`의 `subscription_tier: 'pro'` 자동 승격 처리 구축.
+1. **Lemon Squeezy 심사관(Shreya) 회신 확인 & Live 모드 활성화**:
+   - 신원인증(KYC) 심사 완료 회신 확인 시 대시보드 Test mode를 꺼서 Live mode로 전환.
+2. **구독 결제 자동 권한 부여 웹훅 연동 (Lemon Squeezy Webhook)**:
+   - Lemon Squeezy 대시보드에서 Webhook 등록 (`https://seedfit.pro/api/lemon-webhook`).
+   - `functions/api/lemon-webhook.js`에서 결제 완료 신호(`subscription_created`, `subscription_updated`)를 받아 Supabase DB의 `subscription_tier: 'pro'` 자동 승격 및 운영자 텔레그램 알림 발송 처리 구축.
+3. **라이브 모드 실제 결제 1회 테스트**:
+   - 실제 카드 결제 진행 후 1초 만에 Pro 권한 오픈 및 텔레그램 실시간 알림 발송 파이프라인 최종 점검.
