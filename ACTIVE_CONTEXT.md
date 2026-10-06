@@ -9,22 +9,22 @@
 - **인계 시점**: 2026-10-06 03:15 KST
 - **현재 원격 저장소 동기화 상태**:
   - GitHub 비공개 저장소(`ArchistJJ/SeedFit`), `main` 브랜치에 최신 커밋까지 100% 원격 푸시 완료.
-  - 최신 릴리즈 버전: **`v1.9.6`**
+  - 최신 릴리즈 버전: **`v1.9.7`**
   - Cloudflare Pages 프로덕션 무중단 배포 완료 (`https://seedfit.pro/`, `https://www.seedfit.pro/`).
 - **사무실 PC 작업 시작 3단계**:
   1. 저장소 최신화: 작업 디렉토리에서 `git pull origin main` 실행 (Google Drive 스트리밍 폴더인 경우 자동 동기화 대기 후 git 상태 확인).
   2. 로컬 보안 키 파일 확인: `.gitignore` 처리된 로컬 보안 파일(`AUTH_CREDENTIALS_LOCAL.md`)이 사무실 PC 로컬에 존재하는지 확인.
   3. AI 어시스턴트에게 첫 프롬프트 전달:
-     > *"ACTIVE_CONTEXT.md 문서를 읽고 이전 세션에서 진행된 작업 맥락과 v1.9.6 상태를 파악한 뒤, 다음 작업(로드맵)을 이어서 진행해줘."*
+     > *"ACTIVE_CONTEXT.md 문서를 읽고 이전 세션에서 진행된 작업 맥락과 v1.9.7 상태를 파악한 뒤, 다음 작업(로드맵)을 이어서 진행해줘."*
 - **다음 작업 대기 항목 (Roadmap)**:
-  1. Lemon Squeezy 스토어 승인 상태 점검 (승인 메일 확인 시 라이브 결제 테스트).
+  1. Lemon Squeezy 스토어 승인 상태 점검 (승인 메일 확인 완료, 심사관 Shreya에게 신원인증 활성화 요청 회신 완료).
   2. Lemon Squeezy Webhook 연동을 통한 결제 시 `subscription_tier: 'pro'` 실시간 자동 승격 처리 (Supabase Edge Function 구축).
 
 ---
 
 ## 1. 프로젝트 기본 정보
 - **프로젝트 명**: 시드핏 (SeedFit - 시드 & 투자 자금 관리 공식 웹앱)
-- **최신 앱 버전**: `v1.9.6`
+- **최신 앱 버전**: `v1.9.7`
 - **공식 서비스 도메인**: [https://seedfit.pro/](https://seedfit.pro/)
 - **GitHub 저장소**: `ArchistJJ/SeedFit` (비공개 Private 전환 완료, `main` 브랜치 기준)
 - **호스팅 플랫폼**: Cloudflare Pages (`seedfit` 프로젝트, 글로벌 Anycast 엣지 CDN)
@@ -96,7 +96,17 @@
 ---
 
 ## 7. 최근 해결된 주요 UI/UX 이슈
-1. **v1.9.6 사용자 엣지 케이스 및 실사용 환경 6대 핵심 안정화 보강**:
+1. **v1.9.7 운영자 전용 실시간 텔레그램 관제 알림 시스템 구축**:
+   - **보안 격리 아키텍처 (Cloudflare Pages Functions)**:
+     - 텔레그램 봇 토큰 및 운영자 채팅방 ID(`642319428`)는 클라이언트 브라우저 코드에 일절 노출하지 않고, 서버리스 엔드포인트(`functions/api/notify.js`)에 안전하게 격리.
+     - 사용자 대면 웹앱 UI에는 알림 발송 동작이 전혀 노출되지 않는 백그라운드 무음(Silent) 방식으로 작동.
+   - **실시간 통계 자동 집계 및 알림 발송**:
+     - 이벤트 발생 시(신규 회원 가입, SEEDFIT PRO 신규 구독) Supabase 클라우드 DB의 비즈니스 현황을 실시간 집계.
+     - 개인정보(이메일, 이름 등)는 일절 미포함하고 운영 관제에 필요한 핵심 지표(**이벤트 유형, 발생 일시 KST, 현재 총 가입자 수, 현재 Pro 구독자 수, 월간 예상 구독료 MRR**)만 정돈된 양식으로 운영자 개인 텔레그램에 즉각 발송.
+   - **유기적 이벤트 트리거 연동**:
+     - 최초 클라우드 계정 생성 완료(`syncFromCloud` 신규 가입 판정 시) 시 1회 발송 (`SEEDFIT_SIGNUP_NOTIFIED`).
+     - Pro 구독 확인(`refreshSubscriptionStatus` pro 확인 시) 및 공식 결제 완료(`Checkout.Success`) 시 1회 발송 (`SEEDFIT_PRO_NOTIFIED`).
+2. **v1.9.6 사용자 엣지 케이스 및 실사용 환경 6대 핵심 안정화 보강**:
    - **보강 1 (게스트 $\rightarrow$ 로그인 데이터 보존 & 지능형 병합)**:
      - 비로그인(게스트) 상태에서 로컬에 작성한 투자 기록 및 프로젝트가 로그인 시 덮어쓰여 유실되지 않도록 ID 기반 무손실 지능형 병합(Smart Merge) 엔진 탑재.
      - 무료 및 유료 회원 모두 로그인 시 기존 로컬 데이터와 서버 데이터를 온전히 결합하여 첫 사용자의 데이터 유실을 100% 원천 방지.

@@ -1,5 +1,39 @@
 # 프로젝트 개발 로그 (PROJECT DEVELOPMENT LOG)
 
+## [2026-10-07] v1.9.7 운영자 전용 실시간 텔레그램 관제 알림 시스템 구축
+
+### 1. 요구사항 및 기획 의도
+- 서비스에 신규 사용자가 가입하거나, 유료 SEEDFIT PRO 멤버십을 구독할 때 운영자의 개인 텔레그램으로 즉각적인 비즈니스 실시간 알림이 발송되도록 관제 시스템 구축.
+- **사용자 요청 사항**:
+  1. 사용자 대면 웹앱 화면에는 일절 표시나 티가 나지 않는 백그라운드 무음(Silent) 방식으로 동작.
+  2. 메시지 구성에서 불필요한 개인정보(계정 이름, 이메일)는 전면 배제.
+  3. 알림 내용: 이벤트 유형(신규 가입 / PRO 구독), 발생 일시, 현재 총 가입자 수, 현재 Pro 구독자 수, 월간 예상 구독료 MRR($7.77 * 구독자수) 자동 집계 전송.
+  4. 텔레그램 봇 토큰 및 채팅방 ID(`642319428`) 연동.
+
+### 2. 구현 내역
+1. **`functions/api/notify.js` (Cloudflare Pages Functions)**:
+   - 텔레그램 봇 API 토큰 및 채팅방 ID가 브라우저 프론트엔드 소스코드에 절대 노출되지 않도록 서버리스 엣지 함수 구축.
+   - 이벤트 발생 시 Supabase 클라우드 DB의 집계 RPC(`get_business_summary`)를 호출하여 실시간 총 가입자 수, Pro 구독자 수, 월간 구독료 MRR을 자동 계산.
+   - KST 시간 포맷 및 정돈된 양식의 텔레그램 다이얼로그 메시지를 조립하여 Telegram Bot API(`sendMessage`)로 비공개 전송.
+2. **`index.html`**:
+   - `sendTelegramAdminNotification(eventType)`: 백그라운드 무음 비동기 fetch 유틸리티 탑재.
+   - 신규 가입 트리거: `syncFromCloud`에서 클라우드에 유저가 최초로 등록될 때 1회 발송 (`SEEDFIT_SIGNUP_NOTIFIED`).
+   - 구독 확인 트리거: `refreshSubscriptionStatus` 및 Lemon Squeezy 결제 완료(`Checkout.Success`) 이벤트 시 1회 발송 (`SEEDFIT_PRO_NOTIFIED`).
+   - 버전 갱신: `CURRENT_APP_VERSION = 'v1.9.7'`, `sw.js?v=1.9.7`.
+3. **`sw.js` & `package.json`**:
+   - `CACHE_NAME = 'seedfit-cache-v1.9.7'`, 패키지 버전 `"1.9.7"` 동기화.
+4. **`AUTH_CREDENTIALS_LOCAL.md`**:
+   - 운영자 전용 로컬 격리 문서에 텔레그램 봇 토큰 및 Chat ID 안전 보관.
+
+### 3. 검증 결과
+- Telegram Bot API 발송 테스트: 운영자 개인 텔레그램 채팅방(`642319428`)으로 테스트 메시지 및 포맷 검증 100% 정상 수신 완료 (`ok: true`).
+- JavaScript 구문 문법 오류 0건 (`notify.js` ESM 및 `index.html` 파싱 무결).
+- 금지 단어('스마트', '베팅', '배팅') 0건 완전 무결 검증.
+- 유니코드 이모티콘 0건(전역 Apple HIG SVG 라인 아이콘 일원화) 유지 검증.
+- 브라우저 네이티브 다이얼로그 0건 유지 검증.
+
+---
+
 ## [2026-10-06] v1.9.6 사용자 엣지 케이스 및 실사용 환경 6대 핵심 안정화 보강
 
 ### 1. 요구사항 및 기획 의도

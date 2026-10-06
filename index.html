@@ -1101,7 +1101,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.9.6').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.9.7').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -1413,6 +1413,26 @@
       return supabaseClient;
     }
 
+    // 운영자 전용 실시간 관제 백그라운드 텔레그램 알림 (사용자 대면 UI에는 미노출)
+    async function sendTelegramAdminNotification(eventType) {
+      if (!isAuthorizedOrigin()) return;
+      try {
+        await fetch('/api/notify', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-seedfit-client': 'pwa'
+          },
+          body: JSON.stringify({
+            event: eventType,
+            timestamp: new Date().toISOString()
+          })
+        });
+      } catch (e) {
+        // 백그라운드 무음 처리 (유저 UI에 일절 노출하지 않음)
+      }
+    }
+
     let syncDebounceTimer = null;
     window.syncToCloud = async function(showToastNotice = false, isInitialAuth = false) {
       const authUser = getAuthUser();
@@ -1639,6 +1659,11 @@
           }
         } else {
           await window.syncToCloud(false, true);
+          const signupNotifiedKey = 'SEEDFIT_SIGNUP_NOTIFIED_' + userIdKey;
+          if (!safeStorage.get(signupNotifiedKey)) {
+            safeStorage.set(signupNotifiedKey, 'true');
+            sendTelegramAdminNotification('signup');
+          }
         }
       } catch (e) {
         console.warn('syncFromCloud exception:', e);
@@ -2078,6 +2103,26 @@
 
       checkoutUrl += (checkoutUrl.includes('?') ? '&' : '?') + params.join('&');
 
+      // Lemon Squeezy 결제 성공 이벤트 수신 리스너 등록
+      if (window.LemonSqueezy && typeof window.LemonSqueezy.Setup === 'function') {
+        try {
+          window.LemonSqueezy.Setup({
+            eventHandler: (event) => {
+              if (event && (event.event === 'Checkout.Success' || event.event === 'Order.Created')) {
+                const u = getAuthUser();
+                const uKey = u && u.id ? `${u.provider || 'user'}:${u.id}` : 'user:guest';
+                const proNotifiedKey = 'SEEDFIT_PRO_NOTIFIED_' + uKey;
+                if (!safeStorage.get(proNotifiedKey)) {
+                  safeStorage.set(proNotifiedKey, 'true');
+                  sendTelegramAdminNotification('subscription');
+                }
+                setTimeout(() => { if (typeof window.refreshSubscriptionStatus === 'function') window.refreshSubscriptionStatus(); }, 1500);
+              }
+            }
+          });
+        } catch (e) {}
+      }
+
       // Lemon Squeezy In-App Overlay 지원 시 모달 오버레이로 오픈
       if (window.LemonSqueezy && typeof window.LemonSqueezy.Url?.Open === 'function') {
         try {
@@ -2128,6 +2173,11 @@
           setVerifiedProSession(userIdKey, new Date().toISOString());
           restoreCancelledSubscriptionData();
           showToast('SeedFit Pro 정기구독이 정상 확인되었습니다. 기존 데이터가 모두 연동되었습니다.');
+          const proNotifiedKey = 'SEEDFIT_PRO_NOTIFIED_' + userIdKey;
+          if (!safeStorage.get(proNotifiedKey)) {
+            safeStorage.set(proNotifiedKey, 'true');
+            sendTelegramAdminNotification('subscription');
+          }
         } else {
           safeStorage.set('SEEDFIT_IS_PRO', 'false');
           clearVerifiedProSession();
@@ -2144,7 +2194,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.9.6';
+    const CURRENT_APP_VERSION = 'v1.9.7';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');
