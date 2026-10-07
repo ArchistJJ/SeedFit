@@ -1101,7 +1101,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.9.10').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.9.11').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -1612,10 +1612,48 @@
             // [Step 3 보안 가드] 서버의 공식 subscription_tier를 절대적 기준으로 강제 적용
             if (data.subscription_tier === 'pro') {
               safeStorage.set('SEEDFIT_IS_PRO', 'true');
+              safeStorage.set('SEEDFIT_IS_PAST_DUE', 'false');
+              safeStorage.remove('SEEDFIT_UPDATE_CARD_URL');
+              safeStorage.remove('SEEDFIT_PAYMENT_FAILED_AT');
               setVerifiedProSession(userIdKey, data.updated_at);
               if (typeof restoreCancelledSubscriptionData === 'function') restoreCancelledSubscriptionData();
+            } else if (data.subscription_tier === 'past_due') {
+              // [결제 실패 연체 유예 모드] 최초 결제 실패 시점으로부터 3일(72시간) 검사
+              const failedAtMs = data.payment_failed_at ? new Date(data.payment_failed_at).getTime() : Date.now();
+              const isOver3Days = (Date.now() - failedAtMs) > (3 * 24 * 60 * 60 * 1000);
+
+              if (isOver3Days) {
+                // 3일 초과 미해결 시 Free 플랜으로 자동 강등 및 7일 데이터 보존 시작
+                safeStorage.set('SEEDFIT_IS_PRO', 'false');
+                safeStorage.set('SEEDFIT_IS_PAST_DUE', 'false');
+                clearVerifiedProSession();
+                const nowIso = new Date().toISOString();
+                const retentionUntilIso = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+                safeStorage.set('SEEDFIT_CANCELLED_AT', nowIso);
+                safeStorage.set('SEEDFIT_RETENTION_UNTIL', retentionUntilIso);
+                safeStorage.remove('SEEDFIT_UPDATE_CARD_URL');
+                safeStorage.remove('SEEDFIT_PAYMENT_FAILED_AT');
+
+                // 클라우드 DB에도 Free 플랜 및 7일 보존 기간 동기화
+                await sb.from('seedfit_user_data').update({
+                  subscription_tier: 'free',
+                  cancelled_at: nowIso,
+                  data_retention_until: retentionUntilIso,
+                  updated_at: nowIso
+                }).eq('user_id', userIdKey);
+              } else {
+                // 3일 이내: 연체 유예 기간 활성화 (기존 데이터 유지 + 앱 접속 시마다 팝업 알림 플래그)
+                safeStorage.set('SEEDFIT_IS_PAST_DUE', 'true');
+                safeStorage.set('SEEDFIT_IS_PRO', 'true');
+                safeStorage.set('SEEDFIT_UPDATE_CARD_URL', data.update_card_url || '');
+                safeStorage.set('SEEDFIT_PAYMENT_FAILED_AT', data.payment_failed_at || new Date().toISOString());
+                setVerifiedProSession(userIdKey, data.updated_at);
+              }
             } else {
               safeStorage.set('SEEDFIT_IS_PRO', 'false');
+              safeStorage.set('SEEDFIT_IS_PAST_DUE', 'false');
+              safeStorage.remove('SEEDFIT_UPDATE_CARD_URL');
+              safeStorage.remove('SEEDFIT_PAYMENT_FAILED_AT');
               clearVerifiedProSession();
 
               // 7일 데이터 보존 기간 만료 여부 검사 (구독 해지 후 7일 경과 시 클라우드 및 기기 영구 삭제)
@@ -1654,6 +1692,9 @@
             if (!silent) showToast('클라우드 데이터를 안전하게 불러왔습니다.');
             if (localNeedsPush && isServerPro) {
               setTimeout(() => { if (typeof window.syncToCloud === 'function') window.syncToCloud(false, true); }, 1000);
+            }
+            if (typeof window.checkPastDuePaymentModal === 'function') {
+              window.checkPastDuePaymentModal();
             }
           } else {
             await window.syncToCloud(false, true);
@@ -2072,6 +2113,47 @@
       renderCurrentTab();
     };
 
+    // [결제 실패 연체 유예 모드] 앱 접속/포커스 시 결제 수단 변경 안내 모달 팝업
+    window.checkPastDuePaymentModal = function() {
+      const isPastDue = safeStorage.get('SEEDFIT_IS_PAST_DUE') === 'true';
+      if (!isPastDue) return;
+
+      const failedAtStr = safeStorage.get('SEEDFIT_PAYMENT_FAILED_AT');
+      const failedAt = failedAtStr ? new Date(failedAtStr).getTime() : Date.now();
+      const diffMs = (3 * 24 * 60 * 60 * 1000) - (Date.now() - failedAt);
+      
+      let remainText = '3일 이내';
+      if (diffMs > 0) {
+        const hours = Math.floor(diffMs / (1000 * 60 * 60));
+        const days = Math.floor(hours / 24);
+        const remHours = hours % 24;
+        remainText = days > 0 ? `${days}일 ${remHours}시간 이내` : `${hours}시간 이내`;
+      } else {
+        remainText = '지금 즉시';
+      }
+
+      window.showAlertDialog({
+        title: '정기 결제 승인 실패',
+        message: '이번 달 SeedFit Pro 정기 구독료 결제가 정상 처리되지 않았습니다.\n(카드 잔액 부족 또는 유효기간 만료)\n\n' + remainText + '에 결제 카드를 갱신하지 않으시면 무료 플랜으로 자동 전환되며, 데이터는 7일간만 임시 보관됩니다.',
+        notice: '서비스가 중단되지 않도록 지금 바로 결제 카드를 갱신해주세요.',
+        confirmText: '결제 수단 변경하기',
+        icon: 'warning'
+      }).then(() => {
+        window.openUpdatePaymentMethod();
+      });
+    };
+
+    window.openUpdatePaymentMethod = function(url) {
+      const targetUrl = url || safeStorage.get('SEEDFIT_UPDATE_CARD_URL') || LEMON_CHECKOUT_URL;
+      if (window.LemonSqueezy && typeof window.LemonSqueezy.Url?.Open === 'function') {
+        try {
+          window.LemonSqueezy.Url.Open(targetUrl);
+          return;
+        } catch (e) {}
+      }
+      window.open(targetUrl, '_blank', 'noopener,noreferrer');
+    };
+
     window.startLemonSqueezyCheckout = function() {
       if (!isAuthorizedOrigin()) {
         window.showAlertDialog({
@@ -2214,7 +2296,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.9.10';
+    const CURRENT_APP_VERSION = 'v1.9.11';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');
@@ -4242,6 +4324,12 @@
       const isWithinGracePeriod = (!isProMember && retentionExpiry && Date.now() < retentionExpiry);
       const remainingDays = isWithinGracePeriod ? Math.max(1, Math.ceil((retentionExpiry - Date.now()) / (24 * 60 * 60 * 1000))) : 0;
 
+      const isPastDue = safeStorage.get('SEEDFIT_IS_PAST_DUE') === 'true';
+      const failedAtStr = safeStorage.get('SEEDFIT_PAYMENT_FAILED_AT');
+      const failedAtMs = failedAtStr ? new Date(failedAtStr).getTime() : Date.now();
+      const pastDueDiffMs = Math.max(0, (3 * 24 * 60 * 60 * 1000) - (Date.now() - failedAtMs));
+      const pastDueHours = Math.ceil(pastDueDiffMs / (1000 * 60 * 60));
+
       container.innerHTML = `
         <div class="space-y-4">
           <!-- User Account & Sync Status Card -->
@@ -4368,6 +4456,28 @@
               </div>
             ` : ''}
           </div>
+
+          ${isPastDue ? `
+            <!-- 정기 결제 승인 실패 연체 유예 배너 (3일 내 변경 필요) -->
+            <div class="p-4 rounded-3xl ${isLightMode ? 'bg-rose-50 border-rose-300' : 'bg-rose-500/15 border-rose-500/30'} border space-y-2.5 text-left shadow-sm">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-rose-400 flex items-center space-x-1.5">
+                  <svg class="w-4 h-4 text-rose-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+                  <span>정기 결제 승인 실패</span>
+                </span>
+                <span class="text-[10px] font-mono text-rose-400 bg-rose-500/20 border border-rose-500/30 px-2 py-0.5 rounded-full font-bold">
+                  ${pastDueHours > 0 ? `${pastDueHours}시간 내 변경 필요` : '즉시 변경 필요'}
+                </span>
+              </div>
+              <p class="text-[11px] ${isLightMode ? 'text-rose-900' : 'text-neutral-300'} leading-relaxed">
+                이번 달 SeedFit Pro 정기 결제가 정상 처리되지 않았습니다. (카드 잔액 부족 또는 유효기간 만료)<br>
+                <b>3일 이내에 결제 카드를 갱신</b>하지 않으시면 무료 플랜으로 자동 전환되며, 데이터는 7일간만 임시 보관됩니다.
+              </p>
+              <button onclick="window.openUpdatePaymentMethod()" class="w-full py-2.5 bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 text-white font-extrabold rounded-xl text-xs shadow-md transition active:scale-95 flex items-center justify-center space-x-1">
+                <span>결제 수단 변경하기</span>
+              </button>
+            </div>
+          ` : ''}
 
           ${isWithinGracePeriod ? `
             <!-- 7일 데이터 보존 유예 기간 카운트다운 배너 -->
@@ -5681,6 +5791,22 @@
       if (getAuthUser()) {
         window.syncFromCloud(getAuthUser(), true);
       }
+      setTimeout(() => {
+        if (typeof window.checkPastDuePaymentModal === 'function') {
+          window.checkPastDuePaymentModal();
+        }
+      }, 800);
+
+      window.addEventListener('focus', () => {
+        if (typeof window.checkPastDuePaymentModal === 'function') {
+          window.checkPastDuePaymentModal();
+        }
+      });
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible' && typeof window.checkPastDuePaymentModal === 'function') {
+          window.checkPastDuePaymentModal();
+        }
+      });
     });
 
     applyThemeUI();
@@ -5692,6 +5818,11 @@
     if (getAuthUser()) {
       window.syncFromCloud(getAuthUser(), true);
     }
+    setTimeout(() => {
+      if (typeof window.checkPastDuePaymentModal === 'function') {
+        window.checkPastDuePaymentModal();
+      }
+    }, 1200);
   </script>
 </body>
 </html>

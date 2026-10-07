@@ -1,5 +1,37 @@
 # 프로젝트 개발 로그 (PROJECT DEVELOPMENT LOG)
 
+## [2026-10-07] v1.9.11 정기 결제 실패·연체 유예(Past Due) 대응 시스템 및 3일 만료 Free 강등 파이프라인 구축
+
+### 1. 요구사항 및 기획 의도
+- 2번째 달 정기 갱신 결제 시도 시 카드 한도 초과, 잔액 부족, 유효기간 만료 등으로 결제가 정상 처리되지 않는 상황(Dunning) 완벽 대응.
+- 결제 실패 시 즉시 서비스를 차단하지 않고 **3일간의 연체 유예(Grace Period)**를 부여하되, **앱에 접속할 때마다 결제 수단 변경 안내 팝업 알림창**이 계속 뜨도록 구현.
+- 3일 동안 결제 카드가 갱신되지 않으면 **무료(Free) 플랜으로 자동 강등**하고, **7일간만 데이터가 임시 보관된다는 정책 및 카운트다운 배너** 노출.
+- 레몬스퀴즈 공식 고유 카드 갱신 다이렉트 URL(`urls.update_payment_method`)을 연동하여, 사용자가 상담원에게 문의할 필요 없이 원클릭으로 새 카드 번호를 직접 입력하여 1초 만에 갱신할 수 있도록 UX 극대화.
+
+### 2. 구현 및 보강 내역
+1. **데이터베이스 스키마 확장 (Supabase PostgreSQL)**:
+   - `ALTER TABLE seedfit_user_data ADD COLUMN IF NOT EXISTS payment_failed_at timestamptz;`
+   - `ALTER TABLE seedfit_user_data ADD COLUMN IF NOT EXISTS update_card_url text;`
+   - 최초 결제 실패 일시 및 사용자 고유 카드 변경 링크 안전 보관.
+2. **웹훅 엔드포인트 연동 (`functions/api/lemon-webhook.js`)**:
+   - `subscription_payment_failed`: 수신 시 `subscription_tier: 'past_due'` 전환, `payment_failed_at: now`, `update_card_url` 저장, 운영자 텔레그램 실시간 결제 실패 관제 알림 발송.
+   - `subscription_payment_success` / `subscription_payment_recovered`: 연체 해소 및 갱신 성공 시 즉시 `subscription_tier: 'pro'` 복원 및 텔레그램 정상화 알림 발송.
+   - `subscription_expired`: 최종 만료 시 `subscription_tier: 'free'` 강등 및 7일 보존 시작.
+3. **프론트엔드 앱 접속 시 알림 및 3일 만료 검사 (`index.html`)**:
+   - `checkPastDuePaymentModal`: 앱 실행(DOMContentLoaded), 화면 포커스(focus), 화면 복귀(visibilitychange) 시마다 연체 잔여 시간(예: "2일 14시간 이내")과 함께 결제 수단 변경 안내 모달을 띄우고 `openUpdatePaymentMethod`로 Lemon Squeezy 카드 갱신 폼 직접 연결.
+   - `syncFromCloud`: 최초 실패 시점으로부터 3일(72시간) 경과 시 클라우드 DB 및 로컬 상태를 Free 플랜으로 자동 전환하고 7일 보존 카운트다운 시작.
+   - `renderSettingsTab`: 설정 탭 상단에 Apple HIG 스타일의 [정기 결제 승인 실패: 3일 내 변경 필요] 앰버/로즈 경고 카드 및 [결제 수단 변경하기] 버튼 렌더링.
+4. **버전 갱신**:
+   - `CURRENT_APP_VERSION = 'v1.9.11'`, `sw.js?v=1.9.11`, `seedfit-cache-v1.9.11`, `package.json` `"1.9.11"` 동기화.
+
+### 3. 검증 결과
+- JavaScript 구문 문법 오류 0건 통과 (`index.html`, `sw.js`, `lemon-webhook.js`, `notify.js`).
+- 금지 단어('스마트', '베팅', '배팅') 0건 완전 무결 검증.
+- 유니코드 이모티콘 0건(전역 Apple HIG SVG 라인 아이콘 일원화) 유지 검증.
+- 브라우저 네이티브 다이얼로그 0건 유지 검증.
+
+---
+
 ## [2026-10-07] v1.9.10 라이브 모드 전환 대비 서비스 전수 보안·무결성 감사 및 게스트 결제 가드 구축
 
 ### 1. 요구사항 및 기획 의도

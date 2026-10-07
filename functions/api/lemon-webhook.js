@@ -135,30 +135,39 @@ export async function onRequestPost(context) {
 
   console.log(`[Lemon Webhook] Event: ${eventName}, Target User: ${targetUserId}, Status: ${status}, Test: ${isTestMode}`);
 
-  // Pro 플랜 승격/해지 이벤트 판정
+  // Pro 플랜 승격/해지/연체 이벤트 판정
   let isProUpgrade = false;
   let isProCancellation = false;
+  let isPaymentFailed = false;
 
   if (
-    eventName === 'subscription_created' ||
-    eventName === 'subscription_resumed' ||
-    eventName === 'order_created' ||
-    status === 'active' ||
-    status === 'on_trial'
+    eventName === 'subscription_payment_failed' ||
+    status === 'past_due'
   ) {
-    isProUpgrade = true;
+    isPaymentFailed = true;
   } else if (
     eventName === 'subscription_cancelled' ||
     eventName === 'subscription_expired' ||
     status === 'expired'
   ) {
     isProCancellation = true;
+  } else if (
+    eventName === 'subscription_created' ||
+    eventName === 'subscription_resumed' ||
+    eventName === 'subscription_payment_success' ||
+    eventName === 'subscription_payment_recovered' ||
+    eventName === 'order_created' ||
+    status === 'active' ||
+    status === 'on_trial'
+  ) {
+    isProUpgrade = true;
   }
 
   // 4. Supabase DB 사용자 subscription_tier 동기화
   let dbUpdated = false;
   let dbError = null;
-  const newTier = isProUpgrade ? 'pro' : (isProCancellation ? 'free' : null);
+  const newTier = isPaymentFailed ? 'past_due' : (isProUpgrade ? 'pro' : (isProCancellation ? 'free' : null));
+  const updateCardUrl = attributes.urls?.update_payment_method || attributes.urls?.customer_portal || null;
 
   if (newTier) {
     let resolvedUserId = targetUserId;
@@ -186,6 +195,24 @@ export async function onRequestPost(context) {
 
     if (resolvedUserId) {
       try {
+        const now = new Date();
+        const patchData = {
+          subscription_tier: newTier,
+          updated_at: now.toISOString()
+        };
+
+        if (isPaymentFailed) {
+          patchData.payment_failed_at = now.toISOString();
+          if (updateCardUrl) patchData.update_card_url = updateCardUrl;
+        } else if (isProUpgrade) {
+          patchData.payment_failed_at = null;
+          if (updateCardUrl) patchData.update_card_url = updateCardUrl;
+        } else if (isProCancellation) {
+          patchData.cancelled_at = now.toISOString();
+          patchData.data_retention_until = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString();
+          patchData.payment_failed_at = null;
+        }
+
         const patchRes = await fetch(`${SUPABASE_URL}/rest/v1/seedfit_user_data?user_id=eq.${encodeURIComponent(resolvedUserId)}`, {
           method: 'PATCH',
           headers: {
@@ -195,15 +222,12 @@ export async function onRequestPost(context) {
             'Content-Type': 'application/json',
             'Prefer': 'return=representation'
           },
-          body: JSON.stringify({
-            subscription_tier: newTier,
-            updated_at: new Date().toISOString()
-          })
+          body: JSON.stringify(patchData)
         });
 
         if (patchRes.ok) {
-          const patchData = await patchRes.json();
-          dbUpdated = Array.isArray(patchData) && patchData.length > 0;
+          const resRows = await patchRes.json();
+          dbUpdated = Array.isArray(resRows) && resRows.length > 0;
         } else {
           dbError = await patchRes.text();
         }
@@ -242,17 +266,30 @@ export async function onRequestPost(context) {
   }
 
   // 6. 운영자 텔레그램 실시간 관제 알림 발송
-  // - 중복 알림 방지: 정기구독 상품 특성상 order_created, subscription_updated 등 부수적 이벤트는 DB 승격만 수행하고,
-  //   실제 텔레그램 알림은 오직 'subscription_created' (신규 구독 1회) 및 'subscription_cancelled' (취소 1회) 일 때만 단 1회 발송
-  const shouldNotify = (eventName === 'subscription_created') || (eventName === 'subscription_cancelled');
+  // - 알림 대상:
+  //   1) subscription_created (신규 구독 1회)
+  //   2) subscription_cancelled / subscription_expired (구독 해지/만료 1회)
+  //   3) subscription_payment_failed (2번째 달 갱신 결제 실패 1회)
+  //   4) subscription_payment_recovered / subscription_payment_success (갱신 결제 성공/연체 해소)
+  const isNotifyTarget = (
+    eventName === 'subscription_created' ||
+    eventName === 'subscription_cancelled' ||
+    eventName === 'subscription_expired' ||
+    eventName === 'subscription_payment_failed' ||
+    eventName === 'subscription_payment_recovered'
+  );
 
-  if (shouldNotify) {
+  if (isNotifyTarget) {
     const timeStr = getKSTTimeString();
     let eventTitle = '';
     if (eventName === 'subscription_created') {
       eventTitle = isTestMode ? '[테스트 결제] SEEDFIT PRO 신규 구독' : 'SEEDFIT PRO 신규 구독';
-    } else if (eventName === 'subscription_cancelled') {
+    } else if (eventName === 'subscription_cancelled' || eventName === 'subscription_expired') {
       eventTitle = isTestMode ? '[테스트 결제] SEEDFIT PRO 구독 취소' : 'SEEDFIT PRO 구독 취소';
+    } else if (eventName === 'subscription_payment_failed') {
+      eventTitle = isTestMode ? '[테스트 결제] SEEDFIT PRO 갱신 승인 실패 (연체 전환)' : 'SEEDFIT PRO 정기 갱신 결제 실패 (연체 유예 모드)';
+    } else if (eventName === 'subscription_payment_recovered') {
+      eventTitle = isTestMode ? '[테스트 결제] SEEDFIT PRO 갱신 결제 성공 (연체 해소)' : 'SEEDFIT PRO 갱신 결제 성공 (연체 해소)';
     }
 
     let statsSection = '';
@@ -267,7 +304,12 @@ export async function onRequestPost(context) {
     const modeBadge = isTestMode ? ' [TEST MODE]' : ' [LIVE MODE]';
     const dbStatusText = targetUserId ? (dbUpdated ? '정상 반영 완료' : '반영 확인 완료') : '유저 키 미지정';
 
-    const telegramMsg = `[SeedFit 결제 관제 알림]${modeBadge}\n\n이벤트: ${eventTitle}\n일시: ${timeStr}\nDB 승격: ${dbStatusText}\n\n${statsSection}`;
+    let extraNote = '';
+    if (eventName === 'subscription_payment_failed') {
+      extraNote = `\n안내: 카드 잔액 부족 또는 만료로 실패했습니다. 3일 내 미해결 시 무료 플랜으로 자동 강등됩니다.`;
+    }
+
+    const telegramMsg = `[SeedFit 결제 관제 알림]${modeBadge}\n\n이벤트: ${eventTitle}\n일시: ${timeStr}\nDB 승격: ${dbStatusText}${extraNote}\n\n${statsSection}`;
 
     await sendTelegramAlert(botToken, chatId, telegramMsg);
   }

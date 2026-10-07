@@ -6,22 +6,25 @@
 ---
 
 ## 0. 멀티 디바이스 작업 즉시 인계 가이드 (Multi-Device Quick Handoff)
-- **인계 시점**: 2026-10-07 15:25 KST
+- **인계 시점**: 2026-10-07 15:46 KST
 - **현재 원격 저장소 동기화 상태**:
-  - GitHub 비공개 저장소(`ArchistJJ/SeedFit`), `main` 브랜치에 최신 커밋까지 100% 원격 푸시 완료.
-  - 최신 릴리즈 버전: **`v1.9.10`**
-  - Cloudflare Pages 프로덕션 무중단 배포 완료 (`https://seedfit.pro/`, `https://www.seedfit.pro/`).
+  - GitHub 비공개 저장소(`ArchistJJ/SeedFit`), `main` 브랜치에 최신 커밋까지 100% 원격 푸시 대기 중.
+  - 최신 릴리즈 버전: **`v1.9.11`**
+  - Cloudflare Pages 프로덕션 무중단 배포 연동 (`https://seedfit.pro/`, `https://www.seedfit.pro/`).
 - **최근 완료된 핵심 작업 요약**:
-  1. **라이브 모드 전환 대비 서비스 전수 보안·무결성 감사 완료**:
-     - 금지 단어 0건, 이모티콘 0건, 네이티브 팝업 0건, RLS 보안 100% 무결 검증.
-     - 비로그인 게스트 사용자가 결제 진입 시 `user_id` 누락 위험을 방지하는 로그인 선제 가드(`window.showAlertDialog` $\rightarrow$ `openAuthModal`) 구축.
-  2. **Lemon Squeezy 결제 및 취소 실시간 동기화 파이프라인 완성**:
+  1. **정기 갱신 결제 실패(Dunning/Past Due) 및 결제 수단 자가 변경 파이프라인 완성 (v1.9.11)**:
+     - 2번째 달 자동 갱신 시 잔액 부족/카드 만료 등으로 결제 실패 시 `subscription_tier: 'past_due'`로 전환 및 3일(72시간) 유예 기간 부여.
+     - 하루 1회 재결제 시도 및 3일 경과 후에도 결제되지 않을 경우 `subscription_tier: 'free'` 플랜 강등 및 7일 데이터 보존 안내 카운트다운 파이프라인 연동.
+     - **Lemon Squeezy 고객센터 문의 배제**: Lemon Squeezy 고유의 구독자 카드 셀프 갱신 다이렉트 URL(`urls.update_payment_method`)을 DB에 저장 및 즉시 연동하여 사용자가 1초 만에 새 카드를 직접 입력할 수 있도록 구축.
+     - **유예 기간 앱 접속 팝업 지속 노출**: 연체 중일 경우 앱을 실행하거나 포커스될 때마다 잔여 유예 시간과 함께 결제 수단 변경 Apple HIG 모달 지속 안내.
+  2. **Lemon Squeezy 웹훅 중복 알림 방지 및 취소 시 구독자수/MRR 실시간 동기화 완료**:
      - 웹훅 결제 승인 시 DB 승격 및 텔레그램 1회 발송, 구독 취소 시 Pro 수 및 MRR 실시간 감소 반영 100% 완료.
+     - `seedfit_user_data` DB에 `cancelled_at`, `data_retention_until`, `payment_failed_at`, `update_card_url` 컬럼 정식 구축.
 - **다른 PC에서 작업 시작 3단계**:
   1. 저장소 최신화: 작업 디렉토리 터미널에서 `git pull origin main` 실행.
   2. 로컬 보안 키 파일 확인: `.gitignore` 처리된 로컬 보안 파일(`AUTH_CREDENTIALS_LOCAL.md`)이 해당 PC에 존재하는지 확인.
   3. AI 어시스턴트에게 첫 프롬프트 전달:
-     > *"ACTIVE_CONTEXT.md 문서를 읽고 이전 세션에서 진행된 작업 맥락과 v1.9.10 상태를 파악한 뒤, 다음 작업(로드맵)을 이어서 진행해줘."*
+     > *"ACTIVE_CONTEXT.md 문서를 읽고 이전 세션에서 진행된 작업 맥락과 v1.9.11 상태를 파악한 뒤, 다음 작업(로드맵)을 이어서 진행해줘."*
 - **다음 작업 대기 항목 (Roadmap)**:
   1. Lemon Squeezy 대시보드 Live 모드 전환 (스토어 Test mode 해제).
   2. 라이브 모드 실제 카드 $7.77 1회 결제 및 단 1회의 깔끔한 텔레그램 실시간 알림 수신 최종 확인.
@@ -30,7 +33,7 @@
 
 ## 1. 프로젝트 기본 정보
 - **프로젝트 명**: 시드핏 (SeedFit - 시드 & 투자 자금 관리 공식 웹앱)
-- **최신 앱 버전**: `v1.9.10`
+- **최신 앱 버전**: `v1.9.11`
 - **공식 서비스 도메인**: [https://seedfit.pro/](https://seedfit.pro/)
 - **GitHub 저장소**: `ArchistJJ/SeedFit` (비공개 Private 전환 완료, `main` 브랜치 기준)
 - **호스팅 플랫폼**: Cloudflare Pages (`seedfit` 프로젝트, 글로벌 Anycast 엣지 CDN)
