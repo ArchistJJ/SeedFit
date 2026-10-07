@@ -156,6 +156,32 @@
     }
 
     /* ========================================================
+       멤버십 관리 및 구독 결제 모달: 화이트 테마에서도 다크 테마와 100% 동일하게 일원화 유지
+       ======================================================== */
+    #membershipManagementModal,
+    #subscriptionModal {
+      color-scheme: dark;
+    }
+    body.light-theme #membershipManagementModal .bg-amber-500\/10,
+    body.light-theme #membershipManagementModal .bg-amber-500\/12,
+    body.light-theme #membershipManagementModal .bg-amber-500\/15,
+    body.light-theme #subscriptionModal .bg-amber-500\/15 {
+      background-color: rgba(245, 158, 11, 0.12) !important;
+    }
+    body.light-theme #membershipManagementModal .border-amber-500\/20,
+    body.light-theme #membershipManagementModal .border-amber-500\/25,
+    body.light-theme #membershipManagementModal .border-amber-500\/30,
+    body.light-theme #subscriptionModal .border-amber-500\/30 {
+      border-color: rgba(245, 158, 11, 0.3) !important;
+    }
+    body.light-theme #membershipManagementModal .text-amber-400,
+    body.light-theme #membershipManagementModal .text-amber-300,
+    body.light-theme #subscriptionModal .text-amber-300 {
+      color: #fbbf24 !important;
+      font-weight: 700;
+    }
+
+    /* ========================================================
        Lemon Squeezy 모바일/PWA 결제 오버레이 뷰포트 & 닫기 버튼 최적화
        - 화면 상단 노치/상태바와 닫기(X) 버튼이 겹치지 않도록 안전 영역(safe-area) 확보
        - 화면 전체를 과도하게 덮지 않고 모바일 카드 팝업 형태로 단정하게 안착
@@ -835,14 +861,14 @@
           </div>
         </div>
 
-        <!-- 7일 데이터 보존 정책 안내 카드 -->
-        <div class="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/25 space-y-1.5 text-left">
-          <div class="font-bold flex items-center space-x-1.5 text-amber-400 text-xs">
-            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-            <span>구독 취소 시 데이터 보존 유예 정책 (7일)</span>
+        <!-- 7일 데이터 보존 정책 안내 카드 (다크 테마 고정 및 선명한 가독성 보장) -->
+        <div class="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/25 space-y-1.5 text-left" style="background-color: rgba(245, 158, 11, 0.12) !important; border-color: rgba(245, 158, 11, 0.3) !important;">
+          <div class="font-bold flex items-center space-x-1.5 text-amber-400 text-xs" style="color: #fbbf24 !important;">
+            <svg class="w-4 h-4 shrink-0 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+            <span style="color: #fbbf24 !important;">구독 취소 시 데이터 보존 유예 정책 (7일)</span>
           </div>
-          <p class="text-[11px] text-neutral-300 leading-relaxed">
-            구독을 취소하셔도 기존에 등록하신 투자 기록 및 프로젝트 데이터는 <b>취소일로부터 7일간 안전하게 임시 보존</b>됩니다. <b>7일 이내에 다시 구독하시면 기존의 모든 데이터가 즉시 연동 복원</b>되며, 7일이 경과하면 클라우드에서 영구 삭제됩니다.
+          <p class="text-[11px] text-neutral-200 leading-relaxed font-normal" style="color: #e5e5e5 !important;">
+            구독을 취소하셔도 기존에 등록하신 투자 기록 및 프로젝트 데이터는 <b class="text-white font-semibold" style="color: #ffffff !important;">취소일로부터 7일간 안전하게 임시 보존</b>됩니다. <b class="text-white font-semibold" style="color: #ffffff !important;">7일 이내에 다시 구독하시면 기존의 모든 데이터가 즉시 연동 복원</b>되며, 7일이 경과하면 클라우드에서 영구 삭제됩니다.
           </p>
         </div>
 
@@ -1221,7 +1247,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.9.19').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.9.20').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -2417,7 +2443,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.9.19';
+    const CURRENT_APP_VERSION = 'v1.9.20';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');
