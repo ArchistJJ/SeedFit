@@ -1146,7 +1146,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.9.14').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.9.15').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -1924,8 +1924,8 @@
       }
     };
 
-    // SeedFit Pro 공식 보안 결제 (Lemon Squeezy) 연동
-    const LEMON_CHECKOUT_URL = 'https://seedfit.lemonsqueezy.com/checkout/buy/1ae381b5-3605-427c-b11d-dbac560468f8';
+    // SeedFit Pro 공식 보안 결제 (Lemon Squeezy) 연동 (공식 라이브 모드)
+    const LEMON_CHECKOUT_URL = 'https://seedfit.lemonsqueezy.com/checkout/buy/9bdb9e32-e510-4ad7-8269-f70f4a7ff117';
 
     // 마스터 관리자 공식 단독 계정 (오직 이 계정에만 관리자 권한 부여)
     const MASTER_ADMIN_EMAIL = 'wpdntm0428@gmail.com';
@@ -2341,7 +2341,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.9.14';
+    const CURRENT_APP_VERSION = 'v1.9.15';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');
