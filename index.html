@@ -1101,7 +1101,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.9.12').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.9.13').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -2296,7 +2296,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.9.12';
+    const CURRENT_APP_VERSION = 'v1.9.13';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');
@@ -3073,9 +3073,9 @@
         } else if (recordFilterCategory === 'PENDING') {
           catMatch = (r.status === 'PENDING');
         } else {
-          catMatch = (r.category === recordFilterCategory);
+          catMatch = (normalizeCategory(r.category) === recordFilterCategory);
         }
-        const foldMatch = recordFilterFold === 'ALL' || (r.fold || '단일') === recordFilterFold;
+        const foldMatch = recordFilterFold === 'ALL' || normalizeFold(r.fold) === recordFilterFold;
         return catMatch && foldMatch;
       });
 
@@ -3217,16 +3217,32 @@
       `;
     }
 
+    function normalizeCategory(cat) {
+      if (!cat) return '일반투자';
+      if (cat === '일반투자' || cat === '승무패') return '일반투자';
+      if (cat === '핸디투자' || cat === '전략투자' || cat === '언옵&핸디' || cat === '언옵' || cat === '핸디') return '핸디투자';
+      return cat;
+    }
+
+    function normalizeFold(fold) {
+      if (!fold || fold === '단일' || fold === '1폴') return '단일';
+      if (fold === '2묶음' || fold === '2조합' || fold === '2폴') return '2묶음';
+      if (fold === '3묶음' || fold === '3조합' || fold === '3폴' || fold === '4폴' || fold === '4폴이상') return '3묶음';
+      return fold;
+    }
+
     function getCategoryColorClass(cat) {
-      if (cat === '일반투자' || cat === '승무패') return 'bg-blue-500/20 text-blue-400 border border-blue-500/30';
-      if (cat === '핸디투자' || cat === '전략투자' || cat === '언옵&핸디' || cat === '언옵' || cat === '핸디') return 'bg-purple-500/20 text-purple-400 border border-purple-500/30';
+      const norm = normalizeCategory(cat);
+      if (norm === '일반투자') return 'bg-blue-500/20 text-blue-400 border border-blue-500/30';
+      if (norm === '핸디투자') return 'bg-purple-500/20 text-purple-400 border border-purple-500/30';
       return 'bg-neutral-800 text-neutral-300 border border-neutral-700';
     }
 
     function getFoldColorClass(fold) {
-      if (fold === '단일' || fold === '1폴') return 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30';
-      if (fold === '2묶음' || fold === '2조합' || fold === '2폴') return 'bg-violet-500/20 text-violet-400 border border-violet-500/30';
-      if (fold === '3묶음' || fold === '3조합' || fold === '3폴' || fold === '4폴' || fold === '4폴이상') return 'bg-fuchsia-500/20 text-fuchsia-400 border border-fuchsia-500/30';
+      const norm = normalizeFold(fold);
+      if (norm === '단일') return 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30';
+      if (norm === '2묶음') return 'bg-violet-500/20 text-violet-400 border border-violet-500/30';
+      if (norm === '3묶음') return 'bg-fuchsia-500/20 text-fuchsia-400 border border-fuchsia-500/30';
       return 'bg-neutral-800 text-neutral-300';
     }
 
@@ -3837,10 +3853,10 @@
       // 2. 카테고리 1(전략) x 카테고리 2(조합 분산) 다차원 교차 필터링
       let comboRecords = periodRecords;
       if (statsCategoryFilter !== 'ALL') {
-        comboRecords = comboRecords.filter(r => r.category === statsCategoryFilter);
+        comboRecords = comboRecords.filter(r => normalizeCategory(r.category) === statsCategoryFilter);
       }
       if (statsFoldFilter !== 'ALL') {
-        comboRecords = comboRecords.filter(r => (r.fold || '단일') === statsFoldFilter);
+        comboRecords = comboRecords.filter(r => normalizeFold(r.fold) === statsFoldFilter);
       }
 
       // 3. 선택 조합 기준 KPI 통계 계산
@@ -3915,7 +3931,7 @@
 
       const matrixData = categories.map(cat => {
         const rowCells = folds.map(f => {
-          const cellRecs = periodRecords.filter(r => (r.category === cat || (cat === '일반투자' && r.category === '승무패') || (cat === '핸디투자' && (r.category === '전략투자' || r.category === '언옵&핸디' || r.category === '언옵' || r.category === '핸디'))) && (r.fold === f || (f === '단일' && (!r.fold || r.fold === '1폴')) || (f === '2묶음' && (r.fold === '2조합' || r.fold === '2폴')) || (f === '3묶음' && (r.fold === '3조합' || r.fold === '3폴' || r.fold === '4폴'))));
+          const cellRecs = periodRecords.filter(r => normalizeCategory(r.category) === cat && normalizeFold(r.fold) === f);
           const cWin = cellRecs.filter(r => r.status === 'WIN').length;
           const cLose = cellRecs.filter(r => r.status === 'LOSE').length;
           const cSettled = cWin + cLose;
@@ -3940,7 +3956,7 @@
 
       // 6. 단일 차원 요약 카드 데이터 (카테고리 1별 & 카테고리 2별)
       const catSummaryStats = categories.map(cat => {
-        const catRecs = periodRecords.filter(r => r.category === cat || (cat === '일반투자' && r.category === '승무패') || (cat === '핸디투자' && (r.category === '전략투자' || r.category === '언옵&핸디' || r.category === '언옵' || r.category === '핸디')));
+        const catRecs = periodRecords.filter(r => normalizeCategory(r.category) === cat);
         let cInvest = 0, cReturn = 0, cWin = 0, cLose = 0;
         catRecs.forEach(r => {
           cInvest += r.investAmount;
@@ -3954,7 +3970,7 @@
       });
 
       const foldSummaryStats = folds.map(f => {
-        const foldRecs = periodRecords.filter(r => r.fold === f || (f === '단일' && (!r.fold || r.fold === '1폴')) || (f === '2묶음' && (r.fold === '2조합' || r.fold === '2폴')) || (f === '3묶음' && (r.fold === '3조합' || r.fold === '3폴' || r.fold === '4폴')));
+        const foldRecs = periodRecords.filter(r => normalizeFold(r.fold) === f);
         let fInvest = 0, fReturn = 0, fWin = 0, fLose = 0;
         foldRecs.forEach(r => {
           fInvest += r.investAmount;
@@ -4722,21 +4738,32 @@
       }
 
       try {
-        const { data, error } = await sb
-          .from('seedfit_user_data')
-          .select('user_id, provider, email, name, subscription_tier, updated_at, records, projects')
-          .order('updated_at', { ascending: false });
+        const authUser = getAuthUser();
+        const currentUserId = authUser && authUser.id ? `${authUser.provider || 'user'}:${authUser.id}` : '';
 
-        if (error) {
-          console.warn('Admin fetch error:', error);
-          if (showToastNotice) showToast('대시보드 데이터 조회 실패: ' + (error.message || '네트워크 오류'));
+        // 마스터 관리자 전용 보안 RPC(get_admin_users_list)로 전체 사용자 목록 조회
+        let fetchedUsers = [];
+        const { data: rpcData, error: rpcError } = await sb.rpc('get_admin_users_list', { caller_user_id: currentUserId });
+
+        if (!rpcError && Array.isArray(rpcData)) {
+          fetchedUsers = [...rpcData];
         } else {
-          let fetchedUsers = Array.isArray(data) ? [...data] : [];
-          
+          // Fallback: 일반 테이블 쿼리 시도
+          const { data, error } = await sb
+            .from('seedfit_user_data')
+            .select('user_id, provider, email, name, subscription_tier, updated_at, records, projects')
+            .order('updated_at', { ascending: false });
+          if (!error && Array.isArray(data)) {
+            fetchedUsers = [...data];
+          } else if (rpcError) {
+            console.warn('Admin fetch error:', rpcError);
+            if (showToastNotice) showToast('대시보드 데이터 조회 실패: ' + (rpcError.message || '네트워크 오류'));
+          }
+        }
+
+        if (fetchedUsers.length > 0) {
           // 현재 로그인한 본인 계정이 DB에 아직 등록되지 않은 경우 로컬 데이터로 병합
-          const authUser = getAuthUser();
           if (authUser && authUser.id) {
-            const currentUserId = `${authUser.provider || 'user'}:${authUser.id}`;
             const exists = fetchedUsers.some(u => u.user_id === currentUserId);
             if (!exists) {
               fetchedUsers.unshift({
@@ -5197,6 +5224,58 @@
                 }).join('')}
               </div>
             </div>
+          </div>
+
+          <!-- 4. 등록 회원 실시간 목록 -->
+          <div class="${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900 border-neutral-800'} border p-4 rounded-3xl space-y-3 shadow-sm">
+            <div class="flex justify-between items-center">
+              <div>
+                <h3 class="text-xs font-bold ${isLightMode ? 'text-neutral-900' : 'text-white'} flex items-center space-x-1.5">
+                  <svg class="w-3.5 h-3.5 text-blue-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                  <span>등록 회원 목록 (${customerUsers.length}명)</span>
+                </h3>
+                <p class="text-[10px] text-neutral-400">마스터 관리자를 제외한 실제 가입 고객 현황</p>
+              </div>
+              <span class="text-[9px] font-semibold px-2 py-0.5 rounded-full ${isLightMode ? 'bg-blue-50 text-blue-600 border border-blue-200' : 'bg-blue-950/40 text-blue-400 border border-blue-800/60'}">
+                실시간 연동
+              </span>
+            </div>
+
+            ${customerUsers.length === 0 ? `
+              <div class="py-6 text-center text-xs text-neutral-500">
+                등록된 일반 회원이 아직 없습니다.
+              </div>
+            ` : `
+              <div class="space-y-2 pt-1">
+                ${customerUsers.map(u => {
+                  const isProUser = (u.subscription_tier === 'pro');
+                  const providerName = u.provider === 'kakao' ? '카카오' : (u.provider === 'google' ? '구글' : (u.provider || '일반'));
+                  const providerBg = u.provider === 'kakao' ? 'bg-[#fee500]/10 text-amber-300 border-[#fee500]/20' : 'bg-blue-500/10 text-blue-300 border-blue-500/20';
+                  const dateStr = u.updated_at ? new Date(u.updated_at).toLocaleDateString() : '-';
+                  return `
+                    <div class="p-3 rounded-2xl ${isLightMode ? 'bg-neutral-50 border border-neutral-200/80' : 'bg-neutral-950/60 border border-neutral-800/80'} flex items-center justify-between text-xs">
+                      <div class="space-y-0.5 min-w-0">
+                        <div class="flex items-center space-x-1.5">
+                          <span class="font-bold ${isLightMode ? 'text-neutral-900' : 'text-white'} truncate">${escapeHtml(u.name || '익명')}</span>
+                          <span class="text-[9px] px-1.5 py-0.5 rounded border font-medium ${providerBg}">${providerName}</span>
+                          <span class="text-[9px] px-1.5 py-0.5 rounded font-bold ${isProUser ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-neutral-800 text-neutral-400'}">
+                            ${isProUser ? 'PRO' : 'FREE'}
+                          </span>
+                        </div>
+                        <div class="text-[10px] text-neutral-400 truncate">
+                          ${u.email ? escapeHtml(u.email) : '이메일 정보 없음'}
+                        </div>
+                      </div>
+                      <div class="text-right shrink-0 pl-2">
+                        <div class="text-[10px] text-neutral-400 font-mono">${dateStr}</div>
+                        <div class="text-[9px] text-neutral-500">가입·활동</div>
+                      </div>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+            `}
+          </div>
         </div>
       `;
     }

@@ -6,34 +6,30 @@
 ---
 
 ## 0. 멀티 디바이스 작업 즉시 인계 가이드 (Multi-Device Quick Handoff)
-- **인계 시점**: 2026-10-07 17:00 KST
+- **인계 시점**: 2026-10-07 17:30 KST
 - **현재 원격 저장소 동기화 상태**:
-  - GitHub 비공개 저장소(`ArchistJJ/SeedFit`), `main` 브랜치에 최신 커밋까지 100% 원격 푸시 완료 (`cb2768d`).
-  - 최신 릴리즈 버전: **`v1.9.12`**
-  - Cloudflare Pages 프로덕션 무중단 배포 완료 (`https://seedfit.pro/`, `https://www.seedfit.pro/`).
+  - GitHub 비공개 저장소(`ArchistJJ/SeedFit`), `main` 브랜치에 최신 커밋까지 동기화 예정.
+  - 최신 릴리즈 버전: **`v1.9.13`**
+  - Cloudflare Pages 프로덕션 무중단 배포 연동 (`https://seedfit.pro/`, `https://www.seedfit.pro/`).
 - **최근 완료된 핵심 작업 요약**:
-  1. **카테고리 및 분산 용어 전면 개편 (v1.9.12)**:
-     - 투자 전략 명칭: **'일반투자', '핸디투자'**로 전면 통일 (기존 전략투자 배제).
-     - 분산 조합 명칭: **'단일', '2묶음', '3묶음'**으로 앱 전역(입력창, 필터, 교차분석 매트릭스, 통계 그래프) 변경.
-     - 과거 레거시 데이터(승무패, 언옵, 핸디, 전략투자, 2폴, 3폴 등) 자동 호환 마이그레이션 탑재.
-  2. **마스터 관리자 계정 유료 통계 완전 제외 (DB & 프론트엔드)**:
-     - 마스터 관리자(`wpdntm0428@gmail.com`)는 결제 없이 무상 Pro를 이용하는 운영자이므로, **현재 구독수, 월 구독 매출(MRR), 구독 전환율, 가입자 통계에서 관리자 계정을 100% 제외**.
-     - Supabase DB RPC(`get_business_summary`) 및 클라이언트 대시보드(`renderAdminTab`)에서 마스터 관리자 제외 검증 완료 (`total_users: 1`, `pro_users: 0`, `mrr_usd: 0.0`).
-  3. **관리자 페이지 화면 정돈**:
-     - 연동 완료된 "결제 시스템 연동 준비 현황" 섹션 완전 삭제.
-     - 관리자 탭은 오직 `wpdntm0428@gmail.com` 단독 접근만 허용(일반 사용자 탭 노출 차단).
+  1. **통계 분석 탭 교차 필터링 전면 동기화 (v1.9.13)**:
+     - `normalizeCategory` 및 `normalizeFold` 정규화 헬퍼 함수를 매트릭스 테이블, 성과 카드, 상단 필터링(`comboRecords`), 손익 그래프에 100% 일원화 적용.
+     - 셀 및 행/열 헤더 터치 시 상단 KPI 카드(승률, 순손익, 총 투자금액, 총 회수금액) 및 손익 곡선이 셀 수치와 100% 한치의 오차도 없이 완벽 동기화.
+  2. **관리자 탭 가입자 0명 오류 해결 및 회원 목록 실시간 연동 (v1.9.13)**:
+     - RLS로 인한 타 유저 비노출 문제를 마스터 관리자 단독 보안 RPC(`get_admin_users_list`)로 해결 (`SECURITY DEFINER` 권한, 관리자 검증 가드 탑재).
+     - 관리자 탭 대시보드에 **"등록 회원 실시간 목록"** UI 신설: 일반 고객(김진건 [카카오] [FREE], JJ [카카오] [FREE] 등)의 이름, 가입 수단, 등급, 활동 일시 실시간 표시.
+     - 마스터 관리자(`wpdntm0428@gmail.com`)는 유료 통계(Pro 구독수 0건, MRR $0.0)에서 100% 제외 유지.
+  3. **카테고리 및 분산 용어 전면 개편 (v1.9.12)**:
+     - 투자 전략 명칭: **'일반투자', '핸디투자'**로 전면 통일.
+     - 분산 조합 명칭: **'단일', '2묶음', '3묶음'**으로 앱 전역 변경.
   4. **Lemon Squeezy 정기 결제 실패·연체 유예(Past Due) 대응 시스템 (v1.9.11)**:
      - 2달 차 자동 결제 실패 시 `past_due` 전환, 3일(72시간) 유예 기간 부여.
-     - 앱 접속/화면 복귀 시마다 결제 수단 변경 Apple HIG 모달 지속 노출.
      - 고객센터 문의 없이 Lemon Squeezy 카드 갱신 다이렉트 URL(`urls.update_payment_method`)로 1초 만에 새 카드 번호 직접 입력 지원.
-     - 3일 경과 시 Free 플랜 강등 및 7일 데이터 보존 카운트다운 시작.
-  5. **라이브 웹훅 공식 등록 완료**:
-     - 9개 핵심 이벤트(`order_created`, `subscription_created`, `subscription_updated`, `subscription_cancelled`, `subscription_resumed`, `subscription_expired`, `subscription_payment_failed`, `subscription_payment_success`, `subscription_payment_recovered`) 등록 완료.
 - **다른 PC에서 작업 시작 3단계**:
   1. 저장소 최신화: 작업 디렉토리 터미널에서 `git pull origin main` 실행.
   2. 로컬 보안 키 파일 확인: `.gitignore` 처리된 로컬 보안 파일(`AUTH_CREDENTIALS_LOCAL.md`)이 해당 PC에 존재하는지 확인.
   3. AI 어시스턴트에게 첫 프롬프트 전달:
-     > *"ACTIVE_CONTEXT.md 문서를 읽고 이전 세션에서 진행된 작업 맥락과 v1.9.12 상태를 파악한 뒤, 다음 작업(로드맵)을 이어서 진행해줘."*
+     > *"ACTIVE_CONTEXT.md 문서를 읽고 이전 세션에서 진행된 작업 맥락과 v1.9.13 상태를 파악한 뒤, 다음 작업(로드맵)을 이어서 진행해줘."*
 - **다음 작업 대기 항목 (Roadmap)**:
   1. Lemon Squeezy 대시보드 Live 모드 확인 (스토어 Test mode OFF 상태).
   2. 라이브 모드 실제 카드 $7.77 1회 결제 및 단 1회의 깔끔한 텔레그램 실시간 알림 수신 최종 확인.
@@ -42,7 +38,7 @@
 
 ## 1. 프로젝트 기본 정보
 - **프로젝트 명**: 시드핏 (SeedFit - 시드 & 투자 자금 관리 공식 웹앱)
-- **최신 앱 버전**: `v1.9.12`
+- **최신 앱 버전**: `v1.9.13`
 - **공식 서비스 도메인**: [https://seedfit.pro/](https://seedfit.pro/)
 - **GitHub 저장소**: `ArchistJJ/SeedFit` (비공개 Private 전환 완료, `main` 브랜치 기준)
 - **호스팅 플랫폼**: Cloudflare Pages (`seedfit` 프로젝트, 글로벌 Anycast 엣지 CDN)
