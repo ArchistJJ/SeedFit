@@ -309,7 +309,7 @@ export async function onRequestPost(context) {
       extraNote = `\n안내: 카드 잔액 부족 또는 만료로 실패했습니다. 3일 내 미해결 시 무료 플랜으로 자동 강등됩니다.`;
     }
 
-    const telegramMsg = `[SeedFit 결제 관제 알림]${modeBadge}\n\n이벤트: ${eventTitle}\n일시: ${timeStr}\nDB 승격: ${dbStatusText}${extraNote}\n\n${statsSection}`;
+    const telegramMsg = `${eventTitle}${modeBadge}\n일시: ${timeStr}\nDB 승격: ${dbStatusText}${extraNote}\n\n${statsSection}`;
 
     await sendTelegramAlert(botToken, chatId, telegramMsg);
   }

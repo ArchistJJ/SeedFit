@@ -124,7 +124,7 @@ export async function onRequestPost(context) {
       statsSection = `[실시간 비즈니스 현황]\n• 현재 총 가입자: 집계 반영 중\n• 현재 Pro 구독자: 집계 반영 중\n• 플랜 요금: $7.77 / month`;
     }
 
-    const messageText = `[SeedFit 실시간 알림]\n\n이벤트: ${eventTitle}\n일시: ${timeStr}\n\n${statsSection}`;
+    const messageText = `${eventTitle}\n일시: ${timeStr}\n\n${statsSection}`;
 
     // 텔레그램 Bot API 전송
     const tgRes = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
