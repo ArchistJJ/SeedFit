@@ -6,28 +6,36 @@
 ---
 
 ## 0. 멀티 디바이스 작업 즉시 인계 가이드 (Multi-Device Quick Handoff)
-- **인계 시점**: 2026-10-07 16:55 KST
+- **인계 시점**: 2026-10-07 17:00 KST
 - **현재 원격 저장소 동기화 상태**:
-  - GitHub 비공개 저장소(`ArchistJJ/SeedFit`), `main` 브랜치에 최신 커밋까지 100% 원격 푸시 대기 중.
+  - GitHub 비공개 저장소(`ArchistJJ/SeedFit`), `main` 브랜치에 최신 커밋까지 100% 원격 푸시 완료 (`cb2768d`).
   - 최신 릴리즈 버전: **`v1.9.12`**
-  - Cloudflare Pages 프로덕션 무중단 배포 연동 (`https://seedfit.pro/`, `https://www.seedfit.pro/`).
+  - Cloudflare Pages 프로덕션 무중단 배포 완료 (`https://seedfit.pro/`, `https://www.seedfit.pro/`).
 - **최근 완료된 핵심 작업 요약**:
-  1. **카테고리 용어 전면 개편 (v1.9.12)**:
-     - 투자 전략 명칭을 **'일반투자', '핸디투자'**로 통일.
-     - 분산 조합 명칭을 **'단일', '2묶음', '3묶음'**으로 앱 전역(입력, 필터, 교차분석 매트릭스, 통계 그래프) 변경.
-     - 과거 레거시 데이터 자동 호환 마이그레이션 파이프라인 탑재.
+  1. **카테고리 및 분산 용어 전면 개편 (v1.9.12)**:
+     - 투자 전략 명칭: **'일반투자', '핸디투자'**로 전면 통일 (기존 전략투자 배제).
+     - 분산 조합 명칭: **'단일', '2묶음', '3묶음'**으로 앱 전역(입력창, 필터, 교차분석 매트릭스, 통계 그래프) 변경.
+     - 과거 레거시 데이터(승무패, 언옵, 핸디, 전략투자, 2폴, 3폴 등) 자동 호환 마이그레이션 탑재.
   2. **마스터 관리자 계정 유료 통계 완전 제외 (DB & 프론트엔드)**:
-     - 마스터 관리자(`wpdntm0428@gmail.com`)는 결제 없이 Pro 기능을 이용하는 운영자이므로, **현재 구독수, 월 구독 매출(MRR), 구독 전환율, 가입자 통계에서 관리자 계정을 완전히 배제**.
-     - Supabase DB RPC(`get_business_summary`) 및 클라이언트 대시보드(`renderAdminTab`)에서 마스터 관리자 제외 검증 완료 (`pro_users: 0`, `mrr_usd: 0.0`).
+     - 마스터 관리자(`wpdntm0428@gmail.com`)는 결제 없이 무상 Pro를 이용하는 운영자이므로, **현재 구독수, 월 구독 매출(MRR), 구독 전환율, 가입자 통계에서 관리자 계정을 100% 제외**.
+     - Supabase DB RPC(`get_business_summary`) 및 클라이언트 대시보드(`renderAdminTab`)에서 마스터 관리자 제외 검증 완료 (`total_users: 1`, `pro_users: 0`, `mrr_usd: 0.0`).
   3. **관리자 페이지 화면 정돈**:
      - 연동 완료된 "결제 시스템 연동 준비 현황" 섹션 완전 삭제.
+     - 관리자 탭은 오직 `wpdntm0428@gmail.com` 단독 접근만 허용(일반 사용자 탭 노출 차단).
+  4. **Lemon Squeezy 정기 결제 실패·연체 유예(Past Due) 대응 시스템 (v1.9.11)**:
+     - 2달 차 자동 결제 실패 시 `past_due` 전환, 3일(72시간) 유예 기간 부여.
+     - 앱 접속/화면 복귀 시마다 결제 수단 변경 Apple HIG 모달 지속 노출.
+     - 고객센터 문의 없이 Lemon Squeezy 카드 갱신 다이렉트 URL(`urls.update_payment_method`)로 1초 만에 새 카드 번호 직접 입력 지원.
+     - 3일 경과 시 Free 플랜 강등 및 7일 데이터 보존 카운트다운 시작.
+  5. **라이브 웹훅 공식 등록 완료**:
+     - 9개 핵심 이벤트(`order_created`, `subscription_created`, `subscription_updated`, `subscription_cancelled`, `subscription_resumed`, `subscription_expired`, `subscription_payment_failed`, `subscription_payment_success`, `subscription_payment_recovered`) 등록 완료.
 - **다른 PC에서 작업 시작 3단계**:
   1. 저장소 최신화: 작업 디렉토리 터미널에서 `git pull origin main` 실행.
   2. 로컬 보안 키 파일 확인: `.gitignore` 처리된 로컬 보안 파일(`AUTH_CREDENTIALS_LOCAL.md`)이 해당 PC에 존재하는지 확인.
   3. AI 어시스턴트에게 첫 프롬프트 전달:
      > *"ACTIVE_CONTEXT.md 문서를 읽고 이전 세션에서 진행된 작업 맥락과 v1.9.12 상태를 파악한 뒤, 다음 작업(로드맵)을 이어서 진행해줘."*
 - **다음 작업 대기 항목 (Roadmap)**:
-  1. Lemon Squeezy 대시보드 Live 모드 전환 (스토어 Test mode 해제).
+  1. Lemon Squeezy 대시보드 Live 모드 확인 (스토어 Test mode OFF 상태).
   2. 라이브 모드 실제 카드 $7.77 1회 결제 및 단 1회의 깔끔한 텔레그램 실시간 알림 수신 최종 확인.
 
 ---
@@ -105,8 +113,23 @@
 
 ---
 
-## 7. 최근 해결된 주요 UI/UX 이슈
-1. **v1.9.7 운영자 전용 실시간 텔레그램 관제 알림 시스템 구축**:
+## 7. 최근 해결된 주요 UI/UX 및 결제·보안 이슈
+1. **v1.9.12 카테고리 용어 전면 개편(일반/핸디투자, 단일/2묶음/3묶음) 및 관리자 계정 유료 통계 완전 제외**:
+   - 투자 전략 명칭을 **'일반투자', '핸디투자'**로 전면 통일 및 '전략투자' 단어 배제.
+   - 분산 조합 명칭을 **'단일', '2묶음', '3묶음'**으로 앱 전역(입력창, 필터, 교차분석 매트릭스, 통계 그래프) 변경.
+   - 마스터 관리자(`wpdntm0428@gmail.com`)는 결제 없이 무상 Pro를 이용하는 운영자이므로, **현재 구독수, 월 구독 매출(MRR), 구독 전환율, 가입자 통계에서 관리자 계정을 완전히 제외**.
+   - Supabase DB RPC(`get_business_summary`) 및 클라이언트 대시보드(`renderAdminTab`)에서 마스터 관리자 제외 검증 완료 (`total_users: 1`, `pro_users: 0`, `mrr_usd: 0.0`).
+   - 관리자 대시보드 내 "결제 시스템 연동 준비 현황" 섹션 완전 삭제.
+2. **v1.9.11 정기 결제 실패·연체 유예(Past Due) 대응 시스템 및 3일 만료 Free 강등 파이프라인 구축**:
+   - 2달 차 자동 결제 실패 시 `past_due` 전환, 3일(72시간) 유예 기간 부여.
+   - 앱 접속/화면 복귀 시마다 결제 수단 변경 Apple HIG 모달 지속 노출.
+   - Lemon Squeezy 카드 갱신 다이렉트 URL(`urls.update_payment_method`)로 고객센터 문의 없이 1초 만에 새 카드 직접 입력 지원.
+   - 3일 경과 시 Free 플랜 강등 및 7일 데이터 보존 카운트다운 시작.
+   - Supabase DB에 `payment_failed_at`, `update_card_url`, `cancelled_at`, `data_retention_until` 컬럼 구축.
+3. **v1.9.10 서비스 전수 보안 감사 및 게스트 결제 선제 가드 구축**:
+   - 비로그인 사용자가 Pro 결제 진입 시 `user_id` 누락 위험을 방지하는 로그인 모달 유도 가드 구축.
+   - 금지 단어 0건, 이모티콘 0건, 네이티브 팝업 0건, RLS 보안 100% 무결 검증.
+4. **v1.9.7 운영자 전용 실시간 텔레그램 관제 알림 시스템 구축**:
    - **보안 격리 아키텍처 (Cloudflare Pages Functions)**:
      - 텔레그램 봇 토큰 및 운영자 채팅방 ID(`642319428`)는 클라이언트 브라우저 코드에 일절 노출하지 않고, 서버리스 엔드포인트(`functions/api/notify.js`)에 안전하게 격리.
      - 사용자 대면 웹앱 UI에는 알림 발송 동작이 전혀 노출되지 않는 백그라운드 무음(Silent) 방식으로 작동.
