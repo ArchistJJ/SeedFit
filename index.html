@@ -1101,7 +1101,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.9.9').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.9.10').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -2085,6 +2085,22 @@
       }
 
       const authUser = getAuthUser();
+      if (!authUser || !authUser.id) {
+        window.closeSubscriptionModal();
+        window.showAlertDialog({
+          title: '로그인 안내',
+          message: '안전한 구독 계정 연동 및 데이터 영구 보존을 위해 먼저 로그인을 진행해주세요.',
+          notice: '로그인 후 결제를 진행하시면 모든 기기에서 즉시 Pro 혜택이 안전하게 적용됩니다.',
+          confirmText: '로그인하기',
+          icon: 'info'
+        }).then(() => {
+          if (typeof window.openAuthModal === 'function') {
+            window.openAuthModal();
+          }
+        });
+        return;
+      }
+
       let checkoutUrl = LEMON_CHECKOUT_URL;
       
       // 모바일 결제 최적화 파라미터: 거대 썸네일/로고/설명을 숨겨 한 화면에 쏙 들어오게 하고 가독성 극대화
@@ -2198,7 +2214,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.9.9';
+    const CURRENT_APP_VERSION = 'v1.9.10';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');
