@@ -156,49 +156,27 @@
     }
 
     /* ========================================================
-       모든 팝업 모달: 화이트 테마에서도 다크 테마와 100% 동일하게 일원화 유지 (격리 보호)
+       멤버십 관리 및 구독 결제 모달: 화이트 테마에서도 다크 테마와 100% 동일하게 일원화 유지
        ======================================================== */
     #membershipManagementModal,
-    #subscriptionModal,
-    #newRecordModal,
-    #settleModal,
-    #appleConfirmModal,
-    #adminUserRecordsModal {
+    #subscriptionModal {
       color-scheme: dark;
     }
     body.light-theme #membershipManagementModal .bg-amber-500\/10,
     body.light-theme #membershipManagementModal .bg-amber-500\/12,
     body.light-theme #membershipManagementModal .bg-amber-500\/15,
-    body.light-theme #subscriptionModal .bg-amber-500\/15,
-    body.light-theme #newRecordModal .bg-amber-500\/15,
-    body.light-theme #newRecordModal .bg-amber-500\/10,
-    body.light-theme #settleModal .bg-amber-500\/15,
-    body.light-theme #appleConfirmModal .bg-amber-500\/10,
-    body.light-theme #adminUserRecordsModal .bg-amber-500\/15,
-    body.light-theme #adminUserRecordsModal .bg-amber-500\/20 {
+    body.light-theme #subscriptionModal .bg-amber-500\/15 {
       background-color: rgba(245, 158, 11, 0.12) !important;
     }
     body.light-theme #membershipManagementModal .border-amber-500\/20,
     body.light-theme #membershipManagementModal .border-amber-500\/25,
     body.light-theme #membershipManagementModal .border-amber-500\/30,
-    body.light-theme #subscriptionModal .border-amber-500\/30,
-    body.light-theme #newRecordModal .border-amber-500\/30,
-    body.light-theme #settleModal .border-amber-500\/30,
-    body.light-theme #appleConfirmModal .border-amber-500\/20,
-    body.light-theme #appleConfirmModal .border-amber-500\/30,
-    body.light-theme #adminUserRecordsModal .border-amber-500\/30 {
+    body.light-theme #subscriptionModal .border-amber-500\/30 {
       border-color: rgba(245, 158, 11, 0.3) !important;
     }
     body.light-theme #membershipManagementModal .text-amber-400,
     body.light-theme #membershipManagementModal .text-amber-300,
-    body.light-theme #subscriptionModal .text-amber-300,
-    body.light-theme #newRecordModal .text-amber-400,
-    body.light-theme #newRecordModal .text-amber-300,
-    body.light-theme #settleModal .text-amber-400,
-    body.light-theme #appleConfirmModal .text-amber-400,
-    body.light-theme #appleConfirmModal .text-amber-300,
-    body.light-theme #adminUserRecordsModal .text-amber-400,
-    body.light-theme #adminUserRecordsModal .text-amber-300 {
+    body.light-theme #subscriptionModal .text-amber-300 {
       color: #fbbf24 !important;
       font-weight: 700;
     }
@@ -921,8 +899,8 @@
         </div>
 
         <!-- Detailed Notice / Caution Box -->
-        <div id="appleConfirmNoticeBox" class="hidden p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-left space-y-1" style="background-color: rgba(245, 158, 11, 0.12) !important; border-color: rgba(245, 158, 11, 0.25) !important;">
-          <p id="appleConfirmNoticeText" class="text-[11px] text-neutral-200 leading-relaxed whitespace-pre-line" style="color: #e5e5e5 !important;"></p>
+        <div id="appleConfirmNoticeBox" class="hidden p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-left space-y-1">
+          <p id="appleConfirmNoticeText" class="text-[11px] text-neutral-300 leading-relaxed whitespace-pre-line"></p>
         </div>
 
         <!-- Action Buttons -->
@@ -1269,7 +1247,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.9.21').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.9.22').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -2465,7 +2443,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.9.21';
+    const CURRENT_APP_VERSION = 'v1.9.22';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');
