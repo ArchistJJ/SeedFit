@@ -1,5 +1,37 @@
 # 프로젝트 개발 로그 (PROJECT DEVELOPMENT LOG)
 
+## [2026-10-07] v1.9.8 Lemon Squeezy 웹훅 엔드포인트 연동 및 결제 실시간 Pro 승격 자동화
+
+### 1. 요구사항 및 기획 의도
+- Lemon Squeezy 공식 승인 완료에 따른 자동 구독 결제 처리 파이프라인 구축.
+- 사용자가 테스트 모드 또는 라이브 모드에서 결제를 완료했을 때, 웹훅을 통해 Supabase DB의 사용자 `subscription_tier`를 `'pro'`로 즉시 자동 승격.
+- 구독 취소(`subscription_cancelled`) 또는 만료 시 자동으로 `'free'` 플랜 복구 처리.
+- 결제 발생 시 즉각 운영자 텔레그램 실시간 관제 봇으로 비즈니스 현황(총 가입자수, Pro 구독자수, MRR) 알림 발송.
+- Lemon Squeezy의 보안 HMAC-SHA256 서명(`X-Signature`) 검증 탑재로 외부 비인가 웹훅 위변조 원천 방어.
+
+### 2. 구현 내역
+1. **`functions/api/lemon-webhook.js` (Cloudflare Pages Functions)**:
+   - Lemon Squeezy Webhook 수신 엔드포인트 구축 (`/api/lemon-webhook`).
+   - Web Crypto API 기반 HMAC-SHA256 서명(`X-Signature`) 검증 로직 탑재 (`Wowns0428!` Secret 검증).
+   - `subscription_created`, `order_created`, `subscription_resumed` 수신 시 `targetUserId`의 `subscription_tier`를 `'pro'`로 업데이트 (PostgreSQL RLS `x-seedfit-user` 헤더 준수).
+   - `subscription_cancelled`, `subscription_expired` 수신 시 `subscription_tier`를 `'free'`로 자동 갱신.
+   - 테스트 모드 여부(`test_mode`) 및 실시간 비즈니스 지표(총 가입자수, Pro수, MRR)를 조립하여 운영자 텔레그램으로 즉시 발송.
+2. **`index.html`**:
+   - `startLemonSqueezyCheckout` 이벤트 핸들러: 결제 완료(`Checkout.Success`) 시 1.5초 및 3.8초 2중 리프레시 타이머 적용으로 지연 없는 매끄러운 Pro 화면 전환 보장.
+   - 버전 갱신: `CURRENT_APP_VERSION = 'v1.9.8'`, `sw.js?v=1.9.8`.
+3. **`sw.js` & `package.json`**:
+   - `CACHE_NAME = 'seedfit-cache-v1.9.8'`, `"version": "1.9.8"` 동기화.
+4. **`AUTH_CREDENTIALS_LOCAL.md`**:
+   - Lemon Squeezy Webhook Signing Secret (`Wowns0428!`) 및 설정 명세 안전 보관.
+
+### 3. 검증 결과
+- Node.js ESM 구문 문법 오류 0건 통과 (`functions/api/lemon-webhook.js`, `sw.js`).
+- 금지 단어('스마트', '베팅', '배팅') 0건 완전 무결 검증.
+- 유니코드 이모티콘 0건(전역 Apple HIG SVG 라인 아이콘 일원화) 유지 검증.
+- 브라우저 네이티브 다이얼로그 0건 유지 검증.
+
+---
+
 ## [2026-10-07] v1.9.7 운영자 전용 실시간 텔레그램 관제 알림 시스템 구축
 
 ### 1. 요구사항 및 기획 의도

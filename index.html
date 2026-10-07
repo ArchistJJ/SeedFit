@@ -1101,7 +1101,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.9.7').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.9.8').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -2122,7 +2122,16 @@
                   safeStorage.set(proNotifiedKey, 'true');
                   sendTelegramAdminNotification('subscription');
                 }
-                setTimeout(() => { if (typeof window.refreshSubscriptionStatus === 'function') window.refreshSubscriptionStatus(); }, 1500);
+                setTimeout(() => {
+                  if (typeof window.refreshSubscriptionStatus === 'function') {
+                    window.refreshSubscriptionStatus();
+                  }
+                }, 1500);
+                setTimeout(() => {
+                  if (typeof isUserPro === 'function' && !isUserPro() && typeof window.refreshSubscriptionStatus === 'function') {
+                    window.refreshSubscriptionStatus();
+                  }
+                }, 3800);
               }
             }
           });
@@ -2200,7 +2209,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.9.7';
+    const CURRENT_APP_VERSION = 'v1.9.8';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');

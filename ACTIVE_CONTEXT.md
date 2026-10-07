@@ -6,31 +6,33 @@
 ---
 
 ## 0. 멀티 디바이스 작업 즉시 인계 가이드 (Multi-Device Quick Handoff)
-- **인계 시점**: 2026-10-07 02:25 KST
+- **인계 시점**: 2026-10-07 14:35 KST
 - **현재 원격 저장소 동기화 상태**:
   - GitHub 비공개 저장소(`ArchistJJ/SeedFit`), `main` 브랜치에 최신 커밋까지 100% 원격 푸시 완료.
-  - 최신 릴리즈 버전: **`v1.9.7`**
+  - 최신 릴리즈 버전: **`v1.9.8`**
   - Cloudflare Pages 프로덕션 무중단 배포 완료 (`https://seedfit.pro/`, `https://www.seedfit.pro/`).
 - **최근 완료된 핵심 작업 요약**:
-  1. **Lemon Squeezy 스토어 승인 & 회신**: 심사관 Shreya 공식 승인 수신, 신원인증(Live 모드) 활성화 요청 답장 발송 완료.
-  2. **운영자 전용 텔레그램 실시간 관제 봇 구축**: 3대 핵심 트리거(신규 가입, Pro 구독, Pro 구독 취소) 연동 및 실제 수신 테스트 100% 통과.
-  3. **Supabase 실시간 집계 RPC 연동**: `get_business_summary()` 함수를 통해 가입자수, Pro 구독자수, MRR 실시간 자동 집계.
-  4. **관리자 탭 결제 체계 $7.77 일원화**: 9,900원 및 국내 PG(페이앱 등) 내용 100% 삭제, 공식 $7.77 USD (원화 병기)로 통일.
+  1. **Lemon Squeezy 스토어 최종 승인 완료**: 스토어 및 제품 심사 100% 통과.
+  2. **Lemon Squeezy 공식 웹훅 엔드포인트(`functions/api/lemon-webhook.js`) 구축**:
+     - HMAC-SHA256 서명(`X-Signature`) 검증 (`Wowns0428!`).
+     - 구독 결제 발생(`subscription_created`, `order_created`) 시 Supabase DB `subscription_tier: 'pro'` 실시간 승격.
+     - 구독 해지/만료 시 `subscription_tier: 'free'` 자동 갱신.
+     - 운영자 텔레그램 실시간 결제 관제 알림(테스트/라이브 뱃지, 회원수, MRR) 즉시 발송 연동.
+  3. **인앱 결제 완료 시 2중 자동 리프레시**: 1.5초 및 3.8초 2중 타이머로 딜레이 없는 Pro 화면 전환 지원.
 - **다른 PC에서 작업 시작 3단계**:
   1. 저장소 최신화: 작업 디렉토리 터미널에서 `git pull origin main` 실행.
   2. 로컬 보안 키 파일 확인: `.gitignore` 처리된 로컬 보안 파일(`AUTH_CREDENTIALS_LOCAL.md`)이 해당 PC에 존재하는지 확인.
   3. AI 어시스턴트에게 첫 프롬프트 전달:
-     > *"ACTIVE_CONTEXT.md 문서를 읽고 이전 세션에서 진행된 작업 맥락과 v1.9.7 상태를 파악한 뒤, 다음 작업(로드맵)을 이어서 진행해줘."*
+     > *"ACTIVE_CONTEXT.md 문서를 읽고 이전 세션에서 진행된 작업 맥락과 v1.9.8 상태를 파악한 뒤, 다음 작업(로드맵)을 이어서 진행해줘."*
 - **다음 작업 대기 항목 (Roadmap)**:
-  1. Lemon Squeezy 심사관(Shreya) 회신 확인 $\rightarrow$ 대시보드 Live 모드 전환 확인.
-  2. Lemon Squeezy 웹훅(Webhook) 엔드포인트(`functions/api/lemon-webhook.js`) 구현 및 대시보드 Webhook 등록 $\rightarrow$ 결제 시 자동 Pro 승격 연동.
-  3. 라이브 모드 실제 $7.77 결제 1회 테스트.
+  1. Lemon Squeezy 대시보드 Test mode 결제 1회 진행 $\rightarrow$ 웹훅 수신, DB 승격, 텔레그램 알림, Pro 기능 언락 4단계 검증.
+  2. 검증 완료 후 대시보드 Live mode 전환 및 실 결제 점검.
 
 ---
 
 ## 1. 프로젝트 기본 정보
 - **프로젝트 명**: 시드핏 (SeedFit - 시드 & 투자 자금 관리 공식 웹앱)
-- **최신 앱 버전**: `v1.9.7`
+- **최신 앱 버전**: `v1.9.8`
 - **공식 서비스 도메인**: [https://seedfit.pro/](https://seedfit.pro/)
 - **GitHub 저장소**: `ArchistJJ/SeedFit` (비공개 Private 전환 완료, `main` 브랜치 기준)
 - **호스팅 플랫폼**: Cloudflare Pages (`seedfit` 프로젝트, 글로벌 Anycast 엣지 CDN)
