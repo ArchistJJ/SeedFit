@@ -1146,7 +1146,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.9.16').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.9.17').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -2342,7 +2342,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.9.16';
+    const CURRENT_APP_VERSION = 'v1.9.17';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');
@@ -4272,20 +4272,25 @@
             <table class="w-full text-xs border-collapse">
               <thead>
                 <tr class="border-b ${isLightMode ? 'border-neutral-200 text-neutral-500' : 'border-neutral-800 text-neutral-400'}">
-                  <th onclick="window.resetStatsFilters()" class="p-2 text-left font-semibold text-[10px] cursor-pointer hover:text-white">
+                  <th class="p-2 text-left font-semibold text-[10px] select-none ${isLightMode ? 'text-neutral-500' : 'text-neutral-400'}">
                     전략 ╲ 묶음
                   </th>
-                  ${folds.map(f => `
-                    <th onclick="window.setStatsCombo('ALL', '${f}')" class="p-2 text-center font-bold cursor-pointer transition hover:text-white ${statsFoldFilter === f ? 'text-indigo-400 underline' : ''}">
-                      ${f}
-                    </th>
-                  `).join('')}
+                  ${folds.map(f => {
+                    const isFoldActive = (statsFoldFilter === f);
+                    return `
+                      <th onclick="window.setStatsCombo('ALL', '${f}')" class="p-2 text-center font-bold cursor-pointer transition select-none ${isFoldActive ? (isLightMode ? 'text-indigo-600 underline font-black decoration-2' : 'text-indigo-400 underline font-black decoration-2') : (isLightMode ? 'text-neutral-600 hover:text-neutral-900' : 'text-neutral-400 hover:text-neutral-200')}">
+                        ${f}
+                      </th>
+                    `;
+                  }).join('')}
                 </tr>
               </thead>
               <tbody class="divide-y ${isLightMode ? 'divide-neutral-100' : 'divide-neutral-800/60'}">
-                ${matrixData.map(row => `
+                ${matrixData.map(row => {
+                  const isCatActive = (statsCategoryFilter === row.cat);
+                  return `
                   <tr>
-                    <td onclick="window.setStatsCombo('${row.cat}', 'ALL')" class="p-2 font-bold cursor-pointer transition hover:opacity-80 ${statsCategoryFilter === row.cat ? 'text-blue-400 underline' : (isLightMode ? 'text-neutral-800' : 'text-white')}">
+                    <td onclick="window.setStatsCombo('${row.cat}', 'ALL')" class="p-2 font-bold cursor-pointer transition hover:opacity-80 select-none ${isCatActive ? (isLightMode ? 'text-blue-600 underline font-black decoration-2' : 'text-blue-400 underline font-black decoration-2') : (isLightMode ? 'text-neutral-800 hover:text-neutral-950' : 'text-white hover:text-neutral-200')}">
                       <span class="px-2 py-0.5 rounded-md text-[10px] ${getCategoryColorClass(row.cat)}">${row.cat}</span>
                     </td>
                     ${row.cells.map(cell => {
@@ -4294,23 +4299,23 @@
                         <td onclick="window.setStatsCombo('${cell.cat}', '${cell.fold}')" class="p-1 text-center cursor-pointer transition">
                           <div class="py-1 px-1 rounded-xl transition ${isCellActive ? (isLightMode ? 'bg-blue-50 border border-blue-500 font-bold shadow-sm' : 'bg-blue-500/20 border border-blue-500 font-bold shadow-sm') : (isLightMode ? 'hover:bg-neutral-100/80 border border-transparent' : 'hover:bg-neutral-800/50 border border-transparent')}">
                             ${cell.count === 0 ? `
-                              <div class="text-[10px] text-neutral-500">-</div>
-                              <div class="text-[9px] text-neutral-600">0건</div>
+                              <div class="text-[10px] ${isLightMode ? 'text-neutral-400' : 'text-neutral-500'}">-</div>
+                              <div class="text-[9px] ${isLightMode ? 'text-neutral-500' : 'text-neutral-600'}">0건</div>
                             ` : `
-                              <div class="text-[11px] font-bold font-mono ${cell.winRate !== null && cell.winRate >= 50 ? 'text-emerald-400' : (cell.winRate !== null ? 'text-rose-400' : 'text-neutral-400')}">
+                              <div class="text-[11px] font-bold font-mono ${cell.winRate !== null && cell.winRate >= 50 ? (isLightMode ? 'text-emerald-600' : 'text-emerald-400') : (cell.winRate !== null ? (isLightMode ? 'text-rose-600' : 'text-rose-400') : (isLightMode ? 'text-neutral-500' : 'text-neutral-400'))}">
                                 ${cell.winRate !== null ? cell.winRate + '%' : '-'}
                               </div>
-                              <div class="text-[9px] font-mono font-medium ${cell.netProfit > 0 ? 'text-emerald-400' : (cell.netProfit < 0 ? 'text-rose-400' : 'text-neutral-400')}">
+                              <div class="text-[9px] font-mono font-medium ${cell.netProfit > 0 ? (isLightMode ? 'text-emerald-600' : 'text-emerald-400') : (cell.netProfit < 0 ? (isLightMode ? 'text-rose-600' : 'text-rose-400') : (isLightMode ? 'text-neutral-500' : 'text-neutral-400'))}">
                                 ${cell.netProfit > 0 ? '+' : ''}${cell.netProfit >= 10000 || cell.netProfit <= -10000 ? (cell.netProfit/10000).toFixed(1)+'만' : cell.netProfit.toLocaleString()}
                               </div>
-                              <div class="text-[9px] text-neutral-500 font-mono">${cell.count}건</div>
+                              <div class="text-[9px] ${isLightMode ? 'text-neutral-500' : 'text-neutral-500'} font-mono">${cell.count}건</div>
                             `}
                           </div>
                         </td>
                       `;
                     }).join('')}
                   </tr>
-                `).join('')}
+                `}).join('')}
               </tbody>
             </table>
           </div>
