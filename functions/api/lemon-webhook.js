@@ -158,18 +158,40 @@ export async function onRequestPost(context) {
   // 4. Supabase DB 사용자 subscription_tier 동기화
   let dbUpdated = false;
   let dbError = null;
+  const newTier = isProUpgrade ? 'pro' : (isProCancellation ? 'free' : null);
 
-  if (targetUserId) {
-    const newTier = isProUpgrade ? 'pro' : (isProCancellation ? 'free' : null);
+  if (newTier) {
+    let resolvedUserId = targetUserId;
 
-    if (newTier) {
+    // 만약 targetUserId가 없다면 userEmail 기준으로 사용자 식별 시도
+    if (!resolvedUserId && userEmail && userEmail !== '알 수 없음') {
       try {
-        const patchRes = await fetch(`${SUPABASE_URL}/rest/v1/seedfit_user_data?user_id=eq.${encodeURIComponent(targetUserId)}`, {
+        const findRes = await fetch(`${SUPABASE_URL}/rest/v1/seedfit_user_data?email=eq.${encodeURIComponent(userEmail)}&select=user_id`, {
+          headers: {
+            'apikey': SUPABASE_ANON_KEY,
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'x-seedfit-user': `email:${userEmail}`
+          }
+        });
+        if (findRes.ok) {
+          const rows = await findRes.json();
+          if (Array.isArray(rows) && rows.length > 0 && rows[0].user_id) {
+            resolvedUserId = rows[0].user_id;
+          }
+        }
+      } catch (e) {
+        console.warn('Email fallback user lookup error:', e);
+      }
+    }
+
+    if (resolvedUserId) {
+      try {
+        const patchRes = await fetch(`${SUPABASE_URL}/rest/v1/seedfit_user_data?user_id=eq.${encodeURIComponent(resolvedUserId)}`, {
           method: 'PATCH',
           headers: {
             'apikey': SUPABASE_ANON_KEY,
             'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-            'x-seedfit-user': targetUserId,
+            'x-seedfit-user': resolvedUserId,
             'Content-Type': 'application/json',
             'Prefer': 'return=representation'
           },

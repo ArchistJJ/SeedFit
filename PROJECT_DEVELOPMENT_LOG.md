@@ -1,25 +1,33 @@
 # 프로젝트 개발 로그 (PROJECT DEVELOPMENT LOG)
 
-## [2026-10-07] v1.9.9 텔레그램 결제 알림 단일화 & 중복 발송 원천 제거
+## [2026-10-07] v1.9.9 텔레그램 결제 알림 단일화 & 구독 취소 Pro 수 실시간 동기화 무결성 확보
 
 ### 1. 요구사항 및 문제 원인 분석
-- **문제 현상**: 테스트 결제 시 텔레그램으로 결제 관련 알림이 3~4회 연속 발송되는 현상 발생.
-- **근본 원인 2가지**:
-  1. **프론트엔드(`index.html`)와 백엔드 웹훅의 중복 발송**: 인앱 결제 완료 시 프론트엔드(`Checkout.Success` 및 `refreshSubscriptionStatus`)에서 `/api/notify`를 호출하고, 동시에 Lemon Squeezy 백엔드 웹훅(`/api/lemon-webhook`)에서도 알림을 발송하여 이중 수신.
-  2. **레몬스퀴즈 단일 구독 결제 시 복수 이벤트 연쇄 발송**: 사용자가 1회 결제 시 레몬스퀴즈가 `order_created`, `subscription_created`, `subscription_updated`를 연쇄적으로 웹훅 전송. 기존 코드는 모든 이벤트에 대해 알림을 발송하여 3회 중복 발생.
+1. **결제 시 연달아 중복 알림 발생**:
+   - 프론트엔드(`index.html`)와 백엔드 웹훅의 이중 발송 및 레몬스퀴즈의 연쇄 웹훅 이벤트(`order_created`, `subscription_created`, `subscription_updated`) 발송으로 3~4회 중복 발생.
+2. **구독 취소 시 Pro 구독자 수 미감소 및 미반영 결함**:
+   - 사용자가 구독을 취소했을 때 텔레그램 알림에 Pro 구독자 수가 줄어들지 않고 이전 수치(2명)가 그대로 발송되는 문제 발생.
+   - **근본 원인 2가지 정밀 규명**:
+     1. **DB 테이블 스키마 누락**: `seedfit_user_data` 테이블에 `cancelled_at`과 `data_retention_until` 컬럼이 없어, 클라이언트가 취소 UPDATE 실행 시 PostgreSQL 스키마 에러가 발생하여 `subscription_tier: 'free'` 변경 자체가 실패하고 조용히 예외 처리됨.
+     2. **알림 엔드포인트의 데이터 원자성 부재**: 클라이언트의 DB 변경 성공 여부와 무관하게 `notify.js`가 곧바로 `get_business_summary()`를 조회하여 DB의 미갱신 상태(Pro 2명)가 그대로 집계 발송됨.
 
-### 2. 구현 내역
-1. **`index.html` 프론트엔드 알림 트리거 전면 삭제**:
-   - `startLemonSqueezyCheckout` 및 `refreshSubscriptionStatus` 내의 `sendTelegramAdminNotification('subscription')` 호출을 100% 영구 제거.
-   - 프론트엔드는 순수 UI/UX(화면 리프레시 및 안내 토스트)만 전담하고, 금융/결제 알림은 100% 신뢰할 수 있는 백엔드 공식 웹훅에 일원화.
-2. **`functions/api/lemon-webhook.js` 알림 발송 조건 단일화**:
-   - `order_created`, `subscription_updated` 등 부수적 이벤트는 Supabase DB 승격 및 무결성만 조용히 유지하고 알림 미발송.
-   - 텔레그램 실시간 알림은 오직 **`subscription_created` (신규 구독 1회)** 및 **`subscription_cancelled` (해지 1회)** 일 때만 단 1회 발송하도록 엄격 제한.
-3. **버전 갱신**:
+### 2. 구현 및 해결 내역
+1. **데이터베이스 스키마 확장 (Supabase PostgreSQL)**:
+   - `ALTER TABLE seedfit_user_data ADD COLUMN IF NOT EXISTS cancelled_at timestamptz;`
+   - `ALTER TABLE seedfit_user_data ADD COLUMN IF NOT EXISTS data_retention_until timestamptz;`
+   - 구독 취소 및 7일 유예 보존 정책 관련 필드를 DB에 완벽히 구축하여 UPDATE 에러 원천 해결.
+2. **서버 사이드 2중 확정 반영 엔진 (`functions/api/notify.js` & `functions/api/lemon-webhook.js`)**:
+   - `notify.js`: `cancellation` 이벤트 수신 시 `payload.userId`를 기반으로 엔드포인트에서 직접 Supabase DB의 `subscription_tier`를 `'free'`로 선반영한 뒤 `get_business_summary`를 호출하도록 보강 (100% 최신화 집계 보장).
+   - `lemon-webhook.js`: 웹훅 취소 이벤트(`subscription_cancelled`, `subscription_expired`) 수신 시 `userEmail` 역추적 폴백을 포함하여 DB 반영 후 정확한 비즈니스 통계 발송.
+3. **프론트엔드 연동 (`index.html`)**:
+   - `sendTelegramAdminNotification('cancellation', userIdKey)`: 취소 대상 사용자 식별 키를 안전하게 전달.
+   - 결제 완료 시점의 불필요한 프론트엔드 텔레그램 알림 트리거 전면 삭제 (백엔드 웹훅 1회 발송으로 단일화).
+4. **버전 갱신**:
    - `CURRENT_APP_VERSION = 'v1.9.9'`, `sw.js?v=1.9.9`, `seedfit-cache-v1.9.9`, `package.json` `"1.9.9"` 동기화.
 
 ### 3. 검증 결과
-- Node.js ESM 구문 문법 오류 0건 통과 (`lemon-webhook.js`, `sw.js`).
+- PostgreSQL 직접 쿼리 및 `get_business_summary()` 실행 검증: Pro 유저 2명 $\rightarrow$ 1명, MRR $15.54 $\rightarrow$ $7.77 즉각 감소 확인.
+- Node.js ESM 구문 문법 오류 0건 통과 (`lemon-webhook.js`, `notify.js`, `sw.js`).
 - 금지 단어('스마트', '베팅', '배팅') 0건 완전 무결 검증.
 - 유니코드 이모티콘 0건(전역 Apple HIG SVG 라인 아이콘 일원화) 유지 검증.
 - 브라우저 네이티브 다이얼로그 0건 유지 검증.

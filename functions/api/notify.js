@@ -62,6 +62,26 @@ export async function onRequestPost(context) {
       eventTitle = 'SEEDFIT PRO 신규 구독';
     } else if (event === 'cancellation') {
       eventTitle = 'SEEDFIT PRO 구독 취소 (해지)';
+      // 취소 이벤트인 경우, DB 상태를 확실하게 'free'로 반영 후 집계
+      if (payload.userId) {
+        try {
+          await fetch(`${SUPABASE_URL}/rest/v1/seedfit_user_data?user_id=eq.${encodeURIComponent(payload.userId)}`, {
+            method: 'PATCH',
+            headers: {
+              'apikey': SUPABASE_ANON_KEY,
+              'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+              'x-seedfit-user': payload.userId,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              subscription_tier: 'free',
+              updated_at: new Date().toISOString()
+            })
+          });
+        } catch (patchErr) {
+          console.warn('Notify handler cancel patch error:', patchErr);
+        }
+      }
     }
 
     // Supabase RPC에서 실시간 비즈니스 통계 조회 (총 가입자수, Pro 구독자수, MRR)

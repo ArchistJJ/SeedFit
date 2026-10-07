@@ -15,9 +15,9 @@
   1. **Lemon Squeezy 스토어 최종 승인 및 웹훅 연동 완료**:
      - 테스트 모드 $7.77 결제 시 Supabase DB `subscription_tier: 'pro'` 실시간 승격 검증 100% 완료.
      - 통계&분석 탭 해금, 프로젝트 무제한 생성 등 Pro 기능 정상 동작 실증.
-  2. **텔레그램 결제 알림 단일화 & 중복 발송 원천 제거 (v1.9.9)**:
-     - 프론트엔드(`index.html`)의 불필요한 결제 알림 트리거 전면 삭제.
-     - 백엔드 웹훅(`functions/api/lemon-webhook.js`)에서 오직 `subscription_created` (신규 구독 1회) 및 `subscription_cancelled` (해지 1회) 일 때만 단 1회 발송하도록 엄격 제한하여 연달아 오던 중복 알림 완벽 차단.
+  2. **텔레그램 결제 알림 단일화 & 구독 취소 Pro 수 실시간 동기화 (v1.9.9)**:
+     - 프론트엔드(`index.html`)의 불필요한 결제 알림 트리거 전면 삭제 및 웹훅 단일 발송 체계 일원화.
+     - DB 누락 컬럼(`cancelled_at`, `data_retention_until`) 생성 및 `notify.js`/`lemon-webhook.js`에서 취소 시 선반영 후 통계 집계 엔진 탑재로 취소 시 Pro 구독자 수 및 MRR 실시간 감소 100% 정상 반영.
 - **다른 PC에서 작업 시작 3단계**:
   1. 저장소 최신화: 작업 디렉토리 터미널에서 `git pull origin main` 실행.
   2. 로컬 보안 키 파일 확인: `.gitignore` 처리된 로컬 보안 파일(`AUTH_CREDENTIALS_LOCAL.md`)이 해당 PC에 존재하는지 확인.

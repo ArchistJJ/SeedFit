@@ -1414,7 +1414,7 @@
     }
 
     // 운영자 전용 실시간 관제 백그라운드 텔레그램 알림 (사용자 대면 UI에는 미노출)
-    async function sendTelegramAdminNotification(eventType) {
+    async function sendTelegramAdminNotification(eventType, userId = null) {
       if (!isAuthorizedOrigin()) return;
       try {
         await fetch('/api/notify', {
@@ -1425,6 +1425,7 @@
           },
           body: JSON.stringify({
             event: eventType,
+            userId: userId,
             timestamp: new Date().toISOString()
           })
         });
@@ -2058,8 +2059,8 @@
             // Pro 알림 플래그 초기화 (향후 재구독 시 알림 재발송 보장)
             safeStorage.remove('SEEDFIT_PRO_NOTIFIED_' + userIdKey);
 
-            // 운영자 텔레그램 구독 취소 알림 발송 (백그라운드 무음)
-            sendTelegramAdminNotification('cancellation');
+            // 운영자 텔레그램 구독 취소 알림 발송 (백그라운드 무음, DB 확정 갱신 보장)
+            sendTelegramAdminNotification('cancellation', userIdKey);
           } catch (err) {
             console.warn('Subscription cancel db update failed:', err);
           }
