@@ -81,6 +81,36 @@
       border: 2px solid rgba(245, 158, 11, 0.45) !important;
     }
 
+    /* 대기중(정산하기) 은은하고 고급스러운 글로우 페이드 효과 (크기 변화 없는 정적 형태 유지) */
+    @keyframes pendingGlowAmberDark {
+      0%, 100% {
+        box-shadow: 0 0 0px 0px rgba(245, 158, 11, 0);
+        border-color: rgba(245, 158, 11, 0.3);
+      }
+      50% {
+        box-shadow: 0 0 10px 1.5px rgba(245, 158, 11, 0.45);
+        border-color: rgba(245, 158, 11, 0.75);
+      }
+    }
+    @keyframes pendingGlowAmberLight {
+      0%, 100% {
+        box-shadow: 0 0 0px 0px rgba(217, 119, 6, 0);
+        border-color: rgba(251, 191, 36, 0.45);
+      }
+      50% {
+        box-shadow: 0 0 8px 1.5px rgba(245, 158, 11, 0.35);
+        border-color: rgba(217, 119, 6, 0.75);
+      }
+    }
+    .pending-glow-badge-dark {
+      animation: pendingGlowAmberDark 2.6s ease-in-out infinite !important;
+      transform: none !important;
+    }
+    .pending-glow-badge-light {
+      animation: pendingGlowAmberLight 2.6s ease-in-out infinite !important;
+      transform: none !important;
+    }
+
     /* ========================================================
        화이트 테마(라이트 모드) 전용 노란색/골드/앰버 텍스트 가독성 최적화
        - 밝은 화이트 배경에서 옅은 노란색(amber-300, amber-400)이 묻히지 않도록
@@ -1146,7 +1176,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.9.17').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.9.18').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -2342,7 +2372,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.9.17';
+    const CURRENT_APP_VERSION = 'v1.9.18';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');
@@ -3216,7 +3246,7 @@
             let profitDisplay = '';
 
             if (r.status === 'PENDING') {
-              statusBadge = `<span class="${isLightMode ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-amber-500/15 text-amber-400 border-amber-500/30'} border text-[10px] font-bold px-2 py-0.5 rounded-full animate-pulse">대기중 (정산하기)</span>`;
+              statusBadge = `<span class="${isLightMode ? 'bg-amber-100 text-amber-800 border-amber-300 pending-glow-badge-light' : 'bg-amber-500/15 text-amber-400 border-amber-500/30 pending-glow-badge-dark'} border text-[10px] font-bold px-2 py-0.5 rounded-full inline-block">대기중 (정산하기)</span>`;
               profitDisplay = `<span class="text-xs ${isLightMode ? 'text-amber-800 font-bold' : 'text-amber-400'} font-mono">진행 중</span>`;
             } else if (r.status === 'WIN') {
               const profit = (r.returnAmount || 0) - r.investAmount;
@@ -3507,7 +3537,7 @@
                       <span>달성률 ${progressPercent}%</span>
                       <span>목표 ${p.targetAmount.toLocaleString()}원</span>
                     </div>
-                    <div class="w-full h-2 bg-neutral-800 rounded-full overflow-hidden p-0.5">
+                    <div class="w-full h-2 ${isLightMode ? 'bg-neutral-200' : 'bg-neutral-800'} rounded-full overflow-hidden p-0.5">
                       <div class="h-full bg-gradient-to-r from-blue-500 to-emerald-400 rounded-full" style="width: ${progressPercent}%"></div>
                     </div>
                   </div>
@@ -3515,8 +3545,8 @@
 
                 <div class="flex justify-between items-center text-xs text-neutral-400 pt-0.5">
                   <div class="flex space-x-3 text-[11px]">
-                    <span>기록 <b class="text-white font-mono">${projRecords.length}</b>건</span>
-                    <span>승률 <b class="text-white font-mono">${winRate}%</b></span>
+                    <span>기록 <b class="${isLightMode ? 'text-neutral-900' : 'text-white'} font-mono">${projRecords.length}</b>건</span>
+                    <span>승률 <b class="${isLightMode ? 'text-neutral-900' : 'text-white'} font-mono">${winRate}%</b></span>
                     <span>순손익 <b class="font-mono ${netProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${netProfit > 0 ? '+' : ''}${netProfit.toLocaleString()}원</b></span>
                   </div>
                   <span class="text-blue-400 font-semibold text-xs flex items-center">
@@ -3665,7 +3695,7 @@
             let profitDisplay = '';
 
             if (r.status === 'PENDING') {
-              statusBadge = `<span class="${isLightMode ? 'bg-amber-100 text-amber-800 border-amber-300' : 'bg-amber-500/15 text-amber-400 border-amber-500/30'} border text-[10px] font-bold px-2 py-0.5 rounded-full animate-pulse">대기중</span>`;
+              statusBadge = `<span class="${isLightMode ? 'bg-amber-100 text-amber-800 border-amber-300 pending-glow-badge-light' : 'bg-amber-500/15 text-amber-400 border-amber-500/30 pending-glow-badge-dark'} border text-[10px] font-bold px-2 py-0.5 rounded-full inline-block">대기중</span>`;
               profitDisplay = `<span class="text-xs ${isLightMode ? 'text-amber-800 font-bold' : 'text-amber-400'} font-mono">진행 중</span>`;
             } else if (r.status === 'WIN') {
               const profit = (r.returnAmount || 0) - r.investAmount;
@@ -4341,7 +4371,7 @@
                     <span>승률 ${c.winRate}% (${c.count}건)</span>
                     <span class="font-mono">투입: ${c.invest.toLocaleString()}원</span>
                   </div>
-                  <div class="w-full h-1.5 bg-neutral-800 rounded-full overflow-hidden">
+                  <div class="w-full h-1.5 ${isLightMode ? 'bg-neutral-200' : 'bg-neutral-800'} rounded-full overflow-hidden">
                     <div class="h-full bg-blue-500 rounded-full" style="width: ${c.winRate}%"></div>
                   </div>
                 </div>
@@ -4370,7 +4400,7 @@
                     <span>승률 ${f.winRate}% (${f.count}건)</span>
                     <span class="font-mono">투입: ${f.invest.toLocaleString()}원</span>
                   </div>
-                  <div class="w-full h-1.5 bg-neutral-800 rounded-full overflow-hidden">
+                  <div class="w-full h-1.5 ${isLightMode ? 'bg-neutral-200' : 'bg-neutral-800'} rounded-full overflow-hidden">
                     <div class="h-full bg-indigo-500 rounded-full" style="width: ${f.winRate}%"></div>
                   </div>
                 </div>
