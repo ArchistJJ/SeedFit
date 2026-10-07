@@ -23,14 +23,26 @@
   <!-- Lemon Squeezy Official Checkout Overlay SDK -->
   <script src="https://assets.lemonsqueezy.com/lemon.js" defer></script>
   <style>
+    html, body {
+      touch-action: manipulation;
+      -webkit-text-size-adjust: 100%;
+      overscroll-behavior: none;
+      -webkit-overflow-scrolling: touch;
+      height: 100%;
+      width: 100%;
+      margin: 0;
+      padding: 0;
+    }
     * {
       -webkit-tap-highlight-color: transparent;
       user-select: none;
       box-sizing: border-box;
+      touch-action: manipulation;
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Pretendard", Roboto, Helvetica, Arial, sans-serif;
     }
     input, textarea, select {
       user-select: text;
+      touch-action: auto;
     }
     .custom-scroll::-webkit-scrollbar {
       display: none;
@@ -1038,6 +1050,39 @@
       }
     };
 
+    // [iOS Safari / PWA 모바일 UX 최적화] 빈 영역 더블 탭 시 브라우저 확대 줌 및 하단 여백 밀림 방지
+    let lastTouchEndTime = 0;
+    document.addEventListener('touchend', function(e) {
+      const now = Date.now();
+      if (now - lastTouchEndTime <= 320) {
+        const targetTag = (e.target && e.target.tagName) ? e.target.tagName.toUpperCase() : '';
+        // 텍스트 입력창은 더블 탭 시 커서/선택 기본 동작 유지
+        if (targetTag !== 'INPUT' && targetTag !== 'TEXTAREA' && targetTag !== 'SELECT') {
+          e.preventDefault();
+        }
+      }
+      lastTouchEndTime = now;
+    }, { passive: false });
+
+    // iOS 멀티터치 제스처 줌 방지 (화면 크기 불변 유지)
+    document.addEventListener('gesturestart', function(e) {
+      e.preventDefault();
+    }, { passive: false });
+
+    // 뷰포트 스크롤 이탈 감지 시 레이아웃 원위치 강제 보정 (하단 바 밀림 방어)
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', function() {
+        if (window.scrollY !== 0 || window.scrollX !== 0) {
+          window.scrollTo(0, 0);
+        }
+      });
+      window.visualViewport.addEventListener('scroll', function() {
+        if (window.visualViewport.pageTop > 0 || window.visualViewport.pageLeft > 0) {
+          window.scrollTo(0, 0);
+        }
+      });
+    }
+
     // [보안 Step 2] 소스 탈취 및 불법 화면 복제 방어 (Source Shield)
     try {
       // 마우스 우클릭 방지 (텍스트 입력창은 정상 사용 허용)
@@ -1176,7 +1221,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.9.18').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.9.19').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -2372,7 +2417,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.9.18';
+    const CURRENT_APP_VERSION = 'v1.9.19';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');
