@@ -630,7 +630,7 @@
             <span>추격 투자 방지 3원칙</span>
           </div>
           <ul class="space-y-1.5 text-[11px] text-neutral-400 list-disc list-inside">
-            <li><span class="text-neutral-300 font-medium">손실 만회 투자 금지:</span> 홧김에 다음 경기를 급히 찾지 마세요.</li>
+            <li><span class="text-neutral-300 font-medium">손실 만회 투자 금지:</span> 홧김에 다음 투자를 급히 찾지 마세요.</li>
             <li><span class="text-neutral-300 font-medium">시드 보호가 1순위:</span> 시드가 남아있어야 다음 기회가 옵니다.</li>
             <li><span class="text-neutral-300 font-medium">30분 쿨다운:</span> 화면을 닫고 찬물을 마시거나 산책하세요.</li>
           </ul>
@@ -638,7 +638,7 @@
 
         <div class="space-y-2 pt-1">
           <button onclick="window.startCooldownSession(30)" class="w-full py-3.5 bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-white font-bold rounded-2xl text-xs shadow-lg transition active:scale-95">
-            ⏱️ 30분 쿨다운(휴식) 세션 시작
+            30분 쿨다운(휴식) 세션 시작
           </button>
           <button onclick="window.closeMentalCareModal()" class="w-full py-2.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-400 font-semibold rounded-2xl text-xs transition">
             마인드 다잡고 닫기
@@ -2674,9 +2674,9 @@
       const isStreakTriggered = (consecutiveLosses >= threshold);
       // B. 연속 손실액이 내 평균 투자금의 2.5배 이상 (평균 투자금이 존재할 때만 판정)
       const isHeavyLossStreak = (avgInvest > 0 && consecutiveLosses >= 2 && streakLossAmount >= avgInvest * 2.5);
-      // C. 최근 경기에서 평소 평균 투자금의 2배 이상을 투자했다가 미적중 (평균 투자금이 존재할 때만 판정)
+      // C. 최근 투자에서 평소 평균 투자금의 2배 이상을 투자했다가 미적중 (평균 투자금이 존재할 때만 판정)
       const isChasingLoss = (avgInvest > 0 && lastRec && lastRec.status === 'LOSE' && lastRec.investAmount >= avgInvest * 2);
-      // D. 최근 5경기 중 4경기 이상 미적중이면서 손실 누적
+      // D. 최근 5회 투자 중 4회 이상 미적중이면서 손실 누적
       const isRecentPatternCollapse = (avgInvest > 0 && recent5.length >= 4 && recent5LossCount >= 4 && recent5NetProfit <= -avgInvest * 2);
 
       const isTriggered = isStreakTriggered || isHeavyLossStreak || isChasingLoss || isRecentPatternCollapse;
@@ -2736,8 +2736,8 @@
         if (badge) badge.textContent = `평균 투자금 대비 누적 손실 급증`;
         if (sub) sub.textContent = `최근 연속 손실액(${streak.streakLossAmount.toLocaleString()}원)이 평소 평균 투자금(${streak.avgInvest.toLocaleString()}원)${ratioText} 쿨다운이 절실한 시점입니다.`;
       } else if (streak.isRecentPatternCollapse) {
-        if (badge) badge.textContent = `최근 경기 페이스 붕괴 감지`;
-        if (sub) sub.textContent = `최근 경기들에서 지속적인 손실이 발생하고 있습니다. 흐름이 좋지 않을 때는 쉬어가는 것이 시드를 지키는 최고의 전략입니다.`;
+        if (badge) badge.textContent = `최근 투자 페이스 붕괴 감지`;
+        if (sub) sub.textContent = `최근 투자들에서 지속적인 손실이 발생하고 있습니다. 흐름이 좋지 않을 때는 쉬어가는 것이 시드를 지키는 최고의 전략입니다.`;
       } else {
         if (badge) badge.textContent = '멘탈 케어 & 마인드셋';
         if (sub) sub.textContent = `장기적인 플러스 ROI를 위해 가장 중요한 것은 철저한 멘탈과 자금 관리입니다.` + (streak.avgInvest > 0 ? ` (내 평균 투자금: ${streak.avgInvest.toLocaleString()}원)` : '');
@@ -4616,7 +4616,7 @@
                   <div>• ${(mentalCareSettings.lossStreakThreshold || 3)}회 연속 미적중(${(mentalCareSettings.lossStreakThreshold || 3)}연패) 발생 시</div>
                   <div>• 평균 대비 2.5배 이상 연속 손실 발생 시</div>
                   <div>• 평균 대비 2배 이상 단일 추격투자 실패 시</div>
-                  <div>• 최근 5경기 중 4경기 이상 손실 페이스 붕괴 시</div>
+                  <div>• 최근 5회 중 4회 이상 손실 페이스 붕괴 시</div>
                 </div>
               </div>
             </div>
@@ -5224,57 +5224,6 @@
                 }).join('')}
               </div>
             </div>
-          </div>
-
-          <!-- 4. 등록 회원 실시간 목록 -->
-          <div class="${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900 border-neutral-800'} border p-4 rounded-3xl space-y-3 shadow-sm">
-            <div class="flex justify-between items-center">
-              <div>
-                <h3 class="text-xs font-bold ${isLightMode ? 'text-neutral-900' : 'text-white'} flex items-center space-x-1.5">
-                  <svg class="w-3.5 h-3.5 text-blue-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-                  <span>등록 회원 목록 (${customerUsers.length}명)</span>
-                </h3>
-                <p class="text-[10px] text-neutral-400">마스터 관리자를 제외한 실제 가입 고객 현황</p>
-              </div>
-              <span class="text-[9px] font-semibold px-2 py-0.5 rounded-full ${isLightMode ? 'bg-blue-50 text-blue-600 border border-blue-200' : 'bg-blue-950/40 text-blue-400 border border-blue-800/60'}">
-                실시간 연동
-              </span>
-            </div>
-
-            ${customerUsers.length === 0 ? `
-              <div class="py-6 text-center text-xs text-neutral-500">
-                등록된 일반 회원이 아직 없습니다.
-              </div>
-            ` : `
-              <div class="space-y-2 pt-1">
-                ${customerUsers.map(u => {
-                  const isProUser = (u.subscription_tier === 'pro');
-                  const providerName = u.provider === 'kakao' ? '카카오' : (u.provider === 'google' ? '구글' : (u.provider || '일반'));
-                  const providerBg = u.provider === 'kakao' ? 'bg-[#fee500]/10 text-amber-300 border-[#fee500]/20' : 'bg-blue-500/10 text-blue-300 border-blue-500/20';
-                  const dateStr = u.updated_at ? new Date(u.updated_at).toLocaleDateString() : '-';
-                  return `
-                    <div class="p-3 rounded-2xl ${isLightMode ? 'bg-neutral-50 border border-neutral-200/80' : 'bg-neutral-950/60 border border-neutral-800/80'} flex items-center justify-between text-xs">
-                      <div class="space-y-0.5 min-w-0">
-                        <div class="flex items-center space-x-1.5">
-                          <span class="font-bold ${isLightMode ? 'text-neutral-900' : 'text-white'} truncate">${escapeHtml(u.name || '익명')}</span>
-                          <span class="text-[9px] px-1.5 py-0.5 rounded border font-medium ${providerBg}">${providerName}</span>
-                          <span class="text-[9px] px-1.5 py-0.5 rounded font-bold ${isProUser ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-neutral-800 text-neutral-400'}">
-                            ${isProUser ? 'PRO' : 'FREE'}
-                          </span>
-                        </div>
-                        <div class="text-[10px] text-neutral-400 truncate">
-                          ${u.email ? escapeHtml(u.email) : '이메일 정보 없음'}
-                        </div>
-                      </div>
-                      <div class="text-right shrink-0 pl-2">
-                        <div class="text-[10px] text-neutral-400 font-mono">${dateStr}</div>
-                        <div class="text-[9px] text-neutral-500">가입·활동</div>
-                      </div>
-                    </div>
-                  `;
-                }).join('')}
-              </div>
-            `}
           </div>
         </div>
       `;
