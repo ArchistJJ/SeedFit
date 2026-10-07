@@ -1,5 +1,26 @@
 # 프로젝트 개발 로그 (PROJECT DEVELOPMENT LOG)
 
+## [2026-10-07] v1.9.16 Lemon Squeezy 체크아웃 청구 국가 대한민국(KR) 자동 사전 선택 파라미터 적용
+
+### 1. 요구사항 및 기획 의도
+- Lemon Squeezy 체크아웃 창에서 청구 주소(Billing Address)의 선택 국가를 대한민국으로 한정하거나 기본 선택되도록 최적화 요청.
+- **플랫폼 특성 분석**: Lemon Squeezy는 MoR(Merchant of Record) 모델 특성상 글로벌 세금 처리를 대행하므로, 드롭다운 국가 목록 자체를 특정 국가만으로 필터링/숨김 처리하는 기능은 네이티브로 지원하지 않음.
+- **해결 방안**: 공식 URL 파라미터 `checkout[billing_address][country]=KR`을 결제 호출 파이프라인에 주입하여, 결제창 진입 시 청구 국가가 **'South Korea(대한민국)'로 자동 사전 선택(Pre-fill)**되도록 구현.
+- 고객이 수많은 국가 목록 중 한국을 일일이 스크롤해서 찾을 필요가 없어져 결제 UX 편의성 및 전환율 극대화.
+
+### 2. 구현 및 보강 내역
+1. **결제 파라미터 확장 (`index.html` - `window.openLemonCheckout`)**:
+   - `params` 배열에 `'checkout[billing_address][country]=KR'` 추가 완료.
+   - 데스크톱/모바일 웹앱 환경 모두에서 결제 오버레이 또는 새 창 진입 시 대한민국이 기본값으로 완벽하게 세팅됨.
+2. **버전 동기화 (v1.9.16)**:
+   - `index.html` (`v1.9.16`, `sw.js?v=1.9.16`), `sw.js` (`seedfit-cache-v1.9.16`), `package.json` (`1.9.16`).
+
+### 3. 검증 결과
+- 체크아웃 파라미터 규격(ISO 3166-1 alpha-2 `KR`) 무결성 확인.
+- JavaScript 구문 오류 0건, 금지 단어 0건, 이모티콘 0건, 네이티브 팝업 0건 준수.
+
+---
+
 ## [2026-10-07] v1.9.15 Lemon Squeezy 공식 라이브 모드 정식 결제 체크아웃 URL 전면 적용
 
 ### 1. 요구사항 및 기획 의도

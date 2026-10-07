@@ -1146,7 +1146,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.9.15').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.9.16').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -2230,14 +2230,15 @@
 
       let checkoutUrl = LEMON_CHECKOUT_URL;
       
-      // 모바일 결제 최적화 파라미터: 거대 썸네일/로고/설명을 숨겨 한 화면에 쏙 들어오게 하고 가독성 극대화
+      // 모바일 결제 최적화 파라미터: 거대 썸네일/로고/설명을 숨겨 한 화면에 쏙 들어오게 하고 가독성 극대화 및 청구 국가 대한민국(KR) 기본 사전 선택
       const params = [
         'embed=1',
         'media=0',
         'logo=0',
         'desc=0',
         'discount=0',
-        `dark=${isLightMode ? '0' : '1'}`
+        `dark=${isLightMode ? '0' : '1'}`,
+        'checkout[billing_address][country]=KR'
       ];
 
       if (authUser) {
@@ -2341,7 +2342,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.9.15';
+    const CURRENT_APP_VERSION = 'v1.9.16';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');
