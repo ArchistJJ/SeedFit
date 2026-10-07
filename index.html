@@ -1101,7 +1101,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.9.8').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.9.9').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -2115,13 +2115,6 @@
           window.LemonSqueezy.Setup({
             eventHandler: (event) => {
               if (event && (event.event === 'Checkout.Success' || event.event === 'Order.Created')) {
-                const u = getAuthUser();
-                const uKey = u && u.id ? `${u.provider || 'user'}:${u.id}` : 'user:guest';
-                const proNotifiedKey = 'SEEDFIT_PRO_NOTIFIED_' + uKey;
-                if (!safeStorage.get(proNotifiedKey)) {
-                  safeStorage.set(proNotifiedKey, 'true');
-                  sendTelegramAdminNotification('subscription');
-                }
                 setTimeout(() => {
                   if (typeof window.refreshSubscriptionStatus === 'function') {
                     window.refreshSubscriptionStatus();
@@ -2188,11 +2181,6 @@
           setVerifiedProSession(userIdKey, new Date().toISOString());
           restoreCancelledSubscriptionData();
           showToast('SeedFit Pro 정기구독이 정상 확인되었습니다. 기존 데이터가 모두 연동되었습니다.');
-          const proNotifiedKey = 'SEEDFIT_PRO_NOTIFIED_' + userIdKey;
-          if (!safeStorage.get(proNotifiedKey)) {
-            safeStorage.set(proNotifiedKey, 'true');
-            sendTelegramAdminNotification('subscription');
-          }
         } else {
           safeStorage.set('SEEDFIT_IS_PRO', 'false');
           clearVerifiedProSession();
@@ -2209,7 +2197,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.9.8';
+    const CURRENT_APP_VERSION = 'v1.9.9';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');

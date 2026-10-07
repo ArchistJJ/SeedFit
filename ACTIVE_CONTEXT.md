@@ -6,33 +6,32 @@
 ---
 
 ## 0. 멀티 디바이스 작업 즉시 인계 가이드 (Multi-Device Quick Handoff)
-- **인계 시점**: 2026-10-07 14:35 KST
+- **인계 시점**: 2026-10-07 14:48 KST
 - **현재 원격 저장소 동기화 상태**:
   - GitHub 비공개 저장소(`ArchistJJ/SeedFit`), `main` 브랜치에 최신 커밋까지 100% 원격 푸시 완료.
-  - 최신 릴리즈 버전: **`v1.9.8`**
+  - 최신 릴리즈 버전: **`v1.9.9`**
   - Cloudflare Pages 프로덕션 무중단 배포 완료 (`https://seedfit.pro/`, `https://www.seedfit.pro/`).
 - **최근 완료된 핵심 작업 요약**:
-  1. **Lemon Squeezy 스토어 최종 승인 완료**: 스토어 및 제품 심사 100% 통과.
-  2. **Lemon Squeezy 공식 웹훅 엔드포인트(`functions/api/lemon-webhook.js`) 구축**:
-     - HMAC-SHA256 서명(`X-Signature`) 검증 (`Wowns0428!`).
-     - 구독 결제 발생(`subscription_created`, `order_created`) 시 Supabase DB `subscription_tier: 'pro'` 실시간 승격.
-     - 구독 해지/만료 시 `subscription_tier: 'free'` 자동 갱신.
-     - 운영자 텔레그램 실시간 결제 관제 알림(테스트/라이브 뱃지, 회원수, MRR) 즉시 발송 연동.
-  3. **인앱 결제 완료 시 2중 자동 리프레시**: 1.5초 및 3.8초 2중 타이머로 딜레이 없는 Pro 화면 전환 지원.
+  1. **Lemon Squeezy 스토어 최종 승인 및 웹훅 연동 완료**:
+     - 테스트 모드 $7.77 결제 시 Supabase DB `subscription_tier: 'pro'` 실시간 승격 검증 100% 완료.
+     - 통계&분석 탭 해금, 프로젝트 무제한 생성 등 Pro 기능 정상 동작 실증.
+  2. **텔레그램 결제 알림 단일화 & 중복 발송 원천 제거 (v1.9.9)**:
+     - 프론트엔드(`index.html`)의 불필요한 결제 알림 트리거 전면 삭제.
+     - 백엔드 웹훅(`functions/api/lemon-webhook.js`)에서 오직 `subscription_created` (신규 구독 1회) 및 `subscription_cancelled` (해지 1회) 일 때만 단 1회 발송하도록 엄격 제한하여 연달아 오던 중복 알림 완벽 차단.
 - **다른 PC에서 작업 시작 3단계**:
   1. 저장소 최신화: 작업 디렉토리 터미널에서 `git pull origin main` 실행.
   2. 로컬 보안 키 파일 확인: `.gitignore` 처리된 로컬 보안 파일(`AUTH_CREDENTIALS_LOCAL.md`)이 해당 PC에 존재하는지 확인.
   3. AI 어시스턴트에게 첫 프롬프트 전달:
-     > *"ACTIVE_CONTEXT.md 문서를 읽고 이전 세션에서 진행된 작업 맥락과 v1.9.8 상태를 파악한 뒤, 다음 작업(로드맵)을 이어서 진행해줘."*
+     > *"ACTIVE_CONTEXT.md 문서를 읽고 이전 세션에서 진행된 작업 맥락과 v1.9.9 상태를 파악한 뒤, 다음 작업(로드맵)을 이어서 진행해줘."*
 - **다음 작업 대기 항목 (Roadmap)**:
-  1. Lemon Squeezy 대시보드 Test mode 결제 1회 진행 $\rightarrow$ 웹훅 수신, DB 승격, 텔레그램 알림, Pro 기능 언락 4단계 검증.
-  2. 검증 완료 후 대시보드 Live mode 전환 및 실 결제 점검.
+  1. Lemon Squeezy 대시보드 Live 모드 전환 (스토어 Test mode 해제).
+  2. 라이브 모드 실제 카드 $7.77 1회 결제 및 단 1회의 깔끔한 텔레그램 실시간 알림 수신 최종 확인.
 
 ---
 
 ## 1. 프로젝트 기본 정보
 - **프로젝트 명**: 시드핏 (SeedFit - 시드 & 투자 자금 관리 공식 웹앱)
-- **최신 앱 버전**: `v1.9.8`
+- **최신 앱 버전**: `v1.9.9`
 - **공식 서비스 도메인**: [https://seedfit.pro/](https://seedfit.pro/)
 - **GitHub 저장소**: `ArchistJJ/SeedFit` (비공개 Private 전환 완료, `main` 브랜치 기준)
 - **호스팅 플랫폼**: Cloudflare Pages (`seedfit` 프로젝트, 글로벌 Anycast 엣지 CDN)

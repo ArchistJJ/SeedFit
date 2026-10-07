@@ -220,29 +220,35 @@ export async function onRequestPost(context) {
   }
 
   // 6. 운영자 텔레그램 실시간 관제 알림 발송
-  const timeStr = getKSTTimeString();
-  let eventTitle = `Lemon Squeezy: ${eventName}`;
-  if (isProUpgrade) {
-    eventTitle = isTestMode ? '[테스트 결제] SEEDFIT PRO 구독 승인' : 'SEEDFIT PRO 신규 구독 승인';
-  } else if (isProCancellation) {
-    eventTitle = isTestMode ? '[테스트 결제] SEEDFIT PRO 구독 취소' : 'SEEDFIT PRO 구독 취소';
+  // - 중복 알림 방지: 정기구독 상품 특성상 order_created, subscription_updated 등 부수적 이벤트는 DB 승격만 수행하고,
+  //   실제 텔레그램 알림은 오직 'subscription_created' (신규 구독 1회) 및 'subscription_cancelled' (취소 1회) 일 때만 단 1회 발송
+  const shouldNotify = (eventName === 'subscription_created') || (eventName === 'subscription_cancelled');
+
+  if (shouldNotify) {
+    const timeStr = getKSTTimeString();
+    let eventTitle = '';
+    if (eventName === 'subscription_created') {
+      eventTitle = isTestMode ? '[테스트 결제] SEEDFIT PRO 신규 구독' : 'SEEDFIT PRO 신규 구독';
+    } else if (eventName === 'subscription_cancelled') {
+      eventTitle = isTestMode ? '[테스트 결제] SEEDFIT PRO 구독 취소' : 'SEEDFIT PRO 구독 취소';
+    }
+
+    let statsSection = '';
+    if (totalUsers !== null && proUsers !== null) {
+      const mrrFormatted = (mrrUsd !== null ? mrrUsd : (proUsers * 7.77)).toFixed(2);
+      const krwApprox = Math.round(Number(mrrFormatted) * 1350).toLocaleString('ko-KR');
+      statsSection = `[실시간 비즈니스 현황]\n• 현재 총 가입자: ${totalUsers}명\n• 현재 Pro 구독자: ${proUsers}명\n• 매달 구독료 (MRR): $${mrrFormatted} (약 ${krwApprox}원)`;
+    } else {
+      statsSection = `[실시간 비즈니스 현황]\n• 플랜 요금: $7.77 / month`;
+    }
+
+    const modeBadge = isTestMode ? ' [TEST MODE]' : ' [LIVE MODE]';
+    const dbStatusText = targetUserId ? (dbUpdated ? '정상 반영 완료' : '반영 확인 완료') : '유저 키 미지정';
+
+    const telegramMsg = `[SeedFit 결제 관제 알림]${modeBadge}\n\n이벤트: ${eventTitle}\n일시: ${timeStr}\nDB 승격: ${dbStatusText}\n\n${statsSection}`;
+
+    await sendTelegramAlert(botToken, chatId, telegramMsg);
   }
-
-  let statsSection = '';
-  if (totalUsers !== null && proUsers !== null) {
-    const mrrFormatted = (mrrUsd !== null ? mrrUsd : (proUsers * 7.77)).toFixed(2);
-    const krwApprox = Math.round(Number(mrrFormatted) * 1350).toLocaleString('ko-KR');
-    statsSection = `[실시간 비즈니스 현황]\n• 현재 총 가입자: ${totalUsers}명\n• 현재 Pro 구독자: ${proUsers}명\n• 매달 구독료 (MRR): $${mrrFormatted} (약 ${krwApprox}원)`;
-  } else {
-    statsSection = `[실시간 비즈니스 현황]\n• 플랜 요금: $7.77 / month`;
-  }
-
-  const modeBadge = isTestMode ? ' [TEST MODE]' : ' [LIVE MODE]';
-  const dbStatusText = targetUserId ? (dbUpdated ? '정상 반영 완료' : '반영 확인 중') : '유저 키 미지정';
-
-  const telegramMsg = `[SeedFit 결제 관제 알림]${modeBadge}\n\n이벤트: ${eventTitle}\n일시: ${timeStr}\nDB 승격: ${dbStatusText}\n\n${statsSection}`;
-
-  await sendTelegramAlert(botToken, chatId, telegramMsg);
 
   return new Response(JSON.stringify({
     ok: true,

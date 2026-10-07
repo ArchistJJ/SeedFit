@@ -1,5 +1,31 @@
 # 프로젝트 개발 로그 (PROJECT DEVELOPMENT LOG)
 
+## [2026-10-07] v1.9.9 텔레그램 결제 알림 단일화 & 중복 발송 원천 제거
+
+### 1. 요구사항 및 문제 원인 분석
+- **문제 현상**: 테스트 결제 시 텔레그램으로 결제 관련 알림이 3~4회 연속 발송되는 현상 발생.
+- **근본 원인 2가지**:
+  1. **프론트엔드(`index.html`)와 백엔드 웹훅의 중복 발송**: 인앱 결제 완료 시 프론트엔드(`Checkout.Success` 및 `refreshSubscriptionStatus`)에서 `/api/notify`를 호출하고, 동시에 Lemon Squeezy 백엔드 웹훅(`/api/lemon-webhook`)에서도 알림을 발송하여 이중 수신.
+  2. **레몬스퀴즈 단일 구독 결제 시 복수 이벤트 연쇄 발송**: 사용자가 1회 결제 시 레몬스퀴즈가 `order_created`, `subscription_created`, `subscription_updated`를 연쇄적으로 웹훅 전송. 기존 코드는 모든 이벤트에 대해 알림을 발송하여 3회 중복 발생.
+
+### 2. 구현 내역
+1. **`index.html` 프론트엔드 알림 트리거 전면 삭제**:
+   - `startLemonSqueezyCheckout` 및 `refreshSubscriptionStatus` 내의 `sendTelegramAdminNotification('subscription')` 호출을 100% 영구 제거.
+   - 프론트엔드는 순수 UI/UX(화면 리프레시 및 안내 토스트)만 전담하고, 금융/결제 알림은 100% 신뢰할 수 있는 백엔드 공식 웹훅에 일원화.
+2. **`functions/api/lemon-webhook.js` 알림 발송 조건 단일화**:
+   - `order_created`, `subscription_updated` 등 부수적 이벤트는 Supabase DB 승격 및 무결성만 조용히 유지하고 알림 미발송.
+   - 텔레그램 실시간 알림은 오직 **`subscription_created` (신규 구독 1회)** 및 **`subscription_cancelled` (해지 1회)** 일 때만 단 1회 발송하도록 엄격 제한.
+3. **버전 갱신**:
+   - `CURRENT_APP_VERSION = 'v1.9.9'`, `sw.js?v=1.9.9`, `seedfit-cache-v1.9.9`, `package.json` `"1.9.9"` 동기화.
+
+### 3. 검증 결과
+- Node.js ESM 구문 문법 오류 0건 통과 (`lemon-webhook.js`, `sw.js`).
+- 금지 단어('스마트', '베팅', '배팅') 0건 완전 무결 검증.
+- 유니코드 이모티콘 0건(전역 Apple HIG SVG 라인 아이콘 일원화) 유지 검증.
+- 브라우저 네이티브 다이얼로그 0건 유지 검증.
+
+---
+
 ## [2026-10-07] v1.9.8 Lemon Squeezy 웹훅 엔드포인트 연동 및 결제 실시간 Pro 승격 자동화
 
 ### 1. 요구사항 및 기획 의도
