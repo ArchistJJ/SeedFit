@@ -156,27 +156,49 @@
     }
 
     /* ========================================================
-       멤버십 관리 및 구독 결제 모달: 화이트 테마에서도 다크 테마와 100% 동일하게 일원화 유지
+       모든 팝업 모달: 화이트 테마에서도 다크 테마와 100% 동일하게 일원화 유지 (격리 보호)
        ======================================================== */
     #membershipManagementModal,
-    #subscriptionModal {
+    #subscriptionModal,
+    #newRecordModal,
+    #settleModal,
+    #appleConfirmModal,
+    #adminUserRecordsModal {
       color-scheme: dark;
     }
     body.light-theme #membershipManagementModal .bg-amber-500\/10,
     body.light-theme #membershipManagementModal .bg-amber-500\/12,
     body.light-theme #membershipManagementModal .bg-amber-500\/15,
-    body.light-theme #subscriptionModal .bg-amber-500\/15 {
+    body.light-theme #subscriptionModal .bg-amber-500\/15,
+    body.light-theme #newRecordModal .bg-amber-500\/15,
+    body.light-theme #newRecordModal .bg-amber-500\/10,
+    body.light-theme #settleModal .bg-amber-500\/15,
+    body.light-theme #appleConfirmModal .bg-amber-500\/10,
+    body.light-theme #adminUserRecordsModal .bg-amber-500\/15,
+    body.light-theme #adminUserRecordsModal .bg-amber-500\/20 {
       background-color: rgba(245, 158, 11, 0.12) !important;
     }
     body.light-theme #membershipManagementModal .border-amber-500\/20,
     body.light-theme #membershipManagementModal .border-amber-500\/25,
     body.light-theme #membershipManagementModal .border-amber-500\/30,
-    body.light-theme #subscriptionModal .border-amber-500\/30 {
+    body.light-theme #subscriptionModal .border-amber-500\/30,
+    body.light-theme #newRecordModal .border-amber-500\/30,
+    body.light-theme #settleModal .border-amber-500\/30,
+    body.light-theme #appleConfirmModal .border-amber-500\/20,
+    body.light-theme #appleConfirmModal .border-amber-500\/30,
+    body.light-theme #adminUserRecordsModal .border-amber-500\/30 {
       border-color: rgba(245, 158, 11, 0.3) !important;
     }
     body.light-theme #membershipManagementModal .text-amber-400,
     body.light-theme #membershipManagementModal .text-amber-300,
-    body.light-theme #subscriptionModal .text-amber-300 {
+    body.light-theme #subscriptionModal .text-amber-300,
+    body.light-theme #newRecordModal .text-amber-400,
+    body.light-theme #newRecordModal .text-amber-300,
+    body.light-theme #settleModal .text-amber-400,
+    body.light-theme #appleConfirmModal .text-amber-400,
+    body.light-theme #appleConfirmModal .text-amber-300,
+    body.light-theme #adminUserRecordsModal .text-amber-400,
+    body.light-theme #adminUserRecordsModal .text-amber-300 {
       color: #fbbf24 !important;
       font-weight: 700;
     }
@@ -899,8 +921,8 @@
         </div>
 
         <!-- Detailed Notice / Caution Box -->
-        <div id="appleConfirmNoticeBox" class="hidden p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-left space-y-1">
-          <p id="appleConfirmNoticeText" class="text-[11px] text-neutral-300 leading-relaxed whitespace-pre-line"></p>
+        <div id="appleConfirmNoticeBox" class="hidden p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-left space-y-1" style="background-color: rgba(245, 158, 11, 0.12) !important; border-color: rgba(245, 158, 11, 0.25) !important;">
+          <p id="appleConfirmNoticeText" class="text-[11px] text-neutral-200 leading-relaxed whitespace-pre-line" style="color: #e5e5e5 !important;"></p>
         </div>
 
         <!-- Action Buttons -->
@@ -1247,7 +1269,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.9.20').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.9.21').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -2443,7 +2465,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.9.20';
+    const CURRENT_APP_VERSION = 'v1.9.21';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');
@@ -3377,10 +3399,10 @@
     }
 
     function normalizeFold(fold) {
-      if (!fold || fold === '단일' || fold === '1폴') return '단일';
-      if (fold === '2묶음' || fold === '2조합' || fold === '2폴') return '2묶음';
-      if (fold === '3묶음' || fold === '3조합' || fold === '3폴' || fold === '4폴' || fold === '4폴이상') return '3묶음';
-      return fold;
+      if (!fold || fold === '단일') return '단일';
+      if (fold === '2묶음') return '2묶음';
+      if (fold === '3묶음') return '3묶음';
+      return '단일';
     }
 
     function getCategoryColorClass(cat) {
@@ -4135,15 +4157,15 @@
         return { fold: f, invest: fInvest, returnAmount: fReturn, profit: fProfit, winRate: fWinRate, count: foldRecs.length };
       });
 
-      // 7. 필터 상태 라벨링
+      // 7. 필터 상태 라벨링 (심플 표기: 기본 '전체 투자+전체 묶음', 선택 시 '[일반투자]+[2묶음]')
       const isFilterActive = (statsCategoryFilter !== 'ALL' || statsFoldFilter !== 'ALL');
-      let filterBadgeText = '전체 전략 + 전체 분산 묶음';
+      let filterBadgeText = '전체 투자+전체 묶음';
       if (statsCategoryFilter !== 'ALL' && statsFoldFilter !== 'ALL') {
-        filterBadgeText = `[${statsCategoryFilter}] + [${statsFoldFilter}] 교차 분석`;
+        filterBadgeText = `[${statsCategoryFilter}]+[${statsFoldFilter}]`;
       } else if (statsCategoryFilter !== 'ALL') {
-        filterBadgeText = `[${statsCategoryFilter}] 전략 분석`;
+        filterBadgeText = `[${statsCategoryFilter}]+전체 묶음`;
       } else if (statsFoldFilter !== 'ALL') {
-        filterBadgeText = `[${statsFoldFilter}] 분산 묶음 분석`;
+        filterBadgeText = `전체 투자+[${statsFoldFilter}]`;
       }
 
       // 기간 상세 탐색 라벨 계산 (미니멀 텍스트 단독 표시)
