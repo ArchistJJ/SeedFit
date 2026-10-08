@@ -1247,7 +1247,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.9.23').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.9.24').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -1612,10 +1612,11 @@
         return;
       }
 
-      // [Step 3 보안 가드] 클라이언트의 DB 권한 임의 승격(Privilege Escalation) 원천 차단
-      // 일반 회원은 클라이언트에서 스스로 subscription_tier를 'pro'로 조작하여 DB에 등록할 수 없습니다.
-      // 오직 마스터 관리자(wpdntm0428@gmail.com)만 예외적으로 'pro'가 유지되며,
-      // 신규 계정 등록 시에는 안전하게 'free'로 등록됩니다.
+      // [보안 및 무결성 원칙]
+      // 1. 일반 회원의 subscription_tier는 오직 결제 서버(Lemon Squeezy Webhook)만이 통제하는 절대적 서버 전용 필드입니다.
+      // 2. 클라이언트는 동기화 시 일반 회원의 subscription_tier 컬럼을 절대로 전송 페이로드에 포함하지 않습니다.
+      //    (이를 통해 결제 승격된 Pro 권한이 클라이언트의 upsert로 인해 'free'로 덮어써지는 사고를 원천 방지)
+      // 3. 오직 마스터 관리자(wpdntm0428@gmail.com) 계정만 예외적으로 'pro'를 유지합니다.
       const isMaster = isMasterAdminAccount();
       const payload = {
         user_id: userIdKey,
@@ -1630,8 +1631,6 @@
 
       if (isMaster) {
         payload.subscription_tier = 'pro';
-      } else if (isInitialAuth) {
-        payload.subscription_tier = 'free';
       }
 
       // 페이로드 크기 폭탄 방어 (1.5MB 초과 시 전송 사전 차단)
@@ -2443,7 +2442,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.9.23';
+    const CURRENT_APP_VERSION = 'v1.9.24';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');
