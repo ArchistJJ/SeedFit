@@ -1,5 +1,27 @@
 # 프로젝트 개발 로그 (PROJECT DEVELOPMENT LOG)
 
+## [2026-10-08] v1.9.25 매달 정기 구독 갱신 결제 성공 시 텔레그램 실시간 알림 기능 추가 탑재
+
+### 1. 요구사항 및 기획 의도
+- 사용자 피드백 100% 반영: 기존 구독 고객의 2번째 달, 3번째 달 등 매달 정기 결제일이 도래하여 구독료($7.77)가 정상 승인되었을 때, 운영자 텔레그램으로 실시간 갱신 성공 알림이 발송되도록 기능 추가.
+- 기존에는 신규 가입 1회차(`subscription_created`), 갱신 결제 실패(`subscription_payment_failed`), 구독 해지(`subscription_cancelled`)만 알림 대상이었으나, 정기 결제 성공(`subscription_payment_success`) 이벤트를 관제 대상에 포함하여 지속적인 MRR 매출 현황을 직관적으로 확인할 수 있도록 보강.
+
+### 2. 구현 및 보강 내역
+1. **웹훅 알림 관제 대상에 정기 갱신 결제 성공 이벤트 탑재 (`functions/api/lemon-webhook.js`)**:
+   - `isNotifyTarget` 조건에 `eventName === 'subscription_payment_success'` 추가.
+   - 이벤트 타이틀 포맷팅:
+     - 라이브 모드: `SEEDFIT PRO 정기 구독 갱신 성공`
+     - 테스트 모드: `[테스트 결제] SEEDFIT PRO 정기 구독 갱신 성공`
+   - 실시간 비즈니스 현황(총 가입자수, Pro 구독자수, MRR)과 함께 텔레그램 실시간 메시지 발송.
+2. **버전 동기화 (v1.9.25)**:
+   - `functions/api/lemon-webhook.js`, `index.html` (`v1.9.25`, `sw.js?v=1.9.25`), `sw.js` (`seedfit-cache-v1.9.25`), `package.json` (`1.9.25`).
+
+### 3. 검증 결과
+- 매달 정기 결제 성공 시 `SEEDFIT PRO 정기 구독 갱신 성공` 메시지가 운영자 텔레그램으로 정상 발송되는 파이프라인 구축 완료.
+- 금지 단어 0건, 이모티콘 0건, 브라우저 기본 팝업 0건 준수.
+
+---
+
 ## [2026-10-08] v1.9.24 클라이언트 subscription_tier 덮어쓰기 버그 원천 차단 및 결제 유저 Pro 정상 복구
 
 ### 1. 요구사항 및 기획 의도

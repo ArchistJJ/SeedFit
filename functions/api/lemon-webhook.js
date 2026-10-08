@@ -268,11 +268,13 @@ export async function onRequestPost(context) {
   // 6. 운영자 텔레그램 실시간 관제 알림 발송
   // - 알림 대상:
   //   1) subscription_created (신규 구독 1회)
-  //   2) subscription_cancelled / subscription_expired (구독 해지/만료 1회)
-  //   3) subscription_payment_failed (2번째 달 갱신 결제 실패 1회)
-  //   4) subscription_payment_recovered / subscription_payment_success (갱신 결제 성공/연체 해소)
+  //   2) subscription_payment_success (매달 정기 구독 갱신 결제 성공)
+  //   3) subscription_cancelled / subscription_expired (구독 해지/만료 1회)
+  //   4) subscription_payment_failed (갱신 결제 실패 1회)
+  //   5) subscription_payment_recovered (갱신 결제 성공/연체 해소)
   const isNotifyTarget = (
     eventName === 'subscription_created' ||
+    eventName === 'subscription_payment_success' ||
     eventName === 'subscription_cancelled' ||
     eventName === 'subscription_expired' ||
     eventName === 'subscription_payment_failed' ||
@@ -284,6 +286,8 @@ export async function onRequestPost(context) {
     let eventTitle = '';
     if (eventName === 'subscription_created') {
       eventTitle = isTestMode ? '[테스트 결제] SEEDFIT PRO 신규 구독' : 'SEEDFIT PRO 신규 구독';
+    } else if (eventName === 'subscription_payment_success') {
+      eventTitle = isTestMode ? '[테스트 결제] SEEDFIT PRO 정기 구독 갱신 성공' : 'SEEDFIT PRO 정기 구독 갱신 성공';
     } else if (eventName === 'subscription_cancelled' || eventName === 'subscription_expired') {
       eventTitle = isTestMode ? '[테스트 결제] SEEDFIT PRO 구독 취소' : 'SEEDFIT PRO 구독 취소';
     } else if (eventName === 'subscription_payment_failed') {
