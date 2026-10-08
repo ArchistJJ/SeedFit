@@ -6,36 +6,34 @@
 ---
 
 ## 0. 멀티 디바이스 작업 즉시 인계 가이드 (Multi-Device Quick Handoff)
-- **인계 시점**: 2026-10-08 18:22 KST
+- **인계 시점**: 2026-10-08 23:15 KST
 - **현재 원격 저장소 동기화 상태**:
   - GitHub 비공개 저장소(`ArchistJJ/SeedFit`), `main` 브랜치에 최신 커밋까지 동기화 완료.
-  - 최신 릴리즈 버전: **`v1.9.25`**
+  - 최신 릴리즈 버전: **`v1.9.26`**
   - Cloudflare Pages 프로덕션 무중단 배포 연동 (`https://seedfit.pro/`, `https://www.seedfit.pro/`).
 - **최근 완료된 핵심 작업 요약**:
-  1. **매달 정기 구독 갱신 결제 성공 텔레그램 실시간 알림 기능 추가 탑재 (v1.9.25)**:
-     - 사용자 요청 100% 반영: 기존 구독자의 2번째 달, 3번째 달 등 매달 결제일 도래 시 정기 결제가 성공하면 `SEEDFIT PRO 정기 구독 갱신 성공` 텔레그램 실시간 알림이 발송되도록 `functions/api/lemon-webhook.js`에 `subscription_payment_success` 이벤트 관제 추가.
-  2. **클라이언트 subscription_tier 덮어쓰기 버그 원천 차단 및 결제 유저 Pro 정상 복구 (v1.9.24)**:
+  1. **정기 구독 갱신 알림의 첫 달 중복 발송 차단 및 2회차 이후 갱신 전용 필터링 보강 (v1.9.26)**:
+     - 레몬스퀴즈 공식 규격상 `subscription_payment_success`는 첫 달 결제(`billing_reason: 'initial'`)와 매달 정기 갱신 결제(`billing_reason: 'renewal'`) 모두 발생함.
+     - 첫 달 결제는 `subscription_created`에서 신규 구독 알림으로 이미 발송되므로, `billing_reason === 'initial'` 건은 알림 대상에서 완전히 제외하고 오직 2회차 이후 갱신 결제(`attributes.billing_reason !== 'initial'`)일 때만 `SEEDFIT PRO 정기 구독 갱신 성공` 알림이 발송되도록 웹훅 로직 정밀 보정 완료.
+  2. **매달 정기 구독 갱신 결제 성공 텔레그램 실시간 알림 기능 탑재 (v1.9.25)**:
+     - 기존 구독자의 2번째 달, 3번째 달 등 매달 결제일 도래 시 정기 결제가 성공하면 `SEEDFIT PRO 정기 구독 갱신 성공` 텔레그램 실시간 알림이 발송되도록 `functions/api/lemon-webhook.js`에 `subscription_payment_success` 이벤트 관제 추가.
+  3. **클라이언트 subscription_tier 덮어쓰기 버그 원천 차단 및 결제 유저 Pro 정상 복구 (v1.9.24)**:
      - 실제 결제 고객('기현', `kakao:5125713325`)의 Pro 구독 권한을 Supabase DB에서 즉시 정상 복구 완료 (비즈니스 지표: 총 12명 가입, Pro 1명, MRR $7.77 즉시 반영).
      - 클라이언트(`index.html`)의 `syncToCloud` 함수에서 `subscription_tier` 필드를 전면 제거하여, 서버 웹훅이 승격해 둔 Pro 상태가 클라이언트의 upsert로 인해 'free'로 덮어써지던 치명적 결함을 원천 차단.
      - `subscription_tier`는 오직 결제 서버(Lemon Squeezy Webhook)만이 통제하는 절대적 서버 전용 필드로 아키텍처 확립.
-  3. **텔레그램 실시간 알림 템플릿 양식 간소화 개편 (v1.9.23)**:
-     - 사용자 피드백 100% 반영: 상단 타이틀 `[SeedFit 실시간 알림]` 삭제 및 `이벤트: ` 접두어 제거.
-     - 알림 메시지 첫 줄에 이벤트 내용이 직관적으로 바로 표기되도록 일원화.
-  4. **화이트 테마 일반 모달(기록/정산/컨펌/회원기록) 화이트 스타일 원상 복구 (v1.9.22)**:
-     - 사용자 피드백 100% 반영: 일반 팝업 모달의 다크 테마 강제 격리 CSS를 해제하여 화이트 테마 선택 시 기존의 깔끔한 화이트 테마로 표시되도록 원상복구.
 - **다른 PC에서 작업 시작 3단계**:
   1. 저장소 최신화: 작업 디렉토리 터미널에서 `git pull origin main` 실행.
   2. 로컬 보안 키 파일 확인: `.gitignore` 처리된 로컬 보안 파일(`AUTH_CREDENTIALS_LOCAL.md`)이 해당 PC에 존재하는지 확인.
   3. AI 어시스턴트에게 첫 프롬프트 전달:
-     > *"ACTIVE_CONTEXT.md 문서를 읽고 이전 세션에서 진행된 작업 맥락과 v1.9.25 상태를 파악한 뒤, 다음 작업(로드맵)을 이어서 진행해줘."*
+     > *"ACTIVE_CONTEXT.md 문서를 읽고 이전 세션에서 진행된 작업 맥락과 v1.9.26 상태를 파악한 뒤, 다음 작업(로드맵)을 이어서 진행해줘."*
 - **다음 작업 대기 항목 (Roadmap)**:
-  1. 결제 고객('기현')의 앱 재접속 시 Pro 권한 영구 유지 및 정상 동작 모니터링.
+  1. 결제 고객들의 다음 달 갱신 결제일 도래 시 정상 승인 및 텔레그램 단 1회 갱신 알림 수신 상태 모니터링.
 
 ---
 
 ## 1. 프로젝트 기본 정보
 - **프로젝트 명**: 시드핏 (SeedFit - 시드 & 투자 자금 관리 공식 웹앱)
-- **최신 앱 버전**: `v1.9.25`
+- **최신 앱 버전**: `v1.9.26`
 - **공식 서비스 도메인**: [https://seedfit.pro/](https://seedfit.pro/)
 - **GitHub 저장소**: `ArchistJJ/SeedFit` (비공개 Private 전환 완료, `main` 브랜치 기준)
 - **호스팅 플랫폼**: Cloudflare Pages (`seedfit` 프로젝트, 글로벌 Anycast 엣지 CDN)

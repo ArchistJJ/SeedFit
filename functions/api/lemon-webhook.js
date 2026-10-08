@@ -268,13 +268,20 @@ export async function onRequestPost(context) {
   // 6. 운영자 텔레그램 실시간 관제 알림 발송
   // - 알림 대상:
   //   1) subscription_created (신규 구독 1회)
-  //   2) subscription_payment_success (매달 정기 구독 갱신 결제 성공)
+  //   2) subscription_payment_success (매달 정기 구독 갱신 결제 성공 - 2회차 이후 renewal만)
+  //      * 레몬스퀴즈는 첫 결제(initial) 시에도 subscription_payment_success를 발송하므로,
+  //        billing_reason === 'initial'인 첫 결제 건은 중복 방지를 위해 제외하고 오직 갱신(renewal)일 때만 알림
   //   3) subscription_cancelled / subscription_expired (구독 해지/만료 1회)
   //   4) subscription_payment_failed (갱신 결제 실패 1회)
   //   5) subscription_payment_recovered (갱신 결제 성공/연체 해소)
+  const isRenewalPayment = (
+    eventName === 'subscription_payment_success' &&
+    attributes.billing_reason !== 'initial'
+  );
+
   const isNotifyTarget = (
     eventName === 'subscription_created' ||
-    eventName === 'subscription_payment_success' ||
+    isRenewalPayment ||
     eventName === 'subscription_cancelled' ||
     eventName === 'subscription_expired' ||
     eventName === 'subscription_payment_failed' ||

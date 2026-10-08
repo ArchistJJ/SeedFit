@@ -1,5 +1,32 @@
 # 프로젝트 개발 로그 (PROJECT DEVELOPMENT LOG)
 
+## [2026-10-08] v1.9.26 정기 구독 갱신 알림의 첫 달 중복 발송 차단 및 갱신(renewal) 전용 필터링 보강
+
+### 1. 요구사항 및 기획 의도
+- 사용자 피드백 100% 직시: 신규 구독자가 처음 결제했을 때 `신규 구독` 알림이 온 직후, 불과 1분 만에 `정기 구독 갱신 성공` 알림이 연이어 도착하던 결함 해결.
+- 구독 갱신 알림은 첫 달 결제가 아니라, 2번째 달 및 이후 매달 정기 결제일에 결제가 이루어질 때만 정확히 발송되어야 함.
+
+### 2. 문제 원인 분석
+- 레몬스퀴즈(Lemon Squeezy) 웹훅 시스템은 신규 구독 시작 시 `subscription_created` 이벤트를 발송한 직후, 첫 달 결제 인보이스에 대해서도 `subscription_payment_success` 이벤트를 연속으로 발송함.
+- 레몬스퀴즈 공식 API 규격상 `subscription-invoices` 데이터의 `attributes.billing_reason` 속성:
+  - 첫 달 신규 결제: `billing_reason === 'initial'`
+  - 매달 정기 갱신: `billing_reason === 'renewal'`
+- 기존 v1.9.25 코드에서 `billing_reason`을 구분하지 않고 모든 `subscription_payment_success`에 대해 갱신 알림을 발송하여 첫 결제 건에서도 중복 알림이 발생함.
+
+### 3. 구현 및 보강 내역
+1. **갱신 결제 웹훅 알림 필터링 보정 (`functions/api/lemon-webhook.js`)**:
+   - `attributes.billing_reason === 'initial'`인 첫 달 결제 건은 알림 대상에서 100% 제외.
+   - 오직 2회차 이후 정기 갱신 건(`attributes.billing_reason !== 'initial'`)일 때만 `isRenewalPayment`로 판정하여 `SEEDFIT PRO 정기 구독 갱신 성공` 알림이 발송되도록 수정.
+2. **버전 동기화 (v1.9.26)**:
+   - `functions/api/lemon-webhook.js`, `index.html` (`v1.9.26`, `sw.js?v=1.9.26`), `sw.js` (`seedfit-cache-v1.9.26`), `package.json` (`1.9.26`).
+
+### 4. 검증 결과
+- 첫 달 신규 구독 시: `subscription_created` 알림(1회)만 단독 발송되고 갱신 알림 중복 차단 확인.
+- 2번째 달 이후 갱신 시: `subscription_payment_success` (`billing_reason: renewal`)에 의해서만 단 1회 갱신 알림 발송 파이프라인 확립.
+- 금지 단어('스마트', '베팅', '배팅') 0건, 이모티콘 0건, 브라우저 기본 팝업 0건 준수.
+
+---
+
 ## [2026-10-08] v1.9.25 매달 정기 구독 갱신 결제 성공 시 텔레그램 실시간 알림 기능 추가 탑재
 
 ### 1. 요구사항 및 기획 의도
