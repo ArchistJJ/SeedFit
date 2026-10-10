@@ -472,7 +472,7 @@
 
         <img id="headerAppIcon" src="apple-touch-icon.png" class="w-8 h-8 rounded-xl object-cover shadow-sm border border-neutral-700/80" alt="SeedFit">
         <div>
-          <h1 id="screenTitle" class="text-sm sm:text-base font-bold text-white tracking-tight leading-none">www.SeedFit.pro <span class="title-tag text-[10px] sm:text-[11px] font-normal text-white">(토계부,자금관리)</span></h1>
+          <h1 id="screenTitle" class="text-sm sm:text-base font-bold text-white tracking-tight leading-none">www.SeedFit.pro <span class="title-tag text-[10px] sm:text-[11px] font-bold text-white">(토계부,자금관리)</span></h1>
           <span id="screenSubtitle" class="text-[10px] text-neutral-400 font-medium">기록 · 실시간 현황</span>
         </div>
       </div>
@@ -1290,7 +1290,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.9.31').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.9.32').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -2485,7 +2485,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.9.31';
+    const CURRENT_APP_VERSION = 'v1.9.32';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');
@@ -3058,7 +3058,7 @@
         if (titleEl) {
           titleEl.className = "text-sm sm:text-base font-bold text-neutral-900 tracking-tight leading-none";
           const subTag = titleEl.querySelector('.title-tag');
-          if (subTag) subTag.className = "title-tag text-[10px] sm:text-[11px] font-normal text-neutral-900";
+          if (subTag) subTag.className = "title-tag text-[10px] sm:text-[11px] font-bold text-neutral-900";
         }
         if (subEl) subEl.className = "text-[10px] text-neutral-500 font-medium";
         if (reloadBtn) reloadBtn.className = "w-8 h-8 rounded-full bg-neutral-200/90 hover:bg-neutral-300 flex items-center justify-center text-neutral-700 transition active:scale-90";
@@ -3075,7 +3075,7 @@
         if (titleEl) {
           titleEl.className = "text-sm sm:text-base font-bold text-white tracking-tight leading-none";
           const subTag = titleEl.querySelector('.title-tag');
-          if (subTag) subTag.className = "title-tag text-[10px] sm:text-[11px] font-normal text-white";
+          if (subTag) subTag.className = "title-tag text-[10px] sm:text-[11px] font-bold text-white";
         }
         if (subEl) subEl.className = "text-[10px] text-neutral-400 font-medium";
         if (reloadBtn) reloadBtn.className = "w-8 h-8 rounded-full bg-neutral-800/80 hover:bg-neutral-700 flex items-center justify-center text-neutral-300 transition active:scale-90";
@@ -3168,7 +3168,7 @@
         if (showBack) {
           titleEl.textContent = title;
         } else {
-          titleEl.innerHTML = `www.SeedFit.pro <span class="title-tag text-[10px] sm:text-[11px] font-normal ${isLightMode ? 'text-neutral-900' : 'text-white'}">(토계부,자금관리)</span>`;
+          titleEl.innerHTML = `www.SeedFit.pro <span class="title-tag text-[10px] sm:text-[11px] font-bold ${isLightMode ? 'text-neutral-900' : 'text-white'}">(토계부,자금관리)</span>`;
         }
         titleEl.className = `text-sm sm:text-base font-bold tracking-tight leading-none ${isLightMode ? 'text-neutral-900' : 'text-white'}`;
       }
