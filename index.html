@@ -1290,7 +1290,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.9.28').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.9.29').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -2485,7 +2485,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.9.28';
+    const CURRENT_APP_VERSION = 'v1.9.29';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');
@@ -6124,7 +6124,7 @@
         area.classList.toggle('hidden');
         if (willShow) {
           if (card) {
-            card.style.paddingBottom = '280px';
+            card.style.paddingBottom = '180px';
           }
           setTimeout(() => {
             area.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -6622,7 +6622,7 @@
         winReturnInputEl.addEventListener('focus', () => {
           const card = document.getElementById('settleModalCard');
           if (card) {
-            card.style.paddingBottom = '280px';
+            card.style.paddingBottom = '180px';
           }
           setTimeout(() => {
             document.getElementById('winAmountArea')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
