@@ -21,6 +21,7 @@
      - 카카오톡/페이스북/트위터(X) 링크 공유 시 미리보기 카드 완벽 지원(Open Graph, Twitter Cards).
      - 구글 구조화 데이터 공식 규격(`schema.org` WebApplication / FinanceApplication JSON-LD) 삽입.
      - 검색 엔진 로봇 가이드 `robots.txt` 및 사이트맵 `sitemap.xml` 파일 생성 및 연동.
+     - 구글 서치 콘솔(Google Search Console) 소유권 인증 태그(`google-site-verification`) 탑재.
   2. **정기 구독 갱신 알림의 첫 달 중복 발송 차단 및 2회차 이후 갱신 전용 필터링 보강 (v1.9.26)**:
      - 레몬스퀴즈 공식 규격상 `subscription_payment_success`는 첫 달 결제(`billing_reason: 'initial'`)와 매달 정기 갱신 결제(`billing_reason: 'renewal'`) 모두 발생함.
      - 첫 달 결제는 `subscription_created`에서 신규 구독 알림으로 이미 발송되므로, `billing_reason === 'initial'` 건은 알림 대상에서 완전히 제외하고 오직 2회차 이후 갱신 결제(`attributes.billing_reason !== 'initial'`)일 때만 `SEEDFIT PRO 정기 구독 갱신 성공` 알림이 발송되도록 웹훅 로직 정밀 보정 완료.

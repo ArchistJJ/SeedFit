@@ -15,6 +15,7 @@
    - 검색 키워드 태그: `<meta name="keywords" content="시드핏,SeedFit,토계부,토토,프로토,프로토 기록, 시드 관리, 투자 관리, 배팅, 배팅 기록, 배팅 관리, 토토 기록, 투자기록">` (사용자 지정 유입 검색어 기반)
    - 크롤러 색인 허용: `<meta name="robots" content="index, follow">`
    - 대표 URL 표준화: `<link rel="canonical" href="https://seedfit.pro/">`
+   - 구글 서치 콘솔 소유권 인증: `<meta name="google-site-verification" content="kYF0LwTtipM2Wwsq-5FvYwpksLy_vjI92ORCUXWBNv8">`
 2. **소셜 미디어 미리보기 카드 (Open Graph & Twitter Cards)**:
    - `og:type`, `og:url`, `og:title`, `og:description`, `og:image` (`https://seedfit.pro/icon-512.png`), `og:site_name`, `og:locale`
    - `twitter:card`, `twitter:url`, `twitter:title`, `twitter:description`, `twitter:image`
