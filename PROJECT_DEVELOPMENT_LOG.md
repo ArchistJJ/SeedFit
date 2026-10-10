@@ -1,5 +1,41 @@
 # 프로젝트 개발 로그 (PROJECT DEVELOPMENT LOG)
 
+## [2026-10-10] v1.9.28 정산 모달 모바일 키보드 가림·화면 깜빡임 완벽 개선 및 실제 회수 금액 수정 영구 동기화
+
+### 1. 요구사항 및 문제 원인 분석
+- **현상 1 (모바일 키보드 가림 현상)**: 모바일 기기(아이폰/안드로이드)에서 정산하기 전 '실제 회수 금액 직접 수정하기'를 열었을 때, 가상 키보드가 올라오면서 화면 하단의 입력창을 가려 타이핑 중인 금액을 볼 수 없는 문제.
+  - 원인: 정산 모달 카드(`settleModalCard`)에 스크롤 제약(`max-h`, `overflow-y-auto`)이 없고, 키보드가 팝업되었을 때 하단 스크롤 여백이 확보되지 않아 화면 하단에 고정된 입력창이 키보드 뒤에 숨겨짐.
+- **현상 2 (화면 깜빡임/상하 튕김 현상)**: 가상 키보드가 뜬 상태에서 금액을 입력하면 화면이 위아래로 심하게 요동치며 깜빡이는 현상.
+  - 원인: `window.visualViewport.scroll` 이벤트 리스너가 텍스트 입력 중에도 무조건 `window.scrollTo(0, 0)`을 강제 실행하여, 브라우저의 커서 정렬과 스크립트의 원위치 보정이 매 키 입력마다 무한 충돌하는 바운스 루프 발생.
+- **현상 3 (회수 금액 수정 후 정산 시 데이터 미반영)**: 실제 회수 금액을 직접 수정한 뒤 '정산 완료'를 누르고, 해당 카드를 다시 클릭하면 '적중 시 회수 금액'이 수정한 금액으로 변경되어 있지 않은 결함.
+  - 원인:
+    1. `confirmSettlement()`에서 수정한 금액(`retVal`)을 `rec.returnAmount`에는 저장했으나 `rec.expectedReturn`에는 덮어쓰지 않음.
+    2. 모달을 다시 열 때 `openSettleModal()`이 기존 `rec.expectedReturn`을 우선 참조하여 이전 값으로 회수금 배지를 세팅함.
+    3. `updateExpectedProfit()`가 회수 금액 직접 입력 중 상단 '적중 시 회수 금액' 배지 및 적중 버튼 하단 이익금을 실시간으로 갱신하지 않아 UI 피드백 단절.
+
+### 2. 구현 및 보강 내역
+1. **정산 모달 모바일 뷰포트 & 스크롤 최적화 (`index.html`)**:
+   - `settleModalCard`에 `max-h-[88vh] max-h-[88dvh] overflow-y-auto custom-scroll overscroll-contain` 적용.
+   - 바깥 배경 터치 시 부드럽게 닫히는 애플 순정 인터랙션 탑재.
+   - '실제 회수 금액 직접 수정하기' 토글 및 입력창 포커스 시 모달 하단 패딩(+280px)을 일시 확보하고 `scrollIntoView({ behavior: 'smooth', block: 'center' })`를 호출하여 키보드 위 중앙에 입력창이 여유롭게 노출되도록 개선.
+   - 입력 종료(blur) 및 모달 닫기 시 패딩 원상 복구.
+2. **입력 중 화면 깜빡임/튕김 원천 차단 (`index.html`)**:
+   - `visualViewport.scroll` 및 `resize` 이벤트 발생 시 `document.activeElement`가 `INPUT`, `TEXTAREA`, `SELECT`인 경우 `window.scrollTo(0, 0)` 강제 호출을 방어하여 부드럽고 안정적인 타이핑 환경 완성.
+3. **실제 회수 금액 수정 영구 동기화 & 실시간 UI 반영 (`index.html`)**:
+   - `confirmSettlement()`: `selectedSettleType === 'WIN'`일 때 수정한 회수금액(`retVal`)을 `rec.returnAmount`와 `rec.expectedReturn` 모두에 영구 동기화.
+   - `updateExpectedProfit()`: 회수금액을 입력하는 즉시 상단 카드 '적중 시 회수 금액' 배지, 순이익 배지, 적중 버튼 서브텍스트(+...원)가 타이핑 실시간으로 동기화되도록 보강.
+   - `openSettleModal()`: 이미 정산된 적중 기록은 `rec.returnAmount`를 우선 참조하고, 대기 중 기록은 수정된 `rec.expectedReturn`을 읽어와 재오픈 시에도 완벽히 유지.
+   - `resetToPending()`: 대기 중으로 복구 시에도 사용자가 수정한 회수 예정금액을 안전하게 보존.
+4. **버전 동기화 (v1.9.28)**:
+   - `index.html` (`v1.9.28`, `sw.js?v=1.9.28`), `sw.js` (`seedfit-cache-v1.9.28`), `package.json` (`1.9.28`).
+
+### 3. 검증 결과
+- 모바일 가상 키보드 오픈 시 입력창이 중앙에 안정적으로 위치하며 입력 시 화면 튕김/깜빡임 0건 확인.
+- 실제 회수 금액 수정 후 정산 $\rightarrow$ 재클릭 시 수정한 회수 금액 및 배지가 100% 정상 유지됨 확인.
+- 기존 다른 기능(통계, 프로젝트, PWA 오프라인 캐시, 클라우드 동기화 등) 무결성 100% 유지.
+
+---
+
 ## [2026-10-10] v1.9.27 구글 검색 엔진 최적화(SEO) 및 소셜 메타 태그, 검색봇 크롤링 인프라 구축
 
 ### 1. 요구사항 및 기획 의도

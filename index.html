@@ -498,8 +498,8 @@
     </div>
 
     <!-- Settlement Modal -->
-    <div id="settleModal" class="absolute inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-end justify-center">
-      <div class="w-full bg-neutral-900 border-t border-neutral-800 rounded-t-[28px] p-5 pb-safe space-y-4 shadow-2xl">
+    <div id="settleModal" onclick="if(event.target === this) window.closeSettleModal()" class="absolute inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex items-end justify-center">
+      <div id="settleModalCard" class="w-full bg-neutral-900 border-t border-neutral-800 rounded-t-[28px] p-5 pb-safe space-y-4 shadow-2xl max-h-[88vh] max-h-[88dvh] overflow-y-auto custom-scroll overscroll-contain transition-all duration-200">
         <div class="w-10 h-1 bg-neutral-700 rounded-full mx-auto"></div>
         
         <div class="flex justify-between items-start">
@@ -1136,15 +1136,17 @@
       e.preventDefault();
     }, { passive: false });
 
-    // 뷰포트 스크롤 이탈 감지 시 레이아웃 원위치 강제 보정 (하단 바 밀림 방어)
+    // 뷰포트 스크롤 이탈 감지 시 레이아웃 원위치 보정 (입력 중 화면 깜빡임/튕김 방어)
     if (window.visualViewport) {
       window.visualViewport.addEventListener('resize', function() {
-        if (window.scrollY !== 0 || window.scrollX !== 0) {
+        const isInputActive = document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA' || document.activeElement.tagName === 'SELECT');
+        if (!isInputActive && (window.scrollY !== 0 || window.scrollX !== 0)) {
           window.scrollTo(0, 0);
         }
       });
       window.visualViewport.addEventListener('scroll', function() {
-        if (window.visualViewport.pageTop > 0 || window.visualViewport.pageLeft > 0) {
+        const isInputActive = document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA' || document.activeElement.tagName === 'SELECT');
+        if (!isInputActive && (window.visualViewport.pageTop > 0 || window.visualViewport.pageLeft > 0)) {
           window.scrollTo(0, 0);
         }
       });
@@ -1288,7 +1290,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.9.27').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.9.28').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -2483,7 +2485,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.9.27';
+    const CURRENT_APP_VERSION = 'v1.9.28';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');
@@ -6115,10 +6117,23 @@
 
     window.toggleSettleReturnInput = function() {
       const area = document.getElementById('winAmountArea');
+      const input = document.getElementById('winReturnInput');
+      const card = document.getElementById('settleModalCard');
       if (area) {
+        const willShow = area.classList.contains('hidden');
         area.classList.toggle('hidden');
-        if (!area.classList.contains('hidden')) {
-          document.getElementById('winReturnInput')?.focus();
+        if (willShow) {
+          if (card) {
+            card.style.paddingBottom = '280px';
+          }
+          setTimeout(() => {
+            area.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            input?.focus();
+          }, 120);
+        } else {
+          if (card) {
+            card.style.paddingBottom = '';
+          }
         }
       }
     };
@@ -6144,32 +6159,25 @@
       const investDisp = document.getElementById('settleInvestDisplay');
       if (investDisp) investDisp.textContent = `${rec.investAmount.toLocaleString()}원`;
 
-      // 적중 시 회수 예정 금액 계산 (사전 등록된 금액 우선)
-      const expectedRet = rec.expectedReturn || (rec.returnAmount && rec.returnAmount > 0 ? rec.returnAmount : Math.round(rec.investAmount * 1.9));
-      const expectedProfit = expectedRet - rec.investAmount;
+      // 적중 시 회수 금액: 정산된 적중 금액(returnAmount)이 있으면 우선, 아니면 expectedReturn, 없으면 기본 1.9배
+      const currentRet = (rec.status === 'WIN' && rec.returnAmount && rec.returnAmount > 0)
+        ? rec.returnAmount
+        : (rec.expectedReturn && rec.expectedReturn > 0 ? rec.expectedReturn : Math.round(rec.investAmount * 1.9));
 
-      const retBadge = document.getElementById('settleExpectedReturnBadge');
-      if (retBadge) retBadge.textContent = `${expectedRet.toLocaleString()}원`;
-
-      const profitSub = document.getElementById('settleExpectedProfitSub');
-      if (profitSub) profitSub.textContent = `${expectedProfit >= 0 ? '+' : ''}${expectedProfit.toLocaleString()}원 순이익`;
-
-      const winSub = document.getElementById('btnSettleWinSub');
-      if (winSub) winSub.textContent = `${expectedProfit >= 0 ? '+' : ''}${expectedProfit.toLocaleString()}원`;
-
-      const loseSub = document.getElementById('btnSettleLoseSub');
-      if (loseSub) loseSub.textContent = `-${rec.investAmount.toLocaleString()}원`;
-
-      // 수동 입력창 기본 숨김 (그냥 적중/미적중만 누르면 되도록)
+      // 수동 입력창 기본 숨김 및 카드 패딩/스크롤 초기화
+      const card = document.getElementById('settleModalCard');
+      if (card) {
+        card.style.paddingBottom = '';
+        card.scrollTop = 0;
+      }
       document.getElementById('winAmountArea')?.classList.add('hidden');
-      document.getElementById('winReturnInput').value = expectedRet;
+      document.getElementById('winReturnInput').value = currentRet;
 
       const modal = document.getElementById('settleModal');
       modal.classList.remove('hidden');
 
       if (rec.status === 'WIN') {
         selectSettleType('WIN');
-        document.getElementById('winReturnInput').value = rec.returnAmount || expectedRet;
         document.getElementById('btnResetPending')?.classList.remove('hidden');
       } else if (rec.status === 'LOSE') {
         selectSettleType('LOSE');
@@ -6184,6 +6192,10 @@
     };
 
     window.closeSettleModal = function() {
+      const card = document.getElementById('settleModalCard');
+      if (card) {
+        card.style.paddingBottom = '';
+      }
       document.getElementById('settleModal').classList.add('hidden');
       currentSettleRecordId = null;
     };
@@ -6210,14 +6222,37 @@
       if (!rec) return;
 
       const pEl = document.getElementById('expectedProfitText');
+      const retBadge = document.getElementById('settleExpectedReturnBadge');
+      const profitSub = document.getElementById('settleExpectedProfitSub');
+      const winSub = document.getElementById('btnSettleWinSub');
+      const loseSub = document.getElementById('btnSettleLoseSub');
+
+      if (loseSub) loseSub.textContent = `-${rec.investAmount.toLocaleString()}원`;
+
+      const inputVal = parseCleanAmount(document.getElementById('winReturnInput')?.value);
+      const retVal = (inputVal && inputVal > 0)
+        ? inputVal
+        : ((rec.status === 'WIN' && rec.returnAmount && rec.returnAmount > 0)
+            ? rec.returnAmount
+            : (rec.expectedReturn && rec.expectedReturn > 0 ? rec.expectedReturn : Math.round(rec.investAmount * 1.9)));
+
+      const profit = retVal - rec.investAmount;
+
+      // 실시간으로 상단 카드 "적중 시 회수 금액", "+...원 순이익", 그리고 적중 버튼 서브텍스트를 즉각 동기화
+      if (retBadge) retBadge.textContent = `${retVal.toLocaleString()}원`;
+      if (profitSub) profitSub.textContent = `${profit >= 0 ? '+' : ''}${profit.toLocaleString()}원 순이익`;
+      if (winSub) winSub.textContent = `${profit >= 0 ? '+' : ''}${profit.toLocaleString()}원`;
+
       if (selectedSettleType === 'WIN') {
-        const retVal = parseCleanAmount(document.getElementById('winReturnInput').value) || rec.expectedReturn || Math.round(rec.investAmount * 1.9);
-        const profit = retVal - rec.investAmount;
-        pEl.textContent = `확정 순손익: ${profit >= 0 ? '+' : ''}${profit.toLocaleString()}원`;
-        pEl.className = `text-[11px] font-medium ${profit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+        if (pEl) {
+          pEl.textContent = `확정 순손익: ${profit >= 0 ? '+' : ''}${profit.toLocaleString()}원`;
+          pEl.className = `text-[11px] font-medium ${profit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`;
+        }
       } else {
-        pEl.textContent = `확정 순손익: -${rec.investAmount.toLocaleString()}원 (전액 손실)`;
-        pEl.className = 'text-[11px] font-medium text-rose-400';
+        if (pEl) {
+          pEl.textContent = `확정 순손익: -${rec.investAmount.toLocaleString()}원 (전액 손실)`;
+          pEl.className = 'text-[11px] font-medium text-rose-400';
+        }
       }
     }
 
@@ -6225,13 +6260,21 @@
       const rec = records.find(r => r.id === currentSettleRecordId);
       if (!rec) return;
 
+      const card = document.getElementById('settleModalCard');
+      if (card) {
+        card.style.paddingBottom = '';
+      }
+
       if (selectedSettleType === 'WIN') {
-        let retVal = parseCleanAmount(document.getElementById('winReturnInput').value);
+        let retVal = parseCleanAmount(document.getElementById('winReturnInput')?.value);
         if (isNaN(retVal) || !Number.isFinite(retVal) || retVal <= 0 || retVal > 100000000000) {
-          retVal = rec.expectedReturn || Math.round(rec.investAmount * 1.9);
+          retVal = (rec.returnAmount && rec.returnAmount > 0)
+            ? rec.returnAmount
+            : (rec.expectedReturn && rec.expectedReturn > 0 ? rec.expectedReturn : Math.round(rec.investAmount * 1.9));
         }
         rec.status = 'WIN';
         rec.returnAmount = retVal;
+        rec.expectedReturn = retVal; // 수정한 회수 금액 영구 동기화
       } else {
         rec.status = 'LOSE';
         rec.returnAmount = 0;
@@ -6254,8 +6297,13 @@
     function resetToPending() {
       const rec = records.find(r => r.id === currentSettleRecordId);
       if (!rec) return;
+      const card = document.getElementById('settleModalCard');
+      if (card) {
+        card.style.paddingBottom = '';
+      }
       rec.status = 'PENDING';
       rec.returnAmount = null;
+      // rec.expectedReturn은 최신 수정된 회수 금액 보존
       saveState();
       window.closeSettleModal();
       renderCurrentTab();
@@ -6567,6 +6615,26 @@
       ['inputInvestAmount', 'inputExpectedReturn', 'winReturnInput', 'inputProjectInitial', 'inputProjectTarget'].forEach(id => {
         setupAmountInputSanitizer(document.getElementById(id));
       });
+
+      // [정산 모달 회수금 직접 입력창 키보드 가림 및 스크롤 보호]
+      const winReturnInputEl = document.getElementById('winReturnInput');
+      if (winReturnInputEl) {
+        winReturnInputEl.addEventListener('focus', () => {
+          const card = document.getElementById('settleModalCard');
+          if (card) {
+            card.style.paddingBottom = '280px';
+          }
+          setTimeout(() => {
+            document.getElementById('winAmountArea')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 120);
+        });
+        winReturnInputEl.addEventListener('blur', () => {
+          const card = document.getElementById('settleModalCard');
+          if (card) {
+            card.style.paddingBottom = '';
+          }
+        });
+      }
 
       applyThemeUI();
       updateBottomTabBar();
