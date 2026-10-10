@@ -1,5 +1,38 @@
 # 프로젝트 개발 로그 (PROJECT DEVELOPMENT LOG)
 
+## [2026-10-10] v1.9.27 구글 검색 엔진 최적화(SEO) 및 소셜 메타 태그, 검색봇 크롤링 인프라 구축
+
+### 1. 요구사항 및 기획 의도
+- 구글 검색창에서 사용자가 '시드핏', 'SeedFit', '토계부', '시드 관리', '투자 관리' 등의 키워드로 검색했을 때 `https://seedfit.pro`가 공식 웹앱으로 정확하게 노출되도록 검색 엔진 최적화(SEO) 전면 적용.
+- 사용자가 지정한 공식 검색 타이틀, 요약 설명문, 검색 키워드를 완벽히 탑재하고, 카카오톡/페이스북/X(구 트위터) 링크 공유 시 미리보기(Open Graph / Twitter Card) 카드 완벽 지원.
+- 검색 로봇(Googlebot 등)의 원활한 수집을 위한 `robots.txt` 및 XML 사이트맵(`sitemap.xml`) 인프라 구축.
+- 기존 앱 기능, 디자인, 스타일, PWA 동작, 결제 플로우 등에 영향이 전혀 없도록 무결성 100% 보장.
+
+### 2. 구현 및 보강 내역
+1. **HTML `<head>` 검색 엔진 최적화 태그 탑재 (`index.html`)**:
+   - 검색 결과 제목: `<title>SeedFit (시드핏) - 토계부,투자,시드 관리 공식 웹앱</title>`
+   - 검색 결과 설명: `<meta name="description" content="시드핏(SeedFit)은 시드머니 또는 투자 자금을 체계적으로 기록하고 관리하는 웹앱입니다.">`
+   - 검색 키워드 태그: `<meta name="keywords" content="시드핏,SeedFit,토계부,토토,프로토,프로토 기록, 시드 관리, 투자 관리, 배팅, 배팅 기록, 배팅 관리, 토토 기록, 투자기록">` (사용자 지정 유입 검색어 기반)
+   - 크롤러 색인 허용: `<meta name="robots" content="index, follow">`
+   - 대표 URL 표준화: `<link rel="canonical" href="https://seedfit.pro/">`
+2. **소셜 미디어 미리보기 카드 (Open Graph & Twitter Cards)**:
+   - `og:type`, `og:url`, `og:title`, `og:description`, `og:image` (`https://seedfit.pro/icon-512.png`), `og:site_name`, `og:locale`
+   - `twitter:card`, `twitter:url`, `twitter:title`, `twitter:description`, `twitter:image`
+3. **구글 공식 규격 구조화 데이터 (Schema.org JSON-LD)**:
+   - `WebApplication`, `FinanceApplication` 스키마 탑재로 구글 검색 결과 리치 스니펫(Rich Snippets) 지원 준비.
+4. **검색봇 크롤링 파일 생성**:
+   - `robots.txt`: 모든 검색 엔진 크롤러 허용 및 사이트맵 위치 명시.
+   - `sitemap.xml`: 표준 XML 사이트맵 규격 작성.
+5. **앱 버전 동기화 (v1.9.27)**:
+   - `index.html` (`CURRENT_APP_VERSION = 'v1.9.27'`, `sw.js?v=1.9.27`), `sw.js` (`seedfit-cache-v1.9.27`), `package.json` (`1.9.27`).
+
+### 3. 검증 결과
+- 태그 구문 및 JSON-LD 스키마 정밀 검증 통과.
+- 기존 CSS, Tailwind, Kakao/Google/Supabase/LemonSqueezy SDK 및 PWA Service Worker 동작 100% 정상 유지.
+- 앱 내 사용자 대면 UI는 Apple HIG 순정 스타일 및 가이드라인 100% 준수.
+
+---
+
 ## [2026-10-08] v1.9.26 정기 구독 갱신 알림의 첫 달 중복 발송 차단 및 갱신(renewal) 전용 필터링 보강
 
 ### 1. 요구사항 및 기획 의도

@@ -10,7 +10,47 @@
   <meta http-equiv="X-Content-Type-Options" content="nosniff">
   <meta name="referrer" content="strict-origin-when-cross-origin">
   <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://developers.kakao.com https://t1.kakaocdn.net https://accounts.google.com https://cdn.jsdelivr.net https://assets.lemonsqueezy.com; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; img-src 'self' data: blob: https:; font-src 'self' data: https:; connect-src 'self' https://qeuiqvisuscvkgjvqxpe.supabase.co wss://qeuiqvisuscvkgjvqxpe.supabase.co https://accounts.google.com https://www.googleapis.com https://kauth.kakao.com https://kapi.kakao.com https://api.lemonsqueezy.com https://assets.lemonsqueezy.com https://seedfit.lemonsqueezy.com; frame-src 'self' https://accounts.google.com https://kauth.kakao.com https://app.lemonsqueezy.com https://seedfit.lemonsqueezy.com; object-src 'none'; base-uri 'self';">
-  <title>SeedFit - 시드 & 투자 자금 관리</title>
+  <title>SeedFit (시드핏) - 토계부,투자,시드 관리 공식 웹앱</title>
+  <meta name="description" content="시드핏(SeedFit)은 시드머니 또는 투자 자금을 체계적으로 기록하고 관리하는 웹앱입니다.">
+  <meta name="keywords" content="시드핏,SeedFit,토계부,토토,프로토,프로토 기록, 시드 관리, 투자 관리, 배팅, 배팅 기록, 배팅 관리, 토토 기록, 투자기록">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://seedfit.pro/">
+
+  <!-- Open Graph / Facebook / KakaoTalk -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://seedfit.pro/">
+  <meta property="og:title" content="SeedFit (시드핏) - 토계부,투자,시드 관리 공식 웹앱">
+  <meta property="og:description" content="시드핏(SeedFit)은 시드머니 또는 투자 자금을 체계적으로 기록하고 관리하는 웹앱입니다.">
+  <meta property="og:image" content="https://seedfit.pro/icon-512.png">
+  <meta property="og:site_name" content="SeedFit">
+  <meta property="og:locale" content="ko_KR">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:url" content="https://seedfit.pro/">
+  <meta name="twitter:title" content="SeedFit (시드핏) - 토계부,투자,시드 관리 공식 웹앱">
+  <meta name="twitter:description" content="시드핏(SeedFit)은 시드머니 또는 투자 자금을 체계적으로 기록하고 관리하는 웹앱입니다.">
+  <meta name="twitter:image" content="https://seedfit.pro/icon-512.png">
+
+  <!-- Structured Data (JSON-LD) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "SeedFit (시드핏)",
+    "alternateName": "SeedFit",
+    "url": "https://seedfit.pro/",
+    "description": "시드핏(SeedFit)은 시드머니 또는 투자 자금을 체계적으로 기록하고 관리하는 웹앱입니다.",
+    "applicationCategory": "FinanceApplication",
+    "operatingSystem": "All",
+    "browserRequirements": "Requires JavaScript. Requires HTML5.",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "KRW"
+    }
+  }
+  </script>
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="manifest" href="manifest.json">
   <script src="https://cdn.tailwindcss.com"></script>
@@ -1247,7 +1287,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.9.26').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.9.27').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -2442,7 +2482,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.9.26';
+    const CURRENT_APP_VERSION = 'v1.9.27';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');

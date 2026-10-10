@@ -6,13 +6,22 @@
 ---
 
 ## 0. 멀티 디바이스 작업 즉시 인계 가이드 (Multi-Device Quick Handoff)
-- **인계 시점**: 2026-10-08 23:15 KST
+- **인계 시점**: 2026-10-10 19:25 KST
 - **현재 원격 저장소 동기화 상태**:
   - GitHub 비공개 저장소(`ArchistJJ/SeedFit`), `main` 브랜치에 최신 커밋까지 동기화 완료.
-  - 최신 릴리즈 버전: **`v1.9.26`**
+  - 최신 릴리즈 버전: **`v1.9.27`**
   - Cloudflare Pages 프로덕션 무중단 배포 연동 (`https://seedfit.pro/`, `https://www.seedfit.pro/`).
 - **최근 완료된 핵심 작업 요약**:
-  1. **정기 구독 갱신 알림의 첫 달 중복 발송 차단 및 2회차 이후 갱신 전용 필터링 보강 (v1.9.26)**:
+  1. **구글 검색 엔진 최적화(SEO) 및 소셜 메타 태그, 검색봇 크롤링 인프라 구축 (v1.9.27)**:
+     - 구글 검색 노출을 위한 검색 결과 제목, 요약 설명, 검색 키워드 태그 완벽 탑재:
+       - 제목: `SeedFit (시드핏) - 토계부,투자,시드 관리 공식 웹앱`
+       - 설명: `시드핏(SeedFit)은 시드머니 또는 투자 자금을 체계적으로 기록하고 관리하는 웹앱입니다.`
+       - 키워드: `시드핏,SeedFit,토계부,토토,프로토,프로토 기록, 시드 관리, 투자 관리, 배팅, 배팅 기록, 배팅 관리, 토토 기록, 투자기록`
+     - 검색 로봇 색인 허용 메타 태그(`robots: index, follow`) 및 대표 URL 표준화(`canonical: https://seedfit.pro/`) 구축.
+     - 카카오톡/페이스북/트위터(X) 링크 공유 시 미리보기 카드 완벽 지원(Open Graph, Twitter Cards).
+     - 구글 구조화 데이터 공식 규격(`schema.org` WebApplication / FinanceApplication JSON-LD) 삽입.
+     - 검색 엔진 로봇 가이드 `robots.txt` 및 사이트맵 `sitemap.xml` 파일 생성 및 연동.
+  2. **정기 구독 갱신 알림의 첫 달 중복 발송 차단 및 2회차 이후 갱신 전용 필터링 보강 (v1.9.26)**:
      - 레몬스퀴즈 공식 규격상 `subscription_payment_success`는 첫 달 결제(`billing_reason: 'initial'`)와 매달 정기 갱신 결제(`billing_reason: 'renewal'`) 모두 발생함.
      - 첫 달 결제는 `subscription_created`에서 신규 구독 알림으로 이미 발송되므로, `billing_reason === 'initial'` 건은 알림 대상에서 완전히 제외하고 오직 2회차 이후 갱신 결제(`attributes.billing_reason !== 'initial'`)일 때만 `SEEDFIT PRO 정기 구독 갱신 성공` 알림이 발송되도록 웹훅 로직 정밀 보정 완료.
   2. **매달 정기 구독 갱신 결제 성공 텔레그램 실시간 알림 기능 탑재 (v1.9.25)**:
@@ -33,7 +42,7 @@
 
 ## 1. 프로젝트 기본 정보
 - **프로젝트 명**: 시드핏 (SeedFit - 시드 & 투자 자금 관리 공식 웹앱)
-- **최신 앱 버전**: `v1.9.26`
+- **최신 앱 버전**: `v1.9.27`
 - **공식 서비스 도메인**: [https://seedfit.pro/](https://seedfit.pro/)
 - **GitHub 저장소**: `ArchistJJ/SeedFit` (비공개 Private 전환 완료, `main` 브랜치 기준)
 - **호스팅 플랫폼**: Cloudflare Pages (`seedfit` 프로젝트, 글로벌 Anycast 엣지 CDN)
