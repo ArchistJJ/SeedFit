@@ -472,7 +472,7 @@
 
         <img id="headerAppIcon" src="apple-touch-icon.png" class="w-8 h-8 rounded-xl object-cover shadow-sm border border-neutral-700/80" alt="SeedFit">
         <div>
-          <h1 id="screenTitle" class="text-base font-bold text-white tracking-tight leading-none">www.SeedFit.pro</h1>
+          <h1 id="screenTitle" class="text-sm sm:text-base font-bold text-white tracking-tight leading-none">www.SeedFit.pro <span class="title-tag text-[10px] sm:text-[11px] font-normal text-neutral-400">(토계부,자금관리)</span></h1>
           <span id="screenSubtitle" class="text-[10px] text-neutral-400 font-medium">기록 · 실시간 현황</span>
         </div>
       </div>
@@ -1290,7 +1290,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.9.29').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.9.30').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -2485,7 +2485,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.9.29';
+    const CURRENT_APP_VERSION = 'v1.9.30';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');
@@ -3055,7 +3055,11 @@
         document.body.className = "light-theme bg-neutral-100 text-neutral-900 min-h-screen h-[100dvh] flex flex-col justify-between overflow-hidden antialiased";
         document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#f5f5f5');
 
-        if (titleEl) titleEl.className = "text-base font-bold text-neutral-900 tracking-tight leading-none";
+        if (titleEl) {
+          titleEl.className = "text-sm sm:text-base font-bold text-neutral-900 tracking-tight leading-none";
+          const subTag = titleEl.querySelector('.title-tag');
+          if (subTag) subTag.className = "title-tag text-[10px] sm:text-[11px] font-normal text-neutral-500";
+        }
         if (subEl) subEl.className = "text-[10px] text-neutral-500 font-medium";
         if (reloadBtn) reloadBtn.className = "w-8 h-8 rounded-full bg-neutral-200/90 hover:bg-neutral-300 flex items-center justify-center text-neutral-700 transition active:scale-90";
         if (themeBtn) themeBtn.className = "w-8 h-8 rounded-full bg-neutral-200/90 hover:bg-neutral-300 flex items-center justify-center text-neutral-700 transition active:scale-90";
@@ -3068,7 +3072,11 @@
         document.body.className = "bg-black text-neutral-100 min-h-screen h-[100dvh] flex flex-col justify-between overflow-hidden antialiased";
         document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#000000');
 
-        if (titleEl) titleEl.className = "text-base font-bold text-white tracking-tight leading-none";
+        if (titleEl) {
+          titleEl.className = "text-sm sm:text-base font-bold text-white tracking-tight leading-none";
+          const subTag = titleEl.querySelector('.title-tag');
+          if (subTag) subTag.className = "title-tag text-[10px] sm:text-[11px] font-normal text-neutral-400";
+        }
         if (subEl) subEl.className = "text-[10px] text-neutral-400 font-medium";
         if (reloadBtn) reloadBtn.className = "w-8 h-8 rounded-full bg-neutral-800/80 hover:bg-neutral-700 flex items-center justify-center text-neutral-300 transition active:scale-90";
         if (themeBtn) themeBtn.className = "w-8 h-8 rounded-full bg-neutral-800/80 hover:bg-neutral-700 flex items-center justify-center text-neutral-300 transition active:scale-90";
@@ -3157,8 +3165,12 @@
       const appIcon = document.getElementById('headerAppIcon');
 
       if (titleEl) {
-        titleEl.textContent = showBack ? title : 'www.SeedFit.pro';
-        titleEl.className = `text-base font-bold tracking-tight leading-none ${isLightMode ? 'text-neutral-900' : 'text-white'}`;
+        if (showBack) {
+          titleEl.textContent = title;
+        } else {
+          titleEl.innerHTML = `www.SeedFit.pro <span class="title-tag text-[10px] sm:text-[11px] font-normal ${isLightMode ? 'text-neutral-500' : 'text-neutral-400'}">(토계부,자금관리)</span>`;
+        }
+        titleEl.className = `text-sm sm:text-base font-bold tracking-tight leading-none ${isLightMode ? 'text-neutral-900' : 'text-white'}`;
       }
       if (subEl) {
         subEl.textContent = subtitle;
