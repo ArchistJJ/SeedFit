@@ -1,5 +1,36 @@
 # 프로젝트 개발 로그 (PROJECT DEVELOPMENT LOG)
 
+## [2026-10-13] v1.9.33 신규 가입자 및 기존 무료 회원 대상 5일간 Pro 무료 체험 시스템 구축 및 4중 어뷰징 방어 탑재
+
+### 1. 요구사항 및 기획 의도
+- 구독 전환율 극대화: 처음 로그인 화면(`#authOnboardingView`)에 **"지금 가입하면 5일간 Pro 버전 무료 이용"** 안내 배너를 표시하고, 가입 즉시 카드 등록 없이 5일간 모든 Pro 기능(무제한 기록/프로젝트, 교차 통계 분석, 클라우드 실시간 동기화)을 무료로 이용할 수 있도록 구현.
+- 기존 무료 회원 1회 혜택 일괄 부여: 기존 유료 구독자(기현, 최동호, 한종환 3명)와 마스터 관리자를 제외한 기존 무료 회원 전원(46명)에게도 1회 한정으로 5일 무료 체험 혜택을 부여.
+- 5일 경과 후 선택 모달(`#trialExpiredModal`):
+  - **[Pro 구독하고 기록 그대로 유지하기]**: Lemon Squeezy 결제창 오픈, 결제 시 5일 동안 기록한 투자 내역과 프로젝트를 100% 그대로 유지하며 정식 Pro로 이어서 이용.
+  - **[무료 버전으로 이용하기]**: 구독 취소 시와 동일하게 **7일 데이터 보존 유예(D-7)** 작동 후 7일 경과 시 영구 삭제(7일 내 구독 시 전량 복원).
+- 서브 오류 차단 및 4중 악용(어뷰징) 방어:
+  1. 정식 유료 구독(`subscription_tier === 'pro'`)과 무료 체험(`settings.trialStartedAt`, `settings.trialEndsAt`, `settings.trialUsed`, `settings.trialExpiredHandled`)을 엄격히 분리하여 DB 스키마 충돌 원천 방지 및 관리자 대시보드/텔레그램의 유료 구독자 수·MRR($23.31) 왜곡 0% 보장.
+  2. 계정당 평생 1회 클라우드 영구 기록(`trialUsed: true`)으로 캐시 삭제·재로그인 시 초기화 악용 원천 차단.
+  3. 기기 단위 다중 계정 생성 어뷰징 락(`SEEDFIT_DEVICE_TRIAL_CLAIMED`를 로그아웃 시에도 유지) 탑재.
+  4. 실시간 만료 검증(`verifyProIntegrity`) + 기기 시계 과거 조작 방어(`effectiveNow = Math.max(Date.now(), serverUpdatedMs)`) + 모달 방치 시에도 7일 삭제 기산점을 `trialEndsAt`으로 고정.
+
+### 2. 구현 및 보강 내역
+1. **Supabase 클라우드 DB 기존 무료 회원 46명 일괄 부여 완료**:
+   - 전체 49명 중 정식 유료 구독자 3명(`kakao:5125713325`, `google:107964720602460405764`, `kakao:4843691680`)을 보존하고, 무료 회원 46명의 `settings`에 5일 무료 체험 메타데이터 일괄 적용 완료.
+2. **온보딩 화면 배너 & 5일 체험 종료 전용 선택 모달 (`index.html`)**:
+   - `#authOnboardingView`에 5일간 Pro 무료 이용 혜택 배너 추가.
+   - `#trialExpiredModal` 추가 및 라이트 모드 텍스트/배경 간섭 차단 CSS 격리 적용.
+   - `isUserPaidPro()`, `isUserTrial()`, `getTrialRemainingDays()`, `openTrialExpiredModal()`, `handleTrialUpgradeToPro()`, `handleTrialSwitchToFree()` 구현.
+   - 설정 탭(`renderSettingsTab`)에서 유료 Pro(`PRO 활성화됨` / `[멤버십 관리]`)와 5일 무료 체험(`5일 무료 체험 중 (D-N)` / `[Pro 정식 구독]`) 상태 명확히 분리 표시.
+3. **버전 동기화 (v1.9.33)**:
+   - `index.html` (`v1.9.33`, `sw.js?v=1.9.33`), `sw.js` (`seedfit-cache-v1.9.33`), `package.json` (`1.9.33`).
+
+### 3. 검증 결과
+- 인라인 JS 문법 무결성 검증 통과, 금지어 0건, 기본 브라우저 팝업 0건 확인.
+- Supabase `get_business_summary` RPC 조회 결과 유료 구독자 3명, MRR $23.31 정확도 100% 유지 확인.
+
+---
+
 ## [2026-10-11] v1.9.32 상단 헤더 (토계부,자금관리) 텍스트 볼드체(font-bold) 적용
 
 ### 1. 요구사항 및 기획 의도

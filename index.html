@@ -197,27 +197,34 @@
     }
 
     /* ========================================================
-       멤버십 관리 및 구독 결제 모달: 화이트 테마에서도 다크 테마와 100% 동일하게 일원화 유지
+       멤버십 관리, 구독 결제 및 무료체험 만료 모달: 화이트 테마에서도 다크 테마와 100% 동일하게 일원화 유지
        ======================================================== */
     #membershipManagementModal,
-    #subscriptionModal {
+    #subscriptionModal,
+    #trialExpiredModal {
       color-scheme: dark;
     }
     body.light-theme #membershipManagementModal .bg-amber-500\/10,
     body.light-theme #membershipManagementModal .bg-amber-500\/12,
     body.light-theme #membershipManagementModal .bg-amber-500\/15,
-    body.light-theme #subscriptionModal .bg-amber-500\/15 {
+    body.light-theme #subscriptionModal .bg-amber-500\/15,
+    body.light-theme #trialExpiredModal .bg-amber-500\/10,
+    body.light-theme #trialExpiredModal .bg-amber-500\/15 {
       background-color: rgba(245, 158, 11, 0.12) !important;
     }
     body.light-theme #membershipManagementModal .border-amber-500\/20,
     body.light-theme #membershipManagementModal .border-amber-500\/25,
     body.light-theme #membershipManagementModal .border-amber-500\/30,
-    body.light-theme #subscriptionModal .border-amber-500\/30 {
+    body.light-theme #subscriptionModal .border-amber-500\/30,
+    body.light-theme #trialExpiredModal .border-amber-500\/25,
+    body.light-theme #trialExpiredModal .border-amber-500\/30 {
       border-color: rgba(245, 158, 11, 0.3) !important;
     }
     body.light-theme #membershipManagementModal .text-amber-400,
     body.light-theme #membershipManagementModal .text-amber-300,
-    body.light-theme #subscriptionModal .text-amber-300 {
+    body.light-theme #subscriptionModal .text-amber-300,
+    body.light-theme #trialExpiredModal .text-amber-400,
+    body.light-theme #trialExpiredModal .text-amber-300 {
       color: #fbbf24 !important;
       font-weight: 700;
     }
@@ -407,6 +414,20 @@
             체계적인 시드 자금 관리와 감정 제어로<br>자산을 안전하게 성장시키세요.
           </p>
         </div>
+      </div>
+
+      <!-- 신규 가입 5일 무료 체험 혜택 안내 배너 (Apple HIG 스타일 SVG 아이콘) -->
+      <div class="bg-gradient-to-br from-indigo-950/60 via-neutral-900 to-purple-950/40 border border-indigo-500/35 rounded-2xl p-4 space-y-2 text-left shadow-lg">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-2 text-indigo-400 font-bold text-xs">
+            <svg class="w-4 h-4 text-indigo-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/></svg>
+            <span class="text-white font-extrabold">지금 가입하면 5일간 Pro 버전 무료 이용</span>
+          </div>
+          <span class="px-2 py-0.5 rounded-full text-[9px] font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shrink-0">5일 무료</span>
+        </div>
+        <p class="text-[11px] text-neutral-300 leading-relaxed">
+          결제 수단 등록 없이 <b>로그인 즉시 5일간 SeedFit Pro의 모든 기능</b>(무제한 기록·프로젝트·정밀 교차 분석·클라우드 자동 보관)을 무료로 이용하실 수 있습니다.
+        </p>
       </div>
 
       <!-- 간편 로그인 버튼 그룹 -->
@@ -927,6 +948,65 @@
       </div>
     </div>
 
+    <!-- SeedFit Pro 5-Day Free Trial Expired Selection Modal (5일 무료 체험 종료 선택 모달) -->
+    <div id="trialExpiredModal" class="absolute inset-0 bg-black/85 backdrop-blur-md z-[58] hidden flex items-end justify-center p-0 transition-opacity">
+      <div class="w-full bg-neutral-900 border-t border-neutral-800 rounded-t-[32px] p-6 pb-safe space-y-4 shadow-2xl max-h-[92vh] overflow-y-auto custom-scroll relative">
+        <div class="text-center space-y-2 pt-1">
+          <div class="inline-block px-3.5 py-1 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 text-xs font-black tracking-wider">
+            5-DAY PRO FREE TRIAL ENDED
+          </div>
+          <h3 class="text-xl font-black text-white tracking-tight">5일간의 Pro 무료 체험 종료</h3>
+          <p class="text-xs text-neutral-300 leading-relaxed max-w-xs mx-auto break-keep">
+            그동안 SeedFit Pro를 이용해 주셔서 감사합니다.<br>체험 기간 동안 기록하신 데이터를 계속 유지하시겠습니까?
+          </p>
+        </div>
+
+        <!-- Pro 구독 시 혜택 요약 카드 -->
+        <div class="p-4 rounded-2xl bg-gradient-to-br from-indigo-950/50 via-neutral-900 to-purple-950/30 border border-indigo-500/30 space-y-2.5">
+          <div class="flex justify-between items-center">
+            <span class="text-xs font-bold text-indigo-300">Pro 정기 구독 시 혜택</span>
+            <span class="text-sm font-black text-white font-mono">$7.77 <span class="text-[10px] text-neutral-400 font-sans font-normal">/ 월</span></span>
+          </div>
+          <div class="space-y-1.5 text-[11px] text-neutral-200">
+            <div class="flex items-center space-x-2">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0"></span>
+              <span><b>5일 동안 기록한 투자 내역 및 프로젝트 100% 그대로 유지</b></span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <span class="w-1.5 h-1.5 rounded-full bg-indigo-400 shrink-0"></span>
+              <span>기록 20개 제한 해제 및 모든 기기 실시간 클라우드 연동</span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <span class="w-1.5 h-1.5 rounded-full bg-purple-400 shrink-0"></span>
+              <span>일반/핸디 투자 x 묶음 분산 정밀 교차 분석 및 무제한 프로젝트</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 무료 버전 전환 시 7일 데이터 보존 유예 정책 안내 카드 (다크 테마 고정 및 고대비 보장) -->
+        <div class="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/25 space-y-1.5 text-left" style="background-color: rgba(245, 158, 11, 0.12) !important; border-color: rgba(245, 158, 11, 0.3) !important;">
+          <div class="font-bold flex items-center space-x-1.5 text-amber-400 text-xs" style="color: #fbbf24 !important;">
+            <svg class="w-4 h-4 shrink-0 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+            <span style="color: #fbbf24 !important;">무료 버전 이용 시 7일 데이터 보존 유예 안내</span>
+          </div>
+          <p class="text-[11px] text-neutral-200 leading-relaxed font-normal" style="color: #e5e5e5 !important;">
+            무료 버전(Free)을 선택하시면 구독을 취소했을 때와 동일하게 <b class="text-white font-semibold" style="color: #ffffff !important;">기존 기록은 7일간만 임시 보존된 후 영구 삭제</b>됩니다. <b class="text-white font-semibold" style="color: #ffffff !important;">7일 이내에 언제든 Pro를 구독하시면 모든 기록이 즉시 복원</b>됩니다.
+          </p>
+        </div>
+
+        <!-- 선택 버튼 그룹 -->
+        <div class="space-y-2.5 pt-1">
+          <button onclick="window.handleTrialUpgradeToPro()" class="w-full py-3.5 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold rounded-2xl text-sm shadow-xl transition active:scale-[0.98] flex items-center justify-center space-x-2">
+            <span>Pro 구독하고 기록 그대로 유지하기 ($7.77/월)</span>
+          </button>
+
+          <button onclick="window.handleTrialSwitchToFree()" class="w-full py-3 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 font-semibold rounded-2xl text-xs border border-neutral-700 transition active:scale-[0.98]">
+            무료 버전으로 이용하기 (7일 후 데이터 영구 삭제)
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Apple HIG Custom Confirm & Alert Dialog Modal (네이티브 브라우저 팝업 대체) -->
     <div id="appleConfirmModal" class="absolute inset-0 bg-black/80 backdrop-blur-md z-[60] hidden flex items-center justify-center p-4 transition-opacity">
       <div id="appleConfirmCard" class="w-full max-w-xs rounded-[28px] p-5 shadow-2xl space-y-3.5 border bg-neutral-900 border-neutral-800 text-white transition-all transform scale-100">
@@ -1202,6 +1282,8 @@
       const authUser = typeof getAuthUser === 'function' ? getAuthUser() : null;
       if (!authUser || !authUser.id) {
         safeStorage.set('SEEDFIT_IS_PRO', 'false');
+        safeStorage.set('SEEDFIT_IS_TRIAL', 'false');
+        safeStorage.set('SEEDFIT_IS_PAID_PRO', 'false');
         clearVerifiedProSession();
         return false;
       }
@@ -1209,8 +1291,26 @@
       const token = safeStorage.get('SEEDFIT_PRO_VERIFIED_TOKEN');
       if (!token) {
         safeStorage.set('SEEDFIT_IS_PRO', 'false');
+        safeStorage.set('SEEDFIT_IS_TRIAL', 'false');
         return false;
       }
+
+      // [5일 무료 체험 만료 실시간 검증] 유료 정기구독자가 아닌 5일 체험 계정이 만료 시각을 경과한 경우 즉시 Pro 권한 회수 및 선택 모달 오픈
+      if (safeStorage.get('SEEDFIT_IS_TRIAL') === 'true' && safeStorage.get('SEEDFIT_IS_PAID_PRO') !== 'true') {
+        const trialEndsAt = safeStorage.get('SEEDFIT_TRIAL_ENDS_AT');
+        if (!trialEndsAt || Date.now() >= new Date(trialEndsAt).getTime()) {
+          safeStorage.set('SEEDFIT_IS_TRIAL', 'false');
+          safeStorage.set('SEEDFIT_IS_PRO', 'false');
+          clearVerifiedProSession();
+          setTimeout(() => {
+            if (typeof window.openTrialExpiredModal === 'function') {
+              window.openTrialExpiredModal();
+            }
+          }, 150);
+          return false;
+        }
+      }
+
       return true;
     }
 
@@ -1290,7 +1390,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.9.32').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.9.33').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -1535,14 +1635,25 @@
         safeStorage.set('SEEDFIT_GUEST_MODE', 'false');
         safeStorage.set('SEEDFIT_LAST_SYNC_TIME', '');
         safeStorage.set('SEEDFIT_IS_PRO', 'false');
+        safeStorage.set('SEEDFIT_IS_PAID_PRO', 'false');
+        safeStorage.set('SEEDFIT_IS_TRIAL', 'false');
+        safeStorage.remove('SEEDFIT_TRIAL_ENDS_AT');
+        safeStorage.remove('SEEDFIT_CANCELLED_AT');
+        safeStorage.remove('SEEDFIT_RETENTION_UNTIL');
+        safeStorage.set('SEEDFIT_IS_PAST_DUE', 'false');
+        safeStorage.remove('SEEDFIT_UPDATE_CARD_URL');
+        safeStorage.remove('SEEDFIT_PAYMENT_FAILED_AT');
         safeStorage.set('SEEDFIT_IS_ADMIN', 'false');
         clearVerifiedProSession();
+        if (typeof window.closeTrialExpiredModal === 'function') {
+          window.closeTrialExpiredModal();
+        }
         if (typeof updateBottomTabBar === 'function') {
           updateBottomTabBar();
         }
         supabaseClient = null;
         currentSupabaseUserKey = null;
-        // 계정 간 데이터 유출 및 오염 방지를 위해 로컬 상태를 안전하게 초기화
+        // 계정 간 데이터 유출 및 오염 방지를 위해 로컬 상태를 안전하게 초기화 (단, 기기 1회 무료체험 락 SEEDFIT_DEVICE_TRIAL_CLAIMED는 영구 유지)
         records = [];
         projects = [];
         mentalCareSettings = {
@@ -1724,7 +1835,7 @@
           let localNeedsPush = false;
 
           // [Issue 1 & 3: 게스트 데이터 보존 및 멀티 디바이스 지능형 병합 엔진]
-          const isServerPro = (data.subscription_tier === 'pro') || isMasterAdminAccount();
+          let isServerPro = (data.subscription_tier === 'pro') || isMasterAdminAccount();
 
           if (Array.isArray(data.records)) {
             if (records.length > 0) {
@@ -1786,8 +1897,15 @@
             hasUpdated = true;
           }
 
+          // 기기 시계 조작(과거로 돌리기) 어뷰징 방어: 현재 기기 시각과 서버 최신 갱신 시각 중 더 미래 시각을 기준으로 판정
+          const serverUpdatedMs = data.updated_at ? new Date(data.updated_at).getTime() : 0;
+          const effectiveNow = Math.max(Date.now(), Number.isFinite(serverUpdatedMs) ? serverUpdatedMs : 0);
+
           if (isMasterAdminAccount()) {
             const mode = getAdminTestMode();
+            safeStorage.set('SEEDFIT_IS_PAID_PRO', 'true');
+            safeStorage.set('SEEDFIT_IS_TRIAL', 'false');
+            safeStorage.remove('SEEDFIT_TRIAL_ENDS_AT');
             if (mode === 'admin' || mode === 'pro') {
               safeStorage.set('SEEDFIT_IS_PRO', 'true');
               setVerifiedProSession(userIdKey, data.updated_at);
@@ -1797,21 +1915,32 @@
               clearVerifiedProSession();
             }
           } else {
-            // [Step 3 보안 가드] 서버의 공식 subscription_tier를 절대적 기준으로 강제 적용
+            // [Step 3 보안 가드] 서버의 공식 subscription_tier 및 5일 무료 체험 상태 검증
             if (data.subscription_tier === 'pro') {
+              safeStorage.set('SEEDFIT_IS_PAID_PRO', 'true');
+              safeStorage.set('SEEDFIT_IS_TRIAL', 'false');
+              safeStorage.remove('SEEDFIT_TRIAL_ENDS_AT');
               safeStorage.set('SEEDFIT_IS_PRO', 'true');
               safeStorage.set('SEEDFIT_IS_PAST_DUE', 'false');
               safeStorage.remove('SEEDFIT_UPDATE_CARD_URL');
               safeStorage.remove('SEEDFIT_PAYMENT_FAILED_AT');
               setVerifiedProSession(userIdKey, data.updated_at);
               if (typeof restoreCancelledSubscriptionData === 'function') restoreCancelledSubscriptionData();
+              if (typeof window.closeTrialExpiredModal === 'function') window.closeTrialExpiredModal();
+              if (mentalCareSettings && mentalCareSettings.trialStartedAt && !mentalCareSettings.trialExpiredHandled) {
+                mentalCareSettings.trialExpiredHandled = true;
+                localNeedsPush = true;
+              }
             } else if (data.subscription_tier === 'past_due') {
               // [결제 실패 연체 유예 모드] 최초 결제 실패 시점으로부터 3일(72시간) 검사
+              safeStorage.set('SEEDFIT_IS_TRIAL', 'false');
+              safeStorage.remove('SEEDFIT_TRIAL_ENDS_AT');
               const failedAtMs = data.payment_failed_at ? new Date(data.payment_failed_at).getTime() : Date.now();
               const isOver3Days = (Date.now() - failedAtMs) > (3 * 24 * 60 * 60 * 1000);
 
               if (isOver3Days) {
                 // 3일 초과 미해결 시 Free 플랜으로 자동 강등 및 7일 데이터 보존 시작
+                safeStorage.set('SEEDFIT_IS_PAID_PRO', 'false');
                 safeStorage.set('SEEDFIT_IS_PRO', 'false');
                 safeStorage.set('SEEDFIT_IS_PAST_DUE', 'false');
                 clearVerifiedProSession();
@@ -1831,26 +1960,103 @@
                 }).eq('user_id', userIdKey);
               } else {
                 // 3일 이내: 연체 유예 기간 활성화 (기존 데이터 유지 + 앱 접속 시마다 팝업 알림 플래그)
+                safeStorage.set('SEEDFIT_IS_PAID_DUE', 'true');
                 safeStorage.set('SEEDFIT_IS_PAST_DUE', 'true');
+                safeStorage.set('SEEDFIT_IS_PAID_PRO', 'true');
                 safeStorage.set('SEEDFIT_IS_PRO', 'true');
                 safeStorage.set('SEEDFIT_UPDATE_CARD_URL', data.update_card_url || '');
                 safeStorage.set('SEEDFIT_PAYMENT_FAILED_AT', data.payment_failed_at || new Date().toISOString());
                 setVerifiedProSession(userIdKey, data.updated_at);
               }
             } else {
-              safeStorage.set('SEEDFIT_IS_PRO', 'false');
+              // subscription_tier === 'free' (정식 유료 구독이 아닌 상태)
+              safeStorage.set('SEEDFIT_IS_PAID_PRO', 'false');
               safeStorage.set('SEEDFIT_IS_PAST_DUE', 'false');
               safeStorage.remove('SEEDFIT_UPDATE_CARD_URL');
               safeStorage.remove('SEEDFIT_PAYMENT_FAILED_AT');
-              clearVerifiedProSession();
 
-              // 7일 데이터 보존 기간 만료 여부 검사 (구독 해지 후 7일 경과 시 클라우드 및 기기 영구 삭제)
-              if (data.data_retention_until || data.cancelled_at) {
+              // 1) 5일 무료 체험 이력이 존재하는 경우
+              if (mentalCareSettings && mentalCareSettings.trialStartedAt && mentalCareSettings.trialEndsAt) {
+                const trialEndsMs = new Date(mentalCareSettings.trialEndsAt).getTime();
+                if (! safeStorage.get('SEEDFIT_DEVICE_TRIAL_CLAIMED')) {
+                  safeStorage.set('SEEDFIT_DEVICE_TRIAL_CLAIMED', userIdKey);
+                }
+
+                if (effectiveNow < trialEndsMs && !mentalCareSettings.trialExpiredHandled && !data.cancelled_at) {
+                  // [5일 무료 체험 진행 중] Pro 모든 기능 + 클라우드 실시간 동기화 허용
+                  safeStorage.set('SEEDFIT_IS_TRIAL', 'true');
+                  safeStorage.set('SEEDFIT_TRIAL_ENDS_AT', mentalCareSettings.trialEndsAt);
+                  safeStorage.set('SEEDFIT_IS_PRO', 'true');
+                  setVerifiedProSession(userIdKey, data.updated_at);
+                  if (typeof restoreCancelledSubscriptionData === 'function') restoreCancelledSubscriptionData();
+                  isServerPro = true;
+                  hasUpdated = true;
+                } else {
+                  // [5일 무료 체험 기간 종료] 즉시 Pro 권한 회수 및 7일 데이터 보존 유예 카운트다운 작동
+                  safeStorage.set('SEEDFIT_IS_TRIAL', 'false');
+                  safeStorage.remove('SEEDFIT_TRIAL_ENDS_AT');
+                  safeStorage.set('SEEDFIT_IS_PRO', 'false');
+                  clearVerifiedProSession();
+
+                  // 7일 데이터 보존 기산점은 반드시 체험 만료 시각(trialEndsAt) 또는 기존 해지 시각으로 고정 (모달 방치 악용 차단)
+                  const effectiveCancelledAt = data.cancelled_at || mentalCareSettings.trialEndsAt;
+                  const effectiveRetentionUntil = data.data_retention_until || new Date(trialEndsMs + 7 * 24 * 60 * 60 * 1000).toISOString();
+                  const retentionExpiryMs = new Date(effectiveRetentionUntil).getTime();
+
+                  if (effectiveNow > retentionExpiryMs) {
+                    // 체험 종료 후 7일 유예 기간마저 경과 -> 클라우드 및 기기 데이터 영구 삭제
+                    records = [];
+                    projects = [];
+                    mentalCareSettings.trialExpiredHandled = true;
+                    safeStorage.set(STORAGE_KEY_RECORDS, JSON.stringify([]));
+                    safeStorage.set(STORAGE_KEY_PROJECTS, JSON.stringify([]));
+                    if (typeof restoreCancelledSubscriptionData === 'function') restoreCancelledSubscriptionData();
+                    await sb.from('seedfit_user_data').update({
+                      records: [],
+                      projects: [],
+                      settings: mentalCareSettings,
+                      data_retention_until: null,
+                      cancelled_at: null,
+                      updated_at: new Date().toISOString()
+                    }).eq('user_id', userIdKey);
+                    saveState(true);
+                    renderCurrentTab();
+                    return;
+                  } else {
+                    // 7일 데이터 보존 유예 기간 진행 중
+                    safeStorage.set('SEEDFIT_CANCELLED_AT', effectiveCancelledAt);
+                    safeStorage.set('SEEDFIT_RETENTION_UNTIL', effectiveRetentionUntil);
+
+                    if (!data.cancelled_at || !data.data_retention_until) {
+                      await sb.from('seedfit_user_data').update({
+                        cancelled_at: effectiveCancelledAt,
+                        data_retention_until: effectiveRetentionUntil,
+                        updated_at: new Date().toISOString()
+                      }).eq('user_id', userIdKey);
+                    }
+
+                    // 아직 5일 체험 종료 선택 모달에서 선택하지 않은 경우 즉시 모달 표시
+                    if (!mentalCareSettings.trialExpiredHandled) {
+                      setTimeout(() => {
+                        if (typeof window.openTrialExpiredModal === 'function') {
+                          window.openTrialExpiredModal();
+                        }
+                      }, 250);
+                    }
+                  }
+                }
+              } else if (data.data_retention_until || data.cancelled_at) {
+                // 2) 과거 유료 구독 해지 후 7일 데이터 보존 유예 중인 계정
+                safeStorage.set('SEEDFIT_IS_TRIAL', 'false');
+                safeStorage.remove('SEEDFIT_TRIAL_ENDS_AT');
+                safeStorage.set('SEEDFIT_IS_PRO', 'false');
+                clearVerifiedProSession();
+
                 const retentionExpiry = data.data_retention_until
                   ? new Date(data.data_retention_until).getTime()
                   : (new Date(data.cancelled_at).getTime() + 7 * 24 * 60 * 60 * 1000);
 
-                if (Date.now() > retentionExpiry) {
+                if (effectiveNow > retentionExpiry) {
                   records = [];
                   projects = [];
                   safeStorage.set(STORAGE_KEY_RECORDS, JSON.stringify([]));
@@ -1869,6 +2075,36 @@
                   if (data.cancelled_at) safeStorage.set('SEEDFIT_CANCELLED_AT', data.cancelled_at);
                   if (data.data_retention_until) safeStorage.set('SEEDFIT_RETENTION_UNTIL', data.data_retention_until);
                 }
+              } else if (!mentalCareSettings.trialUsed) {
+                // 3) 아직 5일 무료 체험을 한 번도 부여받지 않은 기존 무료 회원 -> 1회 5일 무료 체험 부여 (단, 동일 기기 다중 계정 악용 시 차단)
+                const claimedBy = safeStorage.get('SEEDFIT_DEVICE_TRIAL_CLAIMED');
+                if (!claimedBy || claimedBy === userIdKey) {
+                  const nowIso = new Date().toISOString();
+                  const endsIso = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString();
+                  mentalCareSettings.trialStartedAt = nowIso;
+                  mentalCareSettings.trialEndsAt = endsIso;
+                  mentalCareSettings.trialUsed = true;
+                  mentalCareSettings.trialExpiredHandled = false;
+                  safeStorage.set('SEEDFIT_DEVICE_TRIAL_CLAIMED', userIdKey);
+                  safeStorage.set('SEEDFIT_IS_TRIAL', 'true');
+                  safeStorage.set('SEEDFIT_TRIAL_ENDS_AT', endsIso);
+                  safeStorage.set('SEEDFIT_IS_PRO', 'true');
+                  setVerifiedProSession(userIdKey, nowIso);
+                  isServerPro = true;
+                  localNeedsPush = true;
+                  hasUpdated = true;
+                  showToast('5일간 SeedFit Pro 무료 체험 혜택이 적용되었습니다!');
+                } else {
+                  safeStorage.set('SEEDFIT_IS_TRIAL', 'false');
+                  safeStorage.remove('SEEDFIT_TRIAL_ENDS_AT');
+                  safeStorage.set('SEEDFIT_IS_PRO', 'false');
+                  clearVerifiedProSession();
+                }
+              } else {
+                safeStorage.set('SEEDFIT_IS_TRIAL', 'false');
+                safeStorage.remove('SEEDFIT_TRIAL_ENDS_AT');
+                safeStorage.set('SEEDFIT_IS_PRO', 'false');
+                clearVerifiedProSession();
               }
             }
           }
@@ -1888,6 +2124,39 @@
             await window.syncToCloud(false, true);
           }
         } else {
+          // [신규 회원 최초 가입] 5일간 Pro 무료 체험 자동 시작 (동일 기기 다중 계정 생성 어뷰징 방어 적용)
+          const claimedBy = safeStorage.get('SEEDFIT_DEVICE_TRIAL_CLAIMED');
+          if (!isMasterAdminAccount()) {
+            if (!claimedBy || claimedBy === userIdKey) {
+              const nowIso = new Date().toISOString();
+              const endsIso = new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString();
+              mentalCareSettings.trialStartedAt = nowIso;
+              mentalCareSettings.trialEndsAt = endsIso;
+              mentalCareSettings.trialUsed = true;
+              mentalCareSettings.trialExpiredHandled = false;
+              safeStorage.set('SEEDFIT_DEVICE_TRIAL_CLAIMED', userIdKey);
+              safeStorage.set('SEEDFIT_IS_PAID_PRO', 'false');
+              safeStorage.set('SEEDFIT_IS_TRIAL', 'true');
+              safeStorage.set('SEEDFIT_TRIAL_ENDS_AT', endsIso);
+              safeStorage.set('SEEDFIT_IS_PRO', 'true');
+              setVerifiedProSession(userIdKey, nowIso);
+              saveState(true);
+              renderCurrentTab();
+              setTimeout(() => {
+                showToast('가입 축하 혜택! 지금부터 5일간 SeedFit Pro 무료 체험이 시작됩니다.');
+              }, 400);
+            } else {
+              // 동일 기기에서 이미 다른 계정으로 무료 체험을 수령한 경우 -> 무료 버전으로 시작
+              mentalCareSettings.trialUsed = true;
+              mentalCareSettings.trialExpiredHandled = true;
+              safeStorage.set('SEEDFIT_IS_PAID_PRO', 'false');
+              safeStorage.set('SEEDFIT_IS_TRIAL', 'false');
+              safeStorage.set('SEEDFIT_IS_PRO', 'false');
+              clearVerifiedProSession();
+              saveState(true);
+              renderCurrentTab();
+            }
+          }
           await window.syncToCloud(false, true);
           const signupNotifiedKey = 'SEEDFIT_SIGNUP_NOTIFIED_' + userIdKey;
           if (!safeStorage.get(signupNotifiedKey)) {
@@ -2094,6 +2363,31 @@
       return verifyProIntegrity();
     }
 
+    function isUserPaidPro() {
+      if (isMasterAdminAccount()) {
+        const mode = getAdminTestMode();
+        return mode === 'admin' || mode === 'pro';
+      }
+      return verifyProIntegrity() && safeStorage.get('SEEDFIT_IS_PAID_PRO') === 'true';
+    }
+
+    function isUserTrial() {
+      if (isMasterAdminAccount()) return false;
+      if (safeStorage.get('SEEDFIT_IS_PAID_PRO') === 'true') return false;
+      if (safeStorage.get('SEEDFIT_IS_TRIAL') !== 'true') return false;
+      const endsAt = safeStorage.get('SEEDFIT_TRIAL_ENDS_AT');
+      if (!endsAt) return false;
+      return Date.now() < new Date(endsAt).getTime();
+    }
+
+    function getTrialRemainingDays() {
+      const endsAt = safeStorage.get('SEEDFIT_TRIAL_ENDS_AT');
+      if (!endsAt) return 0;
+      const diff = new Date(endsAt).getTime() - Date.now();
+      if (diff <= 0) return 0;
+      return Math.max(1, Math.ceil(diff / (24 * 60 * 60 * 1000)));
+    }
+
     try {
       Object.defineProperty(window, 'isUserPro', {
         value: function() { return verifyProIntegrity(); },
@@ -2114,6 +2408,7 @@
       
       if (mode === 'pro') {
         safeStorage.set('SEEDFIT_IS_PRO', 'true');
+        safeStorage.set('SEEDFIT_IS_PAID_PRO', 'true');
         const authUser = getAuthUser();
         if (authUser && authUser.id) {
           setVerifiedProSession(`${authUser.provider || 'user'}:${authUser.id}`, new Date().toISOString());
@@ -2123,6 +2418,7 @@
         restoreCancelledSubscriptionData();
       } else if (mode === 'free') {
         safeStorage.set('SEEDFIT_IS_PRO', 'false');
+        safeStorage.set('SEEDFIT_IS_PAID_PRO', 'false');
         clearVerifiedProSession();
       }
 
@@ -2154,7 +2450,7 @@
       }
       const manageLink = document.getElementById('subscriptionManageLink');
       if (manageLink) {
-        if (isUserPro()) {
+        if (isUserPaidPro()) {
           manageLink.classList.remove('hidden');
         } else {
           manageLink.classList.add('hidden');
@@ -2183,6 +2479,71 @@
       if (modal) modal.classList.add('hidden');
     };
 
+    // [5일 Pro 무료 체험 종료 선택 모달 핸들러]
+    window.openTrialExpiredModal = function() {
+      if (isUserPaidPro() || isMasterAdminAccount()) return;
+      const modal = document.getElementById('trialExpiredModal');
+      if (modal) modal.classList.remove('hidden');
+    };
+
+    window.closeTrialExpiredModal = function() {
+      const modal = document.getElementById('trialExpiredModal');
+      if (modal) modal.classList.add('hidden');
+    };
+
+    window.handleTrialUpgradeToPro = function() {
+      window.closeTrialExpiredModal();
+      window.startLemonSqueezyCheckout();
+    };
+
+    window.handleTrialSwitchToFree = async function() {
+      safeStorage.set('SEEDFIT_IS_TRIAL', 'false');
+      safeStorage.set('SEEDFIT_IS_PRO', 'false');
+      safeStorage.set('SEEDFIT_IS_PAID_PRO', 'false');
+      safeStorage.remove('SEEDFIT_TRIAL_ENDS_AT');
+      clearVerifiedProSession();
+
+      // 7일 데이터 보존 유예 기산점은 5일 무료 체험 만료 시각으로 고정하여 모달 방치 악용 차단
+      const baseCancelledAt = safeStorage.get('SEEDFIT_CANCELLED_AT')
+        || (mentalCareSettings && mentalCareSettings.trialEndsAt)
+        || new Date().toISOString();
+      const baseRetentionUntil = safeStorage.get('SEEDFIT_RETENTION_UNTIL')
+        || new Date(new Date(baseCancelledAt).getTime() + 7 * 24 * 60 * 60 * 1000).toISOString();
+
+      safeStorage.set('SEEDFIT_CANCELLED_AT', baseCancelledAt);
+      safeStorage.set('SEEDFIT_RETENTION_UNTIL', baseRetentionUntil);
+
+      if (mentalCareSettings) {
+        mentalCareSettings.trialExpiredHandled = true;
+      }
+      saveState(true);
+
+      const authUser = getAuthUser();
+      if (authUser && authUser.id) {
+        const userIdKey = `${authUser.provider || 'user'}:${authUser.id}`;
+        const sb = getSupabase(userIdKey);
+        if (sb) {
+          try {
+            await sb.from('seedfit_user_data')
+              .update({
+                subscription_tier: 'free',
+                cancelled_at: baseCancelledAt,
+                data_retention_until: baseRetentionUntil,
+                settings: mentalCareSettings || {},
+                updated_at: new Date().toISOString()
+              })
+              .eq('user_id', userIdKey);
+          } catch (err) {
+            console.warn('Trial switch to free db update failed:', err);
+          }
+        }
+      }
+
+      window.closeTrialExpiredModal();
+      renderCurrentTab();
+      showToast('무료 버전으로 전환되었습니다. 기존 기록은 7일간 임시 보존됩니다.');
+    };
+
     function restoreCancelledSubscriptionData() {
       safeStorage.remove('SEEDFIT_CANCELLED_AT');
       safeStorage.remove('SEEDFIT_RETENTION_UNTIL');
@@ -2207,6 +2568,9 @@
         // 7일 경과 -> 데이터 영구 삭제 실행!
         records = [];
         projects = [];
+        if (mentalCareSettings && mentalCareSettings.trialUsed) {
+          mentalCareSettings.trialExpiredHandled = true;
+        }
         safeStorage.set(STORAGE_KEY_RECORDS, JSON.stringify([]));
         safeStorage.set(STORAGE_KEY_PROJECTS, JSON.stringify([]));
         safeStorage.remove('SEEDFIT_CANCELLED_AT');
@@ -2221,6 +2585,7 @@
                 .update({
                   records: [],
                   projects: [],
+                  settings: mentalCareSettings || {},
                   cancelled_at: null,
                   data_retention_until: null,
                   updated_at: new Date().toISOString()
@@ -2233,7 +2598,7 @@
         }
 
         renderCurrentTab();
-        showToast('구독 취소 후 7일이 경과하여 이전 클라우드 데이터가 영구 삭제되었습니다.');
+        showToast('7일 데이터 보존 유예 기간이 경과하여 이전 클라우드 데이터가 영구 삭제되었습니다.');
       }
     }
 
@@ -2266,6 +2631,8 @@
       }
 
       safeStorage.set('SEEDFIT_IS_PRO', 'false');
+      safeStorage.set('SEEDFIT_IS_PAID_PRO', 'false');
+      safeStorage.set('SEEDFIT_IS_TRIAL', 'false');
       clearVerifiedProSession();
       safeStorage.set('SEEDFIT_CANCELLED_AT', cancelledAt);
       safeStorage.set('SEEDFIT_RETENTION_UNTIL', retentionUntil);
@@ -2409,7 +2776,7 @@
                   }
                 }, 1500);
                 setTimeout(() => {
-                  if (typeof isUserPro === 'function' && !isUserPro() && typeof window.refreshSubscriptionStatus === 'function') {
+                  if (typeof isUserPaidPro === 'function' && !isUserPaidPro() && typeof window.refreshSubscriptionStatus === 'function') {
                     window.refreshSubscriptionStatus();
                   }
                 }, 3800);
@@ -2465,11 +2832,27 @@
         }
 
         if (data && data.subscription_tier === 'pro') {
+          safeStorage.set('SEEDFIT_IS_PAID_PRO', 'true');
+          safeStorage.set('SEEDFIT_IS_TRIAL', 'false');
+          safeStorage.remove('SEEDFIT_TRIAL_ENDS_AT');
           safeStorage.set('SEEDFIT_IS_PRO', 'true');
           setVerifiedProSession(userIdKey, new Date().toISOString());
           restoreCancelledSubscriptionData();
+          if (mentalCareSettings && mentalCareSettings.trialStartedAt) {
+            mentalCareSettings.trialExpiredHandled = true;
+            saveState(true);
+          }
+          if (typeof window.closeTrialExpiredModal === 'function') {
+            window.closeTrialExpiredModal();
+          }
+          if (typeof window.syncToCloud === 'function') {
+            window.syncToCloud(false, true);
+          }
           showToast('SeedFit Pro 정기구독이 정상 확인되었습니다. 기존 데이터가 모두 연동되었습니다.');
+        } else if (isUserTrial()) {
+          showToast('현재 5일 무료 체험 중입니다. (정식 정기구독 결제 내역은 아직 확인되지 않았습니다)');
         } else {
+          safeStorage.set('SEEDFIT_IS_PAID_PRO', 'false');
           safeStorage.set('SEEDFIT_IS_PRO', 'false');
           clearVerifiedProSession();
           showToast('현재 활성화된 Pro 정기구독 내역이 없습니다.');
@@ -2485,7 +2868,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.9.32';
+    const CURRENT_APP_VERSION = 'v1.9.33';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');
@@ -4541,6 +4924,9 @@
       const authUser = getAuthUser();
       const isGuest = safeStorage.get('SEEDFIT_GUEST_MODE') === 'true';
       const isProMember = isUserPro();
+      const isPaidProMember = isUserPaidPro();
+      const isTrialMember = isUserTrial();
+      const trialDaysLeft = getTrialRemainingDays();
       const isAdmin = isAdminUser();
       const isMasterAdmin = isMasterAdminAccount();
       const adminTestMode = getAdminTestMode();
@@ -4550,6 +4936,7 @@
       const retentionExpiry = retentionUntil ? new Date(retentionUntil).getTime() : (cancelledAt ? new Date(cancelledAt).getTime() + 7 * 24 * 60 * 60 * 1000 : null);
       const isWithinGracePeriod = (!isProMember && retentionExpiry && Date.now() < retentionExpiry);
       const remainingDays = isWithinGracePeriod ? Math.max(1, Math.ceil((retentionExpiry - Date.now()) / (24 * 60 * 60 * 1000))) : 0;
+      const isFromTrialGrace = Boolean(mentalCareSettings && mentalCareSettings.trialUsed && !isPaidProMember);
 
       const isPastDue = safeStorage.get('SEEDFIT_IS_PAST_DUE') === 'true';
       const failedAtStr = safeStorage.get('SEEDFIT_PAYMENT_FAILED_AT');
@@ -4614,17 +5001,26 @@
                 <div class="flex items-center space-x-1.5">
                   <span class="w-2 h-2 rounded-full ${isAdmin ? 'bg-amber-400' : (isProMember ? 'bg-emerald-400 animate-pulse' : 'bg-neutral-500')}"></span>
                   <span class="font-medium ${isLightMode ? 'text-neutral-700' : 'text-neutral-300'}">
-                    ${isAdmin ? '마스터 관리자 프리패스 연동됨' : (isProMember ? '클라우드 실시간 동기화됨' : '로컬 보존 모드 (클라우드 Pro)')}
+                    ${isAdmin ? '마스터 관리자 프리패스 연동됨' : (isTrialMember ? `Pro 무료 체험 연동 중 (D-${trialDaysLeft})` : (isProMember ? '클라우드 실시간 동기화됨' : '로컬 보존 모드 (클라우드 Pro)'))}
                   </span>
                 </div>
                 ${isAdmin ? `
                   <button onclick="window.syncToCloud(true)" class="py-1 px-2.5 rounded-lg text-[10px] font-semibold ${isLightMode ? 'bg-neutral-100 hover:bg-neutral-200 text-neutral-700 border border-neutral-200' : 'bg-neutral-800 hover:bg-neutral-700 text-neutral-300'} transition active:scale-95 flex items-center space-x-1">
                     <span>지금 동기화</span>
                   </button>
-                ` : (isProMember ? `
+                ` : (isPaidProMember ? `
                   <div class="flex items-center space-x-1.5">
                     <button onclick="window.openMembershipManagementModal()" class="py-1 px-2.5 rounded-lg text-[10px] font-semibold ${isLightMode ? 'bg-neutral-100 hover:bg-neutral-200 text-neutral-700 border border-neutral-200' : 'bg-neutral-800 hover:bg-neutral-700 text-neutral-300'} transition active:scale-95">
                       <span>멤버십 관리</span>
+                    </button>
+                    <button onclick="window.syncToCloud(true)" class="py-1 px-2 rounded-lg text-[10px] font-semibold ${isLightMode ? 'bg-neutral-100 hover:bg-neutral-200 text-neutral-700 border border-neutral-200' : 'bg-neutral-800 hover:bg-neutral-700 text-neutral-300'} transition active:scale-95 flex items-center space-x-1">
+                      <span>동기화</span>
+                    </button>
+                  </div>
+                ` : (isTrialMember ? `
+                  <div class="flex items-center space-x-1.5">
+                    <button onclick="window.openSubscriptionModal('지금 정식 구독하시면 5일 체험 기간 동안 기록한 데이터가 영구 보존됩니다.')" class="py-1 px-2.5 rounded-lg text-[10px] font-bold bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-sm transition active:scale-95">
+                      <span>Pro 정식 구독</span>
                     </button>
                     <button onclick="window.syncToCloud(true)" class="py-1 px-2 rounded-lg text-[10px] font-semibold ${isLightMode ? 'bg-neutral-100 hover:bg-neutral-200 text-neutral-700 border border-neutral-200' : 'bg-neutral-800 hover:bg-neutral-700 text-neutral-300'} transition active:scale-95 flex items-center space-x-1">
                       <span>동기화</span>
@@ -4634,7 +5030,7 @@
                   <button onclick="window.openSubscriptionModal()" class="py-1 px-2.5 rounded-lg text-[10px] font-bold bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-sm transition active:scale-95 flex items-center space-x-1">
                     <span>Pro 연동</span>
                   </button>
-                `)}
+                `))}
               </div>
 
               ${isMasterAdmin ? `
@@ -4667,10 +5063,14 @@
             ` : ''}
 
             ${!authUser ? `
-              <!-- 게스트 모드일 때 간편 로그인 추천 배너 -->
+              <!-- 게스트 모드일 때 간편 로그인 추천 배너 (5일 무료 이용 혜택 안내 포함) -->
               <div class="p-3 rounded-2xl ${isLightMode ? 'bg-amber-50 border-amber-300' : 'bg-amber-500/10 border-amber-500/20'} border space-y-2 text-left">
+                <div class="flex items-center space-x-1.5 text-[11px] font-bold ${isLightMode ? 'text-indigo-700' : 'text-indigo-300'}">
+                  <svg class="w-3.5 h-3.5 shrink-0 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                  <span>지금 가입하면 5일간 Pro 버전 무료 이용 혜택 제공!</span>
+                </div>
                 <p class="text-[11px] ${isLightMode ? 'text-amber-900 font-medium' : 'text-amber-300'} leading-snug">
-                  안내: 로그인하지 않고 이용하시면 기기 변경이나 캐시 삭제 시 데이터가 소실될 수 있습니다.
+                  로그인하지 않고 이용하시면 기기 변경이나 캐시 삭제 시 데이터가 소실될 수 있습니다.
                 </p>
                 <div class="grid grid-cols-2 gap-2 pt-1">
                   <button onclick="window.handleKakaoLogin()" class="py-2.5 bg-[#FEE500] hover:bg-[#FADA0A] text-[#191919] font-bold rounded-xl text-[11px] transition shadow flex items-center justify-center space-x-1">
@@ -4719,10 +5119,10 @@
                 </span>
               </div>
               <p class="text-[11px] ${isLightMode ? 'text-amber-800' : 'text-neutral-300'} leading-relaxed">
-                구독이 취소된 상태입니다. 기존에 등록하신 투자 기록 및 프로젝트는 <b>${remainingDays}일 후 영구 삭제</b>됩니다. 기한 내에 다시 구독하시면 모든 데이터가 즉시 연동 복원됩니다.
+                ${isFromTrialGrace ? '5일 무료 체험이 종료되어 무료 버전으로 이용 중입니다.' : '구독이 취소된 상태입니다.'} 기존에 등록하신 투자 기록 및 프로젝트는 <b>${remainingDays}일 후 영구 삭제</b>됩니다. 기한 내에 Pro를 구독하시면 모든 데이터가 즉시 연동 복원됩니다.
               </p>
-              <button onclick="window.openSubscriptionModal('기존 데이터를 그대로 유지하고 복원하려면 다시 구독해 주세요.')" class="w-full py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-extrabold rounded-xl text-xs shadow-md transition active:scale-95 flex items-center justify-center space-x-1">
-                <span>Pro 다시 구독하고 데이터 복원하기</span>
+              <button onclick="window.openSubscriptionModal('기존 데이터를 그대로 유지하고 복원하려면 Pro를 구독해 주세요.')" class="w-full py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-black font-extrabold rounded-xl text-xs shadow-md transition active:scale-95 flex items-center justify-center space-x-1">
+                <span>Pro 구독하고 데이터 유지/복원하기</span>
               </button>
             </div>
           ` : ''}
@@ -4736,23 +5136,27 @@
                     <span class="text-xs font-black tracking-wide bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
                       SEEDFIT PRO
                     </span>
-                    <span class="text-[9px] font-bold px-2 py-0.5 rounded-full ${isProMember ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : (isLightMode ? 'bg-indigo-100 text-indigo-700' : 'bg-indigo-500/20 text-indigo-300')}">
-                      ${isProMember ? 'PRO 활성화됨' : '무료 플랜 (Free)'}
+                    <span class="text-[9px] font-bold px-2 py-0.5 rounded-full ${isPaidProMember ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : (isTrialMember ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30' : (isLightMode ? 'bg-indigo-100 text-indigo-700' : 'bg-indigo-500/20 text-indigo-300'))}">
+                      ${isPaidProMember ? 'PRO 활성화됨' : (isTrialMember ? `5일 무료 체험 중 (D-${trialDaysLeft})` : '무료 플랜 (Free)')}
                     </span>
                   </div>
                   <p class="text-[11px] text-neutral-400 mt-1">
-                    ${isProMember ? '모든 고급 분석 및 클라우드 무제한 기능을 이용 중입니다.' : '무제한 기록과 통계 분석을 제한없이 이용해보세요.'}
+                    ${isPaidProMember ? '모든 고급 분석 및 클라우드 무제한 기능을 이용 중입니다.' : (isTrialMember ? `5일간 모든 Pro 기능을 무료로 이용 중입니다. (남은 기간: ${trialDaysLeft}일)` : '무제한 기록과 통계 분석을 제한없이 이용해보세요.')}
                   </p>
                 </div>
-                ${!isProMember ? `
-                  <button onclick="window.openSubscriptionModal()" class="py-1.5 px-3 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold rounded-xl text-xs shadow-md transition active:scale-95 shrink-0">
-                    Pro 구독
-                  </button>
-                ` : `
+                ${isPaidProMember ? `
                   <button onclick="window.openMembershipManagementModal()" class="py-1 px-2.5 rounded-lg text-[10px] font-semibold ${isLightMode ? 'bg-neutral-100 hover:bg-neutral-200 text-neutral-700' : 'bg-neutral-800 hover:bg-neutral-700 text-neutral-300'} transition shrink-0">
                     멤버십 관리
                   </button>
-                `}
+                ` : (isTrialMember ? `
+                  <button onclick="window.openSubscriptionModal('지금 정식 구독하시면 5일 체험 기간 동안 기록한 데이터가 그대로 유지됩니다.')" class="py-1.5 px-3 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold rounded-xl text-xs shadow-md transition active:scale-95 shrink-0">
+                    Pro 정식 구독
+                  </button>
+                ` : `
+                  <button onclick="window.openSubscriptionModal()" class="py-1.5 px-3 bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-bold rounded-xl text-xs shadow-md transition active:scale-95 shrink-0">
+                    Pro 구독
+                  </button>
+                `)}
               </div>
               
               <!-- Quick Features (이모티콘 전면 배제) -->
