@@ -1003,6 +1003,13 @@
           <button onclick="window.handleTrialSwitchToFree()" class="w-full py-3 bg-neutral-800 hover:bg-neutral-700 text-neutral-300 font-semibold rounded-2xl text-xs border border-neutral-700 transition active:scale-[0.98]">
             무료 버전으로 이용하기 (7일 후 데이터 영구 삭제)
           </button>
+
+          <div class="pt-0.5 text-center">
+            <button onclick="window.refreshSubscriptionStatus()" class="w-full py-1.5 text-[11px] font-semibold text-indigo-400 hover:text-indigo-300 transition flex items-center justify-center space-x-1.5">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+              <span>결제 완료 후 상태가 안 바뀌나요? 구독 상태 새로고침</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -1390,7 +1397,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.9.33').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.9.34').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -1997,6 +2004,7 @@
                   safeStorage.remove('SEEDFIT_TRIAL_ENDS_AT');
                   safeStorage.set('SEEDFIT_IS_PRO', 'false');
                   clearVerifiedProSession();
+                  hasUpdated = true;
 
                   // 7일 데이터 보존 기산점은 반드시 체험 만료 시각(trialEndsAt) 또는 기존 해지 시각으로 고정 (모달 방치 악용 차단)
                   const effectiveCancelledAt = data.cancelled_at || mentalCareSettings.trialEndsAt;
@@ -2480,6 +2488,15 @@
     };
 
     // [5일 Pro 무료 체험 종료 선택 모달 핸들러]
+    function isTrialExpiredPendingChoice() {
+      const authUser = getAuthUser();
+      if (!authUser || !authUser.id) return false;
+      if (isMasterAdminAccount() || isUserPaidPro()) return false;
+      if (!mentalCareSettings || !mentalCareSettings.trialStartedAt || !mentalCareSettings.trialEndsAt) return false;
+      if (mentalCareSettings.trialExpiredHandled) return false;
+      return Date.now() >= new Date(mentalCareSettings.trialEndsAt).getTime();
+    }
+
     window.openTrialExpiredModal = function() {
       if (isUserPaidPro() || isMasterAdminAccount()) return;
       const modal = document.getElementById('trialExpiredModal');
@@ -2491,12 +2508,68 @@
       if (modal) modal.classList.add('hidden');
     };
 
+    let trialOverlayWatchTimer = null;
+    function startTrialCheckoutCancelWatch() {
+      if (trialOverlayWatchTimer) clearInterval(trialOverlayWatchTimer);
+      let sawOverlay = false;
+      let ticks = 0;
+      trialOverlayWatchTimer = setInterval(() => {
+        ticks++;
+        if (!window._pendingTrialCheckout || window._trialCheckoutSucceeded || isUserPaidPro()) {
+          clearInterval(trialOverlayWatchTimer);
+          trialOverlayWatchTimer = null;
+          return;
+        }
+        const overlay = document.querySelector('.lemonsqueezy-overlay');
+        if (overlay) {
+          sawOverlay = true;
+        } else if (sawOverlay) {
+          // 오버레이가 열렸다가 결제 완료 없이 닫힌 경우 (사용자가 X / 취소 클릭)
+          clearInterval(trialOverlayWatchTimer);
+          trialOverlayWatchTimer = null;
+          window._pendingTrialCheckout = false;
+          if (isTrialExpiredPendingChoice()) {
+            window.openTrialExpiredModal();
+            showToast('결제가 취소되었습니다. 계속 이용하실 방식을 선택해주세요.');
+          }
+        }
+        if (ticks > 600) { // 최대 5분 후 감시 타이머 자동 정리
+          clearInterval(trialOverlayWatchTimer);
+          trialOverlayWatchTimer = null;
+        }
+      }, 500);
+    }
+
+    // 새 탭으로 결제창이 열렸다가 취소하고 앱으로 복귀한 경우 감지
+    window.addEventListener('focus', function() {
+      if (window._pendingTrialCheckout && !window._trialCheckoutSucceeded) {
+        setTimeout(async () => {
+          if (!window._pendingTrialCheckout || window._trialCheckoutSucceeded) return;
+          const overlay = document.querySelector('.lemonsqueezy-overlay');
+          if (overlay) return; // 아직 인앱 오버레이가 열려 있는 중이면 무시
+          window._pendingTrialCheckout = false;
+          if (typeof window.syncFromCloud === 'function') {
+            await window.syncFromCloud(getAuthUser(), true);
+          }
+          if (!isUserPaidPro() && isTrialExpiredPendingChoice()) {
+            window.openTrialExpiredModal();
+            showToast('결제가 완료되지 않았습니다. 계속 이용하실 방식을 선택해주세요.');
+          }
+        }, 600);
+      }
+    });
+
     window.handleTrialUpgradeToPro = function() {
-      window.closeTrialExpiredModal();
+      // 결제 완료 전까지 5일 종료 선택 모달을 닫지 않고 뒤에 유지 (결제창 취소 시 즉시 선택 모달로 복귀 보장)
+      window._pendingTrialCheckout = true;
+      window._trialCheckoutSucceeded = false;
+      window.openTrialExpiredModal();
       window.startLemonSqueezyCheckout();
+      startTrialCheckoutCancelWatch();
     };
 
     window.handleTrialSwitchToFree = async function() {
+      window._pendingTrialCheckout = false;
       safeStorage.set('SEEDFIT_IS_TRIAL', 'false');
       safeStorage.set('SEEDFIT_IS_PRO', 'false');
       safeStorage.set('SEEDFIT_IS_PAID_PRO', 'false');
@@ -2764,12 +2837,15 @@
 
       checkoutUrl += (checkoutUrl.includes('?') ? '&' : '?') + params.join('&');
 
-      // Lemon Squeezy 결제 성공 이벤트 수신 리스너 등록
+      // Lemon Squeezy 결제 성공 및 닫힘 이벤트 수신 리스너 등록
       if (window.LemonSqueezy && typeof window.LemonSqueezy.Setup === 'function') {
         try {
           window.LemonSqueezy.Setup({
             eventHandler: (event) => {
-              if (event && (event.event === 'Checkout.Success' || event.event === 'Order.Created')) {
+              const evName = event && event.event ? String(event.event) : '';
+              if (evName === 'Checkout.Success' || evName === 'Order.Created') {
+                window._trialCheckoutSucceeded = true;
+                window._pendingTrialCheckout = false;
                 setTimeout(() => {
                   if (typeof window.refreshSubscriptionStatus === 'function') {
                     window.refreshSubscriptionStatus();
@@ -2780,6 +2856,14 @@
                     window.refreshSubscriptionStatus();
                   }
                 }, 3800);
+              } else if (evName.includes('Close') || evName.includes('close')) {
+                if (window._pendingTrialCheckout && !window._trialCheckoutSucceeded) {
+                  window._pendingTrialCheckout = false;
+                  if (isTrialExpiredPendingChoice()) {
+                    window.openTrialExpiredModal();
+                    showToast('결제가 취소되었습니다. 계속 이용하실 방식을 선택해주세요.');
+                  }
+                }
               }
             }
           });
@@ -2832,6 +2916,8 @@
         }
 
         if (data && data.subscription_tier === 'pro') {
+          window._trialCheckoutSucceeded = true;
+          window._pendingTrialCheckout = false;
           safeStorage.set('SEEDFIT_IS_PAID_PRO', 'true');
           safeStorage.set('SEEDFIT_IS_TRIAL', 'false');
           safeStorage.remove('SEEDFIT_TRIAL_ENDS_AT');
@@ -2848,9 +2934,16 @@
           if (typeof window.syncToCloud === 'function') {
             window.syncToCloud(false, true);
           }
+          renderCurrentTab();
           showToast('SeedFit Pro 정기구독이 정상 확인되었습니다. 기존 데이터가 모두 연동되었습니다.');
         } else if (isUserTrial()) {
           showToast('현재 5일 무료 체험 중입니다. (정식 정기구독 결제 내역은 아직 확인되지 않았습니다)');
+        } else if (isTrialExpiredPendingChoice()) {
+          safeStorage.set('SEEDFIT_IS_PAID_PRO', 'false');
+          safeStorage.set('SEEDFIT_IS_PRO', 'false');
+          clearVerifiedProSession();
+          window.openTrialExpiredModal();
+          showToast('아직 결제 완료 내역이 확인되지 않았습니다. 결제를 진행하거나 무료 버전을 선택해주세요.');
         } else {
           safeStorage.set('SEEDFIT_IS_PAID_PRO', 'false');
           safeStorage.set('SEEDFIT_IS_PRO', 'false');
@@ -2868,7 +2961,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.9.33';
+    const CURRENT_APP_VERSION = 'v1.9.34';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');
