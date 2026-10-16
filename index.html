@@ -88,7 +88,7 @@
         },
         {
           "@type": "Question",
-          "name": "모바일 앱처럼 스마트폰 홈 화면에 추가할 수 있나요?",
+          "name": "모바일 앱처럼 휴대폰 홈 화면에 추가할 수 있나요?",
           "acceptedAnswer": {
             "@type": "Answer",
             "text": "네, SeedFit은 최신 PWA(Progressive Web App) 기술로 제작되어 아이폰 Safari의 [홈 화면에 추가], 안드로이드 브라우저의 [앱 설치]를 통해 별도의 스토어 다운로드 없이 3초 만에 순정 토계부 어플처럼 설치하여 사용하실 수 있습니다."
@@ -99,7 +99,7 @@
           "name": "기록한 토계부 데이터는 안전하게 보관되나요?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "기기 로컬 저장소 영구 보존뿐만 아니라 클라우드 실시간 동기화를 지원하여 스마트폰을 바꾸거나 브라우저 캐시를 삭제해도 토계부 데이터가 안전하게 보존됩니다."
+            "text": "기기 로컬 저장소 영구 보존뿐만 아니라 클라우드 실시간 동기화를 지원하여 휴대폰을 바꾸거나 브라우저 캐시를 삭제해도 토계부 데이터가 안전하게 보존됩니다."
           }
         }
       ]
@@ -353,11 +353,11 @@
 
       <!-- 아이폰(iOS) 가이드 카드 -->
       <div id="landingCardIos" class="space-y-4">
-        <!-- Safari & Chrome 지원 알림 배너 -->
+        <!-- Safari 권장 알림 배너 -->
         <div id="iosSafariNotice" class="p-3 bg-blue-500/10 border border-blue-500/25 rounded-2xl flex items-center justify-between text-xs text-blue-300">
           <div class="flex items-center space-x-2">
             <svg class="w-4 h-4 text-blue-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-            <span id="iosBrowserNoticeText">아이폰은 <b>Safari</b> 또는 <b>크롬(Chrome)</b>에서 홈 화면에 추가할 수 있습니다.</span>
+            <span>아이폰은 <b>Safari 브라우저</b>에서 홈 화면에 추가할 수 있습니다.</span>
           </div>
         </div>
 
@@ -370,18 +370,19 @@
           <div class="space-y-3.5 text-xs text-neutral-300">
             <div class="flex items-start space-x-3">
               <div class="w-6 h-6 rounded-full bg-blue-600/30 text-blue-400 font-bold flex items-center justify-center shrink-0 text-xs">1</div>
-              <div class="space-y-1.5 flex-1">
-                <p class="font-semibold text-white">[공유] 아이콘 터치 (네모 위쪽 화살표 ⎋)</p>
-                <div class="space-y-1 text-[11px]">
-                  <div class="flex items-center space-x-1.5 text-amber-300 bg-amber-500/10 px-2.5 py-1.5 rounded-xl border border-amber-500/20">
-                    <span class="font-bold shrink-0">크롬 (Chrome):</span>
-                    <span>화면 <b>상단 주소창 우측</b>의 [공유] 버튼 터치</span>
-                  </div>
-                  <div class="flex items-center space-x-1.5 text-blue-300 bg-blue-500/10 px-2.5 py-1.5 rounded-xl border border-blue-500/20">
-                    <span class="font-bold shrink-0">사파리 (Safari):</span>
-                    <span>화면 <b>하단 중앙</b>의 [공유] 버튼 터치</span>
-                  </div>
-                </div>
+              <div class="flex-1">
+                <p class="font-semibold text-white flex items-center flex-wrap gap-1">
+                  <span>Safari 하단 중앙의 [공유]</span>
+                  <span class="inline-flex items-center justify-center w-5 h-5 bg-neutral-800 border border-neutral-700/80 rounded-md text-white shadow-sm">
+                    <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M4 12v6a2 2 0 002 2h12a2 2 0 002-2v-6"/>
+                      <polyline points="16 6 12 2 8 6"/>
+                      <line x1="12" y1="2" x2="12" y2="15"/>
+                    </svg>
+                  </span>
+                  <span>아이콘 터치</span>
+                </p>
+                <p class="text-[11px] text-neutral-400 mt-0.5">화면 맨 아래 사각 상자에 위쪽 화살표가 있는 버튼을 누릅니다.</p>
               </div>
             </div>
 
@@ -389,7 +390,7 @@
               <div class="w-6 h-6 rounded-full bg-blue-600/30 text-blue-400 font-bold flex items-center justify-center shrink-0 text-xs">2</div>
               <div>
                 <p class="font-semibold text-white">메뉴에서 [홈 화면에 추가] 선택</p>
-                <p class="text-[11px] text-neutral-400 mt-0.5">스크롤을 내려 [홈 화면에 추가]를 터치 후 우측 상단 [추가]를 누릅니다.</p>
+                <p class="text-[11px] text-neutral-400 mt-0.5">스크롤을 살짝 내려 [홈 화면에 추가]를 터치 후 우측 상단 [추가]를 누릅니다.</p>
               </div>
             </div>
 
@@ -406,16 +407,24 @@
         <!-- iOS 데이터 연동 안내 팁 -->
         <div class="p-3 bg-neutral-900/60 border border-neutral-800 rounded-2xl flex items-center space-x-2 text-[11px] text-neutral-400">
           <svg class="w-4 h-4 text-blue-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-          <span>로그인하시면 사파리, 크롬, 홈 화면 앱 어디서나 데이터가 안전하게 연동됩니다.</span>
+          <span>로그인하시면 Safari와 홈 화면 앱 어디서나 데이터가 안전하게 연동됩니다.</span>
         </div>
 
-        <!-- 공유 버튼 가리키는 브라우저별 스마트 안내 배너 -->
-        <div id="iosShareHintBanner" class="p-3.5 rounded-2xl bg-neutral-900/70 border border-neutral-800/80 text-center text-xs text-neutral-300 space-y-1.5 shadow-sm">
-          <div id="iosShareHintIcon" class="text-amber-400 flex justify-center">
-            <svg class="w-4 h-4 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>
+        <!-- 하단 공유 버튼 가리키는 부드러운 화살표 안내 -->
+        <div class="p-3 rounded-2xl bg-neutral-900/50 border border-neutral-800/60 text-center text-xs text-neutral-400 space-y-1">
+          <div class="text-blue-400 animate-bounce flex justify-center">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>
           </div>
-          <p id="iosShareHintText" class="text-[11px] leading-relaxed">
-            <span class="text-amber-400 font-bold">크롬</span>: 상단 주소창 우측 / <span class="text-blue-400 font-bold">사파리</span>: 하단 중앙의 <b>[공유 버튼(⎋)]</b>을 눌러주세요
+          <p class="text-[11px] flex items-center justify-center space-x-1">
+            <span>지금 화면 맨 아래의</span>
+            <span class="inline-flex items-center justify-center w-5 h-5 bg-neutral-800 border border-neutral-700/80 rounded-md text-white shadow-sm">
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M4 12v6a2 2 0 002 2h12a2 2 0 002-2v-6"/>
+                <polyline points="16 6 12 2 8 6"/>
+                <line x1="12" y1="2" x2="12" y2="15"/>
+              </svg>
+            </span>
+            <span><b>공유 버튼</b>을 눌러주세요</span>
           </p>
         </div>
       </div>
@@ -1566,7 +1575,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.9.36').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.9.37').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -1675,25 +1684,8 @@
       }
     }
 
-    function updateIosBrowserDetection() {
-      const ua = navigator.userAgent || '';
-      const isCriOS = /CriOS/i.test(ua);
-      const hintText = document.getElementById('iosShareHintText');
-      const hintIcon = document.getElementById('iosShareHintIcon');
-      const noticeText = document.getElementById('iosBrowserNoticeText');
-      if (isCriOS) {
-        if (noticeText) noticeText.innerHTML = '현재 <b>크롬(Chrome)</b>으로 접속 중입니다. 상단 주소창 우측에서 추가할 수 있습니다.';
-        if (hintIcon) hintIcon.innerHTML = '<svg class="w-4 h-4 text-amber-400 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>';
-        if (hintText) hintText.innerHTML = '지금 화면 <b>상단 주소창 우측의 [공유 버튼(⎋)]</b>을 눌러주세요';
-      } else {
-        if (hintIcon) hintIcon.innerHTML = '<svg class="w-4 h-4 text-blue-400 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/></svg>';
-        if (hintText) hintText.innerHTML = '지금 화면 <b>하단 중앙의 [공유 버튼(⎋)]</b>을 눌러주세요 (크롬은 상단 주소창 우측)';
-      }
-    }
-
     function initInstallLandingGate() {
       checkAppEntryFlow();
-      updateIosBrowserDetection();
     }
 
     window.switchLandingTab = function(tab) {
@@ -1709,7 +1701,6 @@
         tabAndroid.className = 'py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1.5 text-neutral-400 hover:text-white';
         cardIos.classList.remove('hidden');
         cardAndroid.classList.add('hidden');
-        updateIosBrowserDetection();
       } else {
         tabAndroid.className = 'py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1.5 bg-neutral-800 text-white shadow-sm';
         tabIos.className = 'py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center space-x-1.5 text-neutral-400 hover:text-white';
@@ -3148,7 +3139,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.9.36';
+    const CURRENT_APP_VERSION = 'v1.9.37';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');
