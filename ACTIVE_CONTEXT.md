@@ -6,13 +6,17 @@
 ---
 
 ## 0. 멀티 디바이스 작업 즉시 인계 가이드 (Multi-Device Quick Handoff)
-- **인계 시점**: 2026-10-16 12:28 KST
+- **인계 시점**: 2026-10-16 14:30 KST
 - **현재 원격 저장소 동기화 상태**:
   - GitHub 비공개 저장소(`ArchistJJ/SeedFit`), `main` 브랜치에 최신 커밋까지 동기화 완료.
-  - 최신 릴리즈 버전: **`v1.9.35`**
+  - 최신 릴리즈 버전: **`v1.9.36`**
   - Cloudflare Pages 프로덕션 무중단 배포 연동 (`https://seedfit.pro/`, `https://www.seedfit.pro/`).
 - **최근 완료된 핵심 작업 요약**:
-  1. **구글 검색엔진 최적화(SEO) 및 생성형 AI 검색 최적화(GEO) 풀스택 인프라 구축 (v1.9.35)**:
+  1. **iOS 크롬(Chrome) 상단 주소창 공유 지원 및 브라우저별 스마트 설치 가이드 개편 (v1.9.36)**:
+     - iOS 크롬 업데이트 반영: 아이폰 사용자가 크롬으로 접속했을 때 화면 상단 주소창 우측의 [공유 버튼(⎋)]을 통해 [홈 화면에 추가]하도록 1단계 안내 카드 개편.
+     - 사용자 접속 브라우저 자동 감지(`updateIosBrowserDetection`): iOS 크롬(`CriOS`) 접속 시에는 상단 주소창을 가리키는 위쪽 바운스 화살표, 사파리 접속 시에는 하단 중앙을 가리키는 아래쪽 바운스 화살표로 맞춤 안내 제공.
+     - '스포츠 토토' 단어 전면 배제 및 '토계부' / '프로토' 1순위 검색엔진·AI(GEO) 최적화 상태 완벽 유지.
+  2. **구글 검색엔진 최적화(SEO) 및 생성형 AI 검색 최적화(GEO) 풀스택 인프라 구축 (v1.9.35)**:
      - **GEO 최신 공식 표준 도입**: `llms.txt` 생성 완료. AI 검색 엔진(ChatGPT Search, Claude, Perplexity, Gemini)이 SeedFit을 1순위로 학습·인용·추천할 수 있도록 서비스 정의, 6대 기능, 타겟 유저, FAQ 수록.
      - **AI 크롤러 권한 명시 (`robots.txt`)**: GPTBot, ChatGPT-User, ClaudeBot, PerplexityBot, Google-Extended, Applebot-Extended, Yeti(네이버), Bingbot 등 공식 크롤러 접근 허용.
      - **구글 리치 스니펫 대응 구조화 데이터 (`index.html`)**: `WebApplication`, `FAQPage` 스키마(4문 4답) 추가로 구글 검색 결과 아래에 아코디언 질문-답변 리치 결과가 노출되도록 구현.
