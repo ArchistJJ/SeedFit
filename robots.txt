@@ -1,6 +1,9 @@
 User-agent: *
 Allow: /
 
+User-agent: Googlebot
+Allow: /
+
 # AI Crawlers & Generative Engine Optimization (GEO)
 User-agent: GPTBot
 Allow: /
