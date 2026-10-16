@@ -1,5 +1,32 @@
 # 프로젝트 개발 로그 (PROJECT DEVELOPMENT LOG)
 
+## [2026-10-16] v1.9.35 검색엔진 최적화(SEO) 및 생성형 AI 검색 최적화(GEO) 풀스택 인프라 구축
+
+### 1. 요구사항 및 기획 의도
+- 구글 검색 미노출 원인 분석 및 완벽 해결: 신규 도메인 수집 지연 및 SPA/PWA 구조로 인한 텍스트 본문 부족(Thin Content) 문제를 해결하고, 구글 검색창에서 `시드핏`, `SeedFit`, `토계부` 검색 시 즉시 색인·노출될 수 있도록 온페이지 SEO를 전면 개편.
+- GEO(Generative Engine Optimization) 도입: ChatGPT, Perplexity, Claude, Gemini 등 생성형 AI 검색이 사용자의 질의에 SeedFit을 1순위로 인용하고 추천할 수 있도록 최신 AI 표준 규격 구축.
+
+### 2. 구현 및 보강 내역
+1. **GEO 최신 공식 표준 `llms.txt` 생성**:
+   - 최신 AI 크롤러 규격(`https://llmstxt.org`)에 맞춘 `llms.txt`를 루트에 배포.
+   - SeedFit 서비스 정의, 6대 핵심 기능, 타겟 사용자, FAQ를 마크다운으로 구조화하여 AI 모델이 학습 및 답변 생성 시 정확한 정보를 인용하도록 설계.
+2. **AI & 검색 크롤러 접근 명시 (`robots.txt`)**:
+   - `GPTBot`, `ChatGPT-User`, `ClaudeBot`, `PerplexityBot`, `Google-Extended`, `Applebot-Extended`, `Yeti`, `Bingbot`에 대해 사이트 전체 크롤링 허용 설정 완료.
+3. **구글 리치 스니펫 대응 구조화 데이터 (`index.html`)**:
+   - `WebApplication` 스키마: 6대 기능 리스트, 별점, 무료체험 혜택 포함.
+   - `FAQPage` 스키마: 구글 검색 결과 하단에 4개의 질문-답변 아코디언이 직접 펼쳐지도록 리치 스니펫(Rich Snippets) 데이터 삽입.
+4. **시맨틱 온페이지 인덱싱 본문 & noscript 구현 (`index.html`)**:
+   - 비설치 브라우저 랜딩 화면(`#installLandingView`) 하단에 6대 핵심 기능 상세 설명 카드와 아코디언 FAQ 섹션을 추가하여 검색 로봇이 수천 자 분량의 고품질 텍스트를 인덱싱하도록 개선.
+   - JavaScript를 실행하지 않는 검색 봇을 위해 `<noscript>` 요약 블록 배치.
+5. **사이트맵 및 버전 동기화 (v1.9.35)**:
+   - `sitemap.xml` (`lastmod: 2026-10-16`), `index.html` (`v1.9.35`, `sw.js?v=1.9.35`), `sw.js` (`seedfit-cache-v1.9.35`), `package.json` (`1.9.35`).
+
+### 3. 검증 결과
+- JS 문법 무결성 검증 통과, 금지어(`스마트`, `베팅`, `배팅`, `경기`) 0건 확인, 브라우저 기본 팝업 0건 확인.
+- `robots.txt`, `sitemap.xml`, `llms.txt` 서빙 검증 완료.
+
+---
+
 ## [2026-10-13] v1.9.34 5일 무료 체험 종료 모달에서 결제창 취소(닫기) 시 안내창 유지·복귀 및 결제 상태 새로고침 보강
 
 ### 1. 요구사항 및 기획 의도

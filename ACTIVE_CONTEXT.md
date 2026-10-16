@@ -6,13 +6,19 @@
 ---
 
 ## 0. 멀티 디바이스 작업 즉시 인계 가이드 (Multi-Device Quick Handoff)
-- **인계 시점**: 2026-10-13 15:45 KST
+- **인계 시점**: 2026-10-16 12:28 KST
 - **현재 원격 저장소 동기화 상태**:
   - GitHub 비공개 저장소(`ArchistJJ/SeedFit`), `main` 브랜치에 최신 커밋까지 동기화 완료.
-  - 최신 릴리즈 버전: **`v1.9.34`**
+  - 최신 릴리즈 버전: **`v1.9.35`**
   - Cloudflare Pages 프로덕션 무중단 배포 연동 (`https://seedfit.pro/`, `https://www.seedfit.pro/`).
 - **최근 완료된 핵심 작업 요약**:
-  1. **5일 무료 체험 종료 모달에서 결제창 취소(닫기) 시 안내창 유지·자동 복귀 및 실시간 결제 상태 새로고침 보강 (v1.9.34)**:
+  1. **구글 검색엔진 최적화(SEO) 및 생성형 AI 검색 최적화(GEO) 풀스택 인프라 구축 (v1.9.35)**:
+     - **GEO 최신 공식 표준 도입**: `llms.txt` 생성 완료. AI 검색 엔진(ChatGPT Search, Claude, Perplexity, Gemini)이 SeedFit을 1순위로 학습·인용·추천할 수 있도록 서비스 정의, 6대 기능, 타겟 유저, FAQ 수록.
+     - **AI 크롤러 권한 명시 (`robots.txt`)**: GPTBot, ChatGPT-User, ClaudeBot, PerplexityBot, Google-Extended, Applebot-Extended, Yeti(네이버), Bingbot 등 공식 크롤러 접근 허용.
+     - **구글 리치 스니펫 대응 구조화 데이터 (`index.html`)**: `WebApplication`, `FAQPage` 스키마(4문 4답) 추가로 구글 검색 결과 아래에 아코디언 질문-답변 리치 결과가 노출되도록 구현.
+     - **시맨틱 온페이지 인덱싱 섹션 및 noscript 지원**: SPA/PWA의 빈 본문(Thin Content) 문제를 원천 해결하기 위해, 비설치 랜딩 화면(`#installLandingView`) 하단에 6대 핵심 기능 카드와 인터랙티브 FAQ를 배치하고 `<noscript>` 블록을 추가하여 검색 로봇과 AI가 사이트 전체 콘텐츠를 즉시 크롤링하도록 설계.
+     - **최신 사이트맵 동기화**: `sitemap.xml` (`lastmod: 2026-10-16`).
+  2. **5일 무료 체험 종료 모달에서 결제창 취소(닫기) 시 안내창 유지·자동 복귀 및 실시간 결제 상태 새로고침 보강 (v1.9.34)**:
      - `#trialExpiredModal`에서 `[Pro 구독하고 기록 그대로 유지하기]` 클릭 시 모달을 성급히 닫지 않고 결제 오버레이 뒤편에 유지하여, 결제 완료 또는 `[무료 버전으로 이용하기]` 선택 전까지 의사결정이 유실되지 않도록 설계.
      - 레몬스퀴즈 오버레이 결제창을 닫거나(`Checkout.Close` 이벤트 / `.lemonsqueezy-overlay` 제거 감지) 새 탭 결제창에서 취소 후 돌아올 때(`window.focus`) 결제가 안 된 상태면 즉시 안내 모달을 다시 전면에 유지하고 `"결제가 취소되었습니다. 계속 이용하실 방식을 선택해주세요."` 토스트 안내 표시.
      - 모달 하단에 `"결제 완료 후 상태가 안 바뀌나요? 구독 상태 새로고침"` 버튼을 탑재하여 웹훅 반영 즉시 모달 자동 닫힘 및 Pro 전환 지원.
