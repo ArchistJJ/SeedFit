@@ -1590,7 +1590,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.9.38').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.9.39').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -3154,7 +3154,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.9.38';
+    const CURRENT_APP_VERSION = 'v1.9.39';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');
@@ -4858,6 +4858,97 @@
         return { fold: f, invest: fInvest, returnAmount: fReturn, profit: fProfit, winRate: fWinRate, count: foldRecs.length };
       });
 
+      // 7. 배당률별 승률 분석 데이터 계산 (x1.0~1.5, x1.5~2.0, x2.0~3.0, x3.0~5.0, x5.0~)
+      const oddsTiers = [
+        { id: 't1', label: 'x1.0 ~ 1.5', min: 1.0, max: 1.5, barColor: 'bg-emerald-500' },
+        { id: 't2', label: 'x1.5 ~ 2.0', min: 1.5, max: 2.0, barColor: 'bg-blue-500' },
+        { id: 't3', label: 'x2.0 ~ 3.0', min: 2.0, max: 3.0, barColor: 'bg-indigo-500' },
+        { id: 't4', label: 'x3.0 ~ 5.0', min: 3.0, max: 5.0, barColor: 'bg-amber-500' },
+        { id: 't5', label: 'x5.0~', min: 5.0, max: Infinity, barColor: 'bg-rose-500' }
+      ];
+
+      function getRecordOddsValue(r) {
+        if (!r || !r.investAmount || r.investAmount <= 0) return 0;
+        let ret = 0;
+        if (r.expectedReturn && r.expectedReturn > 0) {
+          ret = r.expectedReturn;
+        } else if (r.status === 'WIN' && r.returnAmount && r.returnAmount > 0) {
+          ret = r.returnAmount;
+        } else {
+          ret = Math.round(r.investAmount * 1.9);
+        }
+        return Number((ret / r.investAmount).toFixed(2));
+      }
+
+      function getOddsTierIndex(odds) {
+        if (odds < 1.5) return 0; // x1.0 ~ 1.5
+        if (odds < 2.0) return 1; // x1.5 ~ 2.0
+        if (odds < 3.0) return 2; // x2.0 ~ 3.0
+        if (odds < 5.0) return 3; // x3.0 ~ 5.0
+        return 4;                 // x5.0~
+      }
+
+      const oddsTierStats = oddsTiers.map((tier, tIdx) => {
+        const tierRecs = comboRecords.filter(r => {
+          const o = getRecordOddsValue(r);
+          return getOddsTierIndex(o) === tIdx;
+        });
+
+        let tInvest = 0, tReturn = 0, tWin = 0, tLose = 0, tPending = 0;
+        tierRecs.forEach(r => {
+          tInvest += r.investAmount;
+          if (r.status === 'WIN') {
+            tReturn += (r.returnAmount || 0);
+            tWin++;
+          } else if (r.status === 'LOSE') {
+            tLose++;
+          } else {
+            tPending++;
+          }
+        });
+
+        const tSettled = tWin + tLose;
+        const tWinRate = tSettled > 0 ? Math.round((tWin / tSettled) * 100) : 0;
+        const tSettledInvest = tierRecs.filter(r => r.status !== 'PENDING').reduce((acc, c) => acc + c.investAmount, 0);
+        const tProfit = tReturn - tSettledInvest;
+        const tRoi = tSettledInvest > 0 ? Math.round((tProfit / tSettledInvest) * 100) : 0;
+
+        let badgeClass = '';
+        if (isLightMode) {
+          if (tIdx === 0) badgeClass = 'text-emerald-700 bg-emerald-50 border-emerald-200';
+          else if (tIdx === 1) badgeClass = 'text-blue-700 bg-blue-50 border-blue-200';
+          else if (tIdx === 2) badgeClass = 'text-indigo-700 bg-indigo-50 border-indigo-200';
+          else if (tIdx === 3) badgeClass = 'text-amber-800 bg-amber-50 border-amber-200';
+          else badgeClass = 'text-rose-700 bg-rose-50 border-rose-200';
+        } else {
+          if (tIdx === 0) badgeClass = 'text-emerald-400 bg-emerald-500/20 border-emerald-500/30';
+          else if (tIdx === 1) badgeClass = 'text-blue-400 bg-blue-500/20 border-blue-500/30';
+          else if (tIdx === 2) badgeClass = 'text-indigo-400 bg-indigo-500/20 border-indigo-500/30';
+          else if (tIdx === 3) badgeClass = 'text-amber-400 bg-amber-500/20 border-amber-500/30';
+          else badgeClass = 'text-rose-400 bg-rose-500/20 border-rose-500/30';
+        }
+
+        return {
+          ...tier,
+          badgeClass,
+          count: tierRecs.length,
+          winCount: tWin,
+          loseCount: tLose,
+          pendingCount: tPending,
+          settledCount: tSettled,
+          winRate: tWinRate,
+          invest: tInvest,
+          returnAmount: tReturn,
+          profit: tProfit,
+          roi: tRoi
+        };
+      });
+
+      const settledTiers = oddsTierStats.filter(t => t.settledCount > 0);
+      const bestOddsTier = settledTiers.length > 0
+        ? settledTiers.slice().sort((a, b) => b.winRate - a.winRate || b.settledCount - a.settledCount)[0]
+        : null;
+
       // 7. 필터 상태 라벨링 (심플 표기: 기본 '전체 투자+전체 묶음', 선택 시 '[일반투자]+[2묶음]')
       const isFilterActive = (statsCategoryFilter !== 'ALL' || statsFoldFilter !== 'ALL');
       let filterBadgeText = '전체 투자+전체 묶음';
@@ -5196,6 +5287,55 @@
                   </div>
                   <div class="w-full h-1.5 ${isLightMode ? 'bg-neutral-200' : 'bg-neutral-800'} rounded-full overflow-hidden">
                     <div class="h-full bg-indigo-500 rounded-full" style="width: ${f.winRate}%"></div>
+                  </div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- 배당률별 승률 분석 (x1.0~1.5, x1.5~2.0, x2.0~3.0, x3.0~5.0, x5.0~) -->
+        <div class="space-y-2 pt-1 pb-4">
+          <div class="flex justify-between items-center px-1">
+            <div class="flex items-center space-x-1.5">
+              <svg class="w-4 h-4 text-amber-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+              </svg>
+              <span class="text-xs font-bold ${isLightMode ? 'text-neutral-900' : 'text-white'}">배당률별 승률 분석</span>
+            </div>
+            ${bestOddsTier ? `
+              <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full ${isLightMode ? 'bg-amber-100 text-amber-800' : 'bg-amber-500/20 text-amber-300 border border-amber-500/30'}">
+                최고 승률: ${bestOddsTier.label} (${bestOddsTier.winRate}%)
+              </span>
+            ` : `<span class="text-[10px] text-neutral-400">5개 구간 분석</span>`}
+          </div>
+          <div class="space-y-2">
+            ${oddsTierStats.map(t => `
+              <div class="${isLightMode ? 'bg-white border-neutral-200' : 'bg-neutral-900/80 border-neutral-800'} border p-3.5 rounded-2xl space-y-2 shadow-sm">
+                <div class="flex justify-between items-center">
+                  <div class="flex items-center space-x-2">
+                    <span class="text-xs font-bold font-mono px-2.5 py-0.5 rounded-lg border ${t.badgeClass}">${t.label}</span>
+                    <span class="text-[11px] text-neutral-400 font-mono">
+                      ${t.settledCount > 0 ? `${t.winCount}적중 / ${t.loseCount}미적중` : '기록 없음'}
+                      ${t.pendingCount > 0 ? `<span class="text-amber-400"> (대기 ${t.pendingCount})</span>` : ''}
+                    </span>
+                  </div>
+                  <div class="text-right">
+                    <span class="text-xs font-mono font-bold ${t.settledCount > 0 ? (t.profit >= 0 ? 'text-emerald-400' : 'text-rose-400') : (isLightMode ? 'text-neutral-400' : 'text-neutral-500')}">
+                      ${t.settledCount > 0 ? `${t.profit > 0 ? '+' : ''}${t.profit.toLocaleString()}원` : '-'}
+                    </span>
+                  </div>
+                </div>
+                <div class="space-y-1">
+                  <div class="flex justify-between text-[11px] text-neutral-400">
+                    <span>
+                      승률 <strong class="font-mono text-xs ${t.settledCount > 0 ? (t.winRate >= 50 ? (isLightMode ? 'text-emerald-600' : 'text-emerald-400') : (isLightMode ? 'text-rose-600' : 'text-rose-400')) : (isLightMode ? 'text-neutral-400' : 'text-neutral-500')}">${t.settledCount > 0 ? t.winRate + '%' : '- %'}</strong>
+                      ${t.settledCount > 0 ? `<span class="text-[10px] text-neutral-500 ml-1 font-mono">(ROI: ${t.roi > 0 ? '+' : ''}${t.roi}%)</span>` : ''}
+                    </span>
+                    <span class="font-mono text-[10px]">투입: ${t.invest.toLocaleString()}원</span>
+                  </div>
+                  <div class="w-full h-1.5 ${isLightMode ? 'bg-neutral-200' : 'bg-neutral-800'} rounded-full overflow-hidden">
+                    <div class="h-full ${t.barColor} rounded-full transition-all duration-300" style="width: ${t.settledCount > 0 ? t.winRate : 0}%"></div>
                   </div>
                 </div>
               </div>
