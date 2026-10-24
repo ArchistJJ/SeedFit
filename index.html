@@ -1590,7 +1590,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.9.39').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.9.40').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -1972,13 +1972,17 @@
       //    (이를 통해 결제 승격된 Pro 권한이 클라이언트의 upsert로 인해 'free'로 덮어써지는 사고를 원천 방지)
       // 3. 오직 마스터 관리자(wpdntm0428@gmail.com) 계정만 예외적으로 'pro'를 유지합니다.
       const isMaster = isMasterAdminAccount();
+      if (!mentalCareSettings) mentalCareSettings = {};
+      mentalCareSettings.deletedProjectIds = Array.from(deletedProjectIds).slice(-500);
+      mentalCareSettings.deletedRecordIds = Array.from(deletedRecordIds).slice(-1000);
+
       const payload = {
         user_id: userIdKey,
         provider: authUser.provider || 'unknown',
         email: authUser.email || '',
         name: authUser.name || '',
         records: isPro ? (records || []) : [],
-        projects: isPro ? (projects || []) : [],
+        projects: isPro ? sortProjectsDescending(projects || []) : [],
         settings: mentalCareSettings || {},
         updated_at: new Date().toISOString()
       };
@@ -2037,14 +2041,36 @@
           // [Issue 1 & 3: 게스트 데이터 보존 및 멀티 디바이스 지능형 병합 엔진]
           let isServerPro = (data.subscription_tier === 'pro') || isMasterAdminAccount();
 
+          // mentalCareSettings 동기화 및 tombstones 병합
+          if (data.settings && typeof data.settings === 'object') {
+            if (Array.isArray(data.settings.deletedProjectIds)) {
+              data.settings.deletedProjectIds.forEach(id => deletedProjectIds.add(String(id)));
+              safeStorage.set(STORAGE_KEY_DELETED_PROJECT_IDS, JSON.stringify(Array.from(deletedProjectIds).slice(-500)));
+            }
+            if (Array.isArray(data.settings.deletedRecordIds)) {
+              data.settings.deletedRecordIds.forEach(id => deletedRecordIds.add(Number(id) || String(id)));
+              safeStorage.set(STORAGE_KEY_DELETED_RECORD_IDS, JSON.stringify(Array.from(deletedRecordIds).slice(-1000)));
+            }
+            mentalCareSettings = Object.assign(mentalCareSettings || {}, data.settings);
+            hasUpdated = true;
+          }
+
+          // 기록 지능형 병합 (삭제 톰스톤 적용)
           if (Array.isArray(data.records)) {
+            const validCloudRecords = data.records.filter(r => r && r.id && !isRecordDeleted(r.id));
+            if (validCloudRecords.length !== data.records.length) {
+              localNeedsPush = true;
+            }
+
+            records = (records || []).filter(r => r && r.id && !isRecordDeleted(r.id));
+
             if (records.length > 0) {
               const cloudMap = new Map();
-              data.records.forEach(r => { if (r && r.id) cloudMap.set(r.id, r); });
+              validCloudRecords.forEach(r => { if (r && r.id) cloudMap.set(r.id, r); });
 
               // 로컬에만 있는 기록(게스트 시절 생성된 기록 또는 오프라인/동시 작성 기록) 보존 및 통합
               records.forEach(localRec => {
-                if (localRec && localRec.id) {
+                if (localRec && localRec.id && !isRecordDeleted(localRec.id)) {
                   if (!cloudMap.has(localRec.id)) {
                     cloudMap.set(localRec.id, localRec);
                     localNeedsPush = true;
@@ -2062,39 +2088,43 @@
               records = Array.from(cloudMap.values()).sort((a, b) => (b.id || 0) - (a.id || 0));
               hasUpdated = true;
             } else {
-              records = data.records;
+              records = validCloudRecords;
               hasUpdated = true;
             }
           } else if (records.length > 0) {
             localNeedsPush = true;
           }
 
-          // 프로젝트 지능형 병합
+          // 프로젝트 지능형 병합 (삭제 톰스톤 적용 & 최신순 완벽 정렬)
           if (Array.isArray(data.projects)) {
+            const validCloudProjects = data.projects.filter(p => p && p.id && !isProjectDeleted(p.id));
+            if (validCloudProjects.length !== data.projects.length) {
+              localNeedsPush = true;
+            }
+
+            projects = (projects || []).filter(p => p && p.id && !isProjectDeleted(p.id));
+
             if (projects.length > 0) {
               const cloudProjMap = new Map();
-              data.projects.forEach(p => { if (p && p.id) cloudProjMap.set(p.id, p); });
+              validCloudProjects.forEach(p => { if (p && p.id) cloudProjMap.set(p.id, p); });
 
               projects.forEach(localProj => {
-                if (localProj && localProj.id && !cloudProjMap.has(localProj.id)) {
-                  cloudProjMap.set(localProj.id, localProj);
-                  localNeedsPush = true;
+                if (localProj && localProj.id && !isProjectDeleted(localProj.id)) {
+                  if (!cloudProjMap.has(localProj.id)) {
+                    cloudProjMap.set(localProj.id, localProj);
+                    localNeedsPush = true;
+                  }
                 }
               });
 
-              projects = Array.from(cloudProjMap.values()).sort((a, b) => (b.id || 0) - (a.id || 0));
+              projects = sortProjectsDescending(Array.from(cloudProjMap.values()));
               hasUpdated = true;
             } else {
-              projects = data.projects;
+              projects = sortProjectsDescending(validCloudProjects);
               hasUpdated = true;
             }
           } else if (projects.length > 0) {
             localNeedsPush = true;
-          }
-
-          if (data.settings && typeof data.settings === 'object' && Object.keys(data.settings).length > 0) {
-            mentalCareSettings = Object.assign(mentalCareSettings, data.settings);
-            hasUpdated = true;
           }
 
           // 기기 시계 조작(과거로 돌리기) 어뷰징 방어: 현재 기기 시각과 서버 최신 갱신 시각 중 더 미래 시각을 기준으로 판정
@@ -3154,7 +3184,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.9.39';
+    const CURRENT_APP_VERSION = 'v1.9.40';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');
@@ -3320,6 +3350,84 @@
     const STORAGE_KEY_PROJECTS = 'SEEDFIT_PROJECTS_V1';
     const LEGACY_STORAGE_KEY_RECORDS = 'J_APP_RECORDS_V1';
     const LEGACY_STORAGE_KEY_PROJECTS = 'J_APP_PROJECTS_V1';
+    const STORAGE_KEY_DELETED_PROJECT_IDS = 'SEEDFIT_DELETED_PROJECT_IDS_V1';
+    const STORAGE_KEY_DELETED_RECORD_IDS = 'SEEDFIT_DELETED_RECORD_IDS_V1';
+
+    let deletedProjectIds = new Set();
+    try {
+      const rawDP = safeStorage.get(STORAGE_KEY_DELETED_PROJECT_IDS);
+      if (rawDP) {
+        const arr = JSON.parse(rawDP);
+        if (Array.isArray(arr)) deletedProjectIds = new Set(arr);
+      }
+    } catch(e) {}
+
+    let deletedRecordIds = new Set();
+    try {
+      const rawDR = safeStorage.get(STORAGE_KEY_DELETED_RECORD_IDS);
+      if (rawDR) {
+        const arr = JSON.parse(rawDR);
+        if (Array.isArray(arr)) deletedRecordIds = new Set(arr);
+      }
+    } catch(e) {}
+
+    function addDeletedProjectId(id) {
+      if (!id) return;
+      deletedProjectIds.add(String(id));
+      const arr = Array.from(deletedProjectIds).slice(-500);
+      safeStorage.set(STORAGE_KEY_DELETED_PROJECT_IDS, JSON.stringify(arr));
+      if (typeof mentalCareSettings !== 'undefined' && mentalCareSettings) {
+        mentalCareSettings.deletedProjectIds = arr;
+      }
+    }
+
+    function isProjectDeleted(id) {
+      if (!id) return false;
+      return deletedProjectIds.has(String(id));
+    }
+
+    function addDeletedRecordId(id) {
+      if (!id) return;
+      deletedRecordIds.add(Number(id) || String(id));
+      const arr = Array.from(deletedRecordIds).slice(-1000);
+      safeStorage.set(STORAGE_KEY_DELETED_RECORD_IDS, JSON.stringify(arr));
+      if (typeof mentalCareSettings !== 'undefined' && mentalCareSettings) {
+        mentalCareSettings.deletedRecordIds = arr;
+      }
+    }
+
+    function isRecordDeleted(id) {
+      if (!id) return false;
+      return deletedRecordIds.has(id) || deletedRecordIds.has(Number(id)) || deletedRecordIds.has(String(id));
+    }
+
+    function getProjectTimestamp(p) {
+      if (!p) return 0;
+      if (typeof p.createdAtMs === 'number' && Number.isFinite(p.createdAtMs) && p.createdAtMs > 0) {
+        return p.createdAtMs;
+      }
+      if (typeof p.id === 'string' && p.id.startsWith('proj-')) {
+        const n = Number(p.id.replace('proj-', ''));
+        if (Number.isFinite(n) && n > 1000000000) return n;
+      }
+      if (p.createdAt) {
+        if (typeof p.createdAt === 'number' && Number.isFinite(p.createdAt)) return p.createdAt;
+        const s = String(p.createdAt).trim().replace(/\./g, '-');
+        const t = Date.parse(s);
+        if (Number.isFinite(t)) return t;
+      }
+      return 0;
+    }
+
+    function sortProjectsDescending(arr) {
+      if (!Array.isArray(arr)) return [];
+      return arr.sort((a, b) => {
+        const tA = getProjectTimestamp(a);
+        const tB = getProjectTimestamp(b);
+        if (tB !== tA) return tB - tA; // 최신순 (내림차순): 큰 타임스탬프가 맨 앞(0번 인덱스)
+        return String(b.id || '').localeCompare(String(a.id || ''));
+      });
+    }
 
     let records = [];
     let projects = [];
@@ -3364,12 +3472,16 @@
         safeStorage.set(STORAGE_KEY_PROJECTS, JSON.stringify([]));
         safeStorage.set(LEGACY_STORAGE_KEY_PROJECTS, JSON.stringify([]));
       }
+      // 삭제된 프로젝트 및 기록 필터링 & 최신순(신규 상단, 이전 프로젝트 하단) 정렬
+      projects = sortProjectsDescending((projects || []).filter(p => p && p.id && !isProjectDeleted(p.id)));
+      records = (records || []).filter(r => r && r.id && !isRecordDeleted(r.id));
     } catch(e) {
       records = DEFAULT_RECORDS;
       projects = DEFAULT_PROJECTS;
     }
 
     function saveState(skipCloud = false) {
+      sortProjectsDescending(projects);
       const recordsJson = JSON.stringify(records);
       const projectsJson = JSON.stringify(projects);
       safeStorage.set(STORAGE_KEY_RECORDS, recordsJson);
@@ -4168,8 +4280,9 @@
       });
       if (!confirmed) return;
 
+      addDeletedRecordId(recordId);
       records = records.filter(r => r.id !== recordId);
-      saveState();
+      saveState(true);
 
       if (typeof currentSettleRecordId !== 'undefined' && currentSettleRecordId === recordId) {
         if (typeof window.closeSettleModal === 'function') {
@@ -4179,6 +4292,14 @@
 
       renderCurrentTab();
       showToast('기록이 삭제되었습니다.');
+
+      if (getAuthUser()) {
+        try {
+          await window.syncToCloud(false, false);
+        } catch (e) {
+          console.warn('Direct cloud sync on record delete failed:', e);
+        }
+      }
     };
 
     window.deleteProject = async function(projectId) {
@@ -4212,6 +4333,7 @@
         });
 
         if (deleteRecordsAlso) {
+          projRecords.forEach(r => addDeletedRecordId(r.id));
           records = records.filter(r => r.projectId !== projectId);
         } else {
           records.forEach(r => {
@@ -4222,17 +4344,33 @@
         }
       }
 
-      projects = projects.filter(p => p.id !== projectId);
+      // 1. 영구 삭제 톰스톤 등록 (앱 재접속 시 클라우드 병합에서 부활 원천 차단)
+      addDeletedProjectId(projectId);
 
-      saveState();
+      // 2. 로컬 프로젝트 배열에서 즉시 제거 및 정렬
+      projects = projects.filter(p => p.id !== projectId);
+      sortProjectsDescending(projects);
+
+      // 3. 로컬 저장소 즉각 저장
+      saveState(true);
       if (selectedProjectId === projectId) {
         selectedProjectId = null;
       }
       renderCurrentTab();
       showToast(`'${target.name}' 프로젝트가 삭제되었습니다.`);
+
+      // 4. 클라우드에 지연(디바운스) 없이 즉시 동기화하여 서버에서도 영구 제거 완료
+      if (getAuthUser()) {
+        try {
+          await window.syncToCloud(false, false);
+        } catch (e) {
+          console.warn('Direct cloud sync on project delete failed:', e);
+        }
+      }
     };
 
     function renderProjectsListTab(container, actionBar) {
+      sortProjectsDescending(projects);
       updateProjectsStatus();
       actionBar.classList.add('hidden');
 
@@ -6909,8 +7047,17 @@
               initialSeed: Number.isFinite(Number(p.initialSeed)) ? Math.max(0, Math.min(100000000000, Number(p.initialSeed))) : 0,
               targetAmount: Number.isFinite(Number(p.targetAmount)) ? Math.max(0, Math.min(100000000000, Number(p.targetAmount))) : 0,
               createdAt: sanitizeInput(p.createdAt || '', 30),
+              createdAtMs: Number(p.createdAtMs) || getProjectTimestamp(p),
               status: ['ACTIVE', 'SUCCESS', 'FAILED'].includes(p.status) ? p.status : 'ACTIVE'
             }));
+
+            // 복원된 데이터는 삭제 톰스톤 목록에서 안전하게 해제
+            projects.forEach(p => { if (p && p.id) deletedProjectIds.delete(String(p.id)); });
+            records.forEach(r => { if (r && r.id) { deletedRecordIds.delete(r.id); deletedRecordIds.delete(Number(r.id)); deletedRecordIds.delete(String(r.id)); } });
+            safeStorage.set(STORAGE_KEY_DELETED_PROJECT_IDS, JSON.stringify(Array.from(deletedProjectIds).slice(-500)));
+            safeStorage.set(STORAGE_KEY_DELETED_RECORD_IDS, JSON.stringify(Array.from(deletedRecordIds).slice(-1000)));
+
+            sortProjectsDescending(projects);
 
             if (parsed.mentalCareSettings && typeof parsed.mentalCareSettings === 'object') {
               mentalCareSettings = {
@@ -7308,6 +7455,7 @@
     };
 
     function populateProjectSelect() {
+      sortProjectsDescending(projects);
       const select = document.getElementById('selectRecordProject');
       select.innerHTML = '<option value="">일반 기록 (프로젝트 미연결)</option>';
       projects.filter(p => p.status === 'ACTIVE').forEach(p => {
@@ -7423,17 +7571,21 @@
       const hh = String(now.getHours()).padStart(2, '0');
       const mm = String(now.getMinutes()).padStart(2, '0');
       const ss = String(now.getSeconds()).padStart(2, '0');
+      const createdAtMs = now.getTime();
 
       const newProj = {
-        id: 'proj-' + Date.now(),
+        id: 'proj-' + createdAtMs,
         name: name,
         initialSeed: initial,
         targetAmount: target,
         createdAt: `${y}.${m}.${d} ${hh}:${mm}:${ss}`,
+        createdAtMs: createdAtMs,
         status: 'ACTIVE'
       };
 
+      // 새로 생성된 프로젝트는 항상 가장 위에 배치되고, 이전 프로젝트들은 오래된 순으로 하향 나열
       projects.unshift(newProj);
+      sortProjectsDescending(projects);
       saveState();
       window.closeNewProjectModal();
       selectedProjectId = null;
@@ -7501,6 +7653,15 @@
       document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible' && typeof window.checkPastDuePaymentModal === 'function') {
           window.checkPastDuePaymentModal();
+        }
+      });
+      window.addEventListener('pagehide', () => {
+        if (syncDebounceTimer) {
+          clearTimeout(syncDebounceTimer);
+          syncDebounceTimer = null;
+          if (typeof window.syncToCloud === 'function' && getAuthUser()) {
+            window.syncToCloud(false);
+          }
         }
       });
     });
