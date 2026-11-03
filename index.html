@@ -1635,7 +1635,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.9.41').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.9.42').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -3229,7 +3229,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.9.41';
+    const CURRENT_APP_VERSION = 'v1.9.42';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');
@@ -4935,7 +4935,7 @@
       const abs = Math.abs(amount);
       if (abs >= 10000) {
         const man = (abs / 10000).toFixed(abs % 10000 === 0 ? 0 : 1);
-        return `${sign}${man}만`;
+        return `${sign}${man}`;
       }
       return `${sign}${abs.toLocaleString()}`;
     }
@@ -5061,7 +5061,7 @@
           <div onclick="window.selectCalendarDay(${dayNum})" class="min-h-[66px] p-1.5 border-b border-r ${borderClass} ${bgClass} ${todayMotionClass} ${selectedRingClass} flex flex-col justify-between cursor-pointer select-none transition-colors relative">
             <div class="flex items-center justify-between">
               <span class="text-[11px] font-bold font-mono ${dayColor}">${dayNum}</span>
-              ${isToday ? `<span class="text-[8px] font-extrabold px-1 py-0.2 rounded bg-blue-500 text-white leading-tight">오늘</span>` : (dayInfo.pendingCount > 0 ? `<span class="w-1.5 h-1.5 rounded-full bg-amber-400" title="대기 중 기록 있음"></span>` : ``)}
+              ${dayInfo.pendingCount > 0 ? `<span class="w-1.5 h-1.5 rounded-full bg-amber-400" title="대기 중 기록 있음"></span>` : ``}
             </div>
             ${bottomHtml}
           </div>
@@ -5146,7 +5146,7 @@
             </div>
           ` : ''}
 
-          <!-- 1. 월 이동 네비게이터 & 오늘 이동 & 프로젝트 포함 토글 -->
+          <!-- 1. 월 이동 네비게이터 & 프로젝트 포함 토글 -->
           <div class="rounded-2xl p-3 border ${isLightMode ? 'bg-white border-neutral-200 shadow-sm' : 'bg-neutral-900 border-neutral-800'} flex items-center justify-between">
             <div class="flex items-center space-x-1">
               <button onclick="window.navigateCalendarMonth(-1)" class="w-8 h-8 rounded-xl flex items-center justify-center border ${isLightMode ? 'bg-neutral-100 hover:bg-neutral-200 text-neutral-700 border-neutral-200' : 'bg-neutral-800 hover:bg-neutral-700 text-neutral-200 border-neutral-700'} transition active:scale-90" title="이전 달">
@@ -5157,9 +5157,6 @@
               </div>
               <button onclick="window.navigateCalendarMonth(1)" class="w-8 h-8 rounded-xl flex items-center justify-center border ${isLightMode ? 'bg-neutral-100 hover:bg-neutral-200 text-neutral-700 border-neutral-200' : 'bg-neutral-800 hover:bg-neutral-700 text-neutral-200 border-neutral-700'} transition active:scale-90" title="다음 달">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" d="M9 5l7 7-7 7"/></svg>
-              </button>
-              <button onclick="window.jumpCalendarToday()" class="ml-1 px-2 py-1.5 rounded-xl text-[10px] font-bold bg-blue-500/15 text-blue-400 border border-blue-500/30 hover:bg-blue-500/25 transition active:scale-95">
-                오늘
               </button>
             </div>
 
@@ -5190,11 +5187,11 @@
             <div class="grid grid-cols-3 gap-2 pt-2.5 border-t ${isLightMode ? 'border-neutral-100' : 'border-neutral-800'} text-center">
               <div class="rounded-2xl py-2 px-1.5 ${isLightMode ? 'bg-neutral-100' : 'bg-neutral-950/60'}">
                 <span class="text-[10px] font-semibold text-neutral-400 block">수익 일수 (+)</span>
-                <span class="text-xs font-extrabold font-mono ${isLightMode ? 'text-emerald-600' : 'text-emerald-400'} mt-0.5 block">${profitDays}일 (${formatCalendarCellAmount(profitSum)})</span>
+                <span class="text-xs font-extrabold font-mono ${isLightMode ? 'text-emerald-600' : 'text-emerald-400'} mt-0.5 block">${profitDays}일</span>
               </div>
               <div class="rounded-2xl py-2 px-1.5 ${isLightMode ? 'bg-neutral-100' : 'bg-neutral-950/60'}">
                 <span class="text-[10px] font-semibold text-neutral-400 block">손실 일수 (-)</span>
-                <span class="text-xs font-extrabold font-mono ${isLightMode ? 'text-rose-600' : 'text-rose-400'} mt-0.5 block">${lossDays}일 (${lossSum > 0 ? formatCalendarCellAmount(-lossSum) : '0'})</span>
+                <span class="text-xs font-extrabold font-mono ${isLightMode ? 'text-rose-600' : 'text-rose-400'} mt-0.5 block">${lossDays}일</span>
               </div>
               <div class="rounded-2xl py-2 px-1.5 ${isLightMode ? 'bg-neutral-100' : 'bg-neutral-950/60'}">
                 <span class="text-[10px] font-semibold text-neutral-400 block">진행 건수</span>
@@ -5224,7 +5221,6 @@
             <div class="flex items-center justify-between mb-3">
               <div class="flex items-center space-x-2">
                 <span class="text-sm font-extrabold ${isLightMode ? 'text-neutral-900' : 'text-white'}">${calendarMonth}월 ${calendarSelectedDay}일 (${selectedDow}) 상세 기록</span>
-                ${isSelectedToday ? `<span class="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">오늘</span>` : ''}
               </div>
               <span class="text-xs font-extrabold font-mono ${selectedInfo.settledCount > 0 ? (selectedInfo.pnl >= 0 ? (isLightMode ? 'text-emerald-600' : 'text-emerald-400') : (isLightMode ? 'text-rose-600' : 'text-rose-400')) : 'text-neutral-400'}">
                 ${selectedInfo.settledCount > 0 ? `${selectedInfo.pnl > 0 ? '+' : ''}${selectedInfo.pnl.toLocaleString()}원` : '정산 내역 없음'}
