@@ -1,5 +1,24 @@
 # 프로젝트 개발 로그 (PROJECT DEVELOPMENT LOG)
 
+## [2026-11-03] v1.9.44 기록 탭 및 프로젝트 탭 내 개별 기록 투입 금액 옆 배율(xN.NN) 표기 일원화
+
+### 1. 요구사항 및 기획 의도
+- 사용자 피드백 100% 직시:
+  1. 달력 탭 상세 기록에서 기록 옆에 배율(`xN.NN`)이 표기되는 것을 기록 탭에서도 똑같이 적용.
+  2. 기록 탭에 적힌 기록 카드들의 '투입 금액' 옆에 배율이 함께 표시되도록 UI 일원화.
+
+### 2. 구현 및 보강 내역
+1. **공통 배율 계산 유틸리티 (`getRecordOddsStr`)**:
+   - `expectedReturn`(예상 회수금) 또는 `returnAmount`(정산 회수금)를 `investAmount`(투입 금액)로 나눈 실질 배율을 소수점 2자리 문자열(`(ret / inv).toFixed(2)`)로 정밀 반환.
+   - 기록 탭, 프로젝트 상세 탭, 달력 탭 전반에 공통 적용하여 계산 오차 0% 유지.
+2. **기록 탭 및 프로젝트 탭 카드 UI 반영 (`index.html`)**:
+   - `renderRecordsTab`: 각 기록 카드의 투입 금액 옆에 `<span class="text-xs font-semibold text-blue-400 font-mono">x${oddsStr}</span>` 텍스트 배치.
+   - `renderProjectDetailTab`: 프로젝트 상세 기록 목록에서도 동일하게 투입 금액 옆에 배율 표시.
+3. **버전 동기화 (v1.9.44)**:
+   - `index.html` (`v1.9.44`, `sw.js?v=1.9.44`), `sw.js` (`seedfit-cache-v1.9.44`), `package.json` (`1.9.44`).
+
+---
+
 ## [2026-11-03] v1.9.43 전체 웹앱 보안 점검 및 안티 클로닝·구독/관리자 변조 원천 방어 강화
 
 ### 1. 요구사항 및 보안 점검 의도

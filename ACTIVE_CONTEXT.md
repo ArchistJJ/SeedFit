@@ -6,13 +6,16 @@
 ---
 
 ## 0. 멀티 디바이스 작업 즉시 인계 가이드 (Multi-Device Quick Handoff)
-- **인계 시점**: 2026-11-03 15:35 KST
+- **인계 시점**: 2026-11-03 17:05 KST
 - **현재 원격 저장소 동기화 상태**:
   - GitHub 비공개 저장소(`ArchistJJ/SeedFit`), `main` 브랜치에 최신 커밋까지 동기화 완료.
-  - 최신 릴리즈 버전: **`v1.9.43`**
+  - 최신 릴리즈 버전: **`v1.9.44`**
   - Cloudflare Pages 프로덕션 무중단 배포 연동 (`https://seedfit.pro/`, `https://www.seedfit.pro/`).
 - **최근 완료된 핵심 작업 요약**:
-  1. **전체 웹앱 보안 점검 및 안티 클로닝·구독/관리자 변조 원천 방어 강화 (v1.9.43)**:
+  1. **기록 탭 및 프로젝트 탭 내 개별 기록 투입 금액 옆 배율(배당률, xN.NN) 표기 일원화 (v1.9.44)**:
+     - 달력 탭 상세 기록과 동일하게, 기록 탭(`renderRecordsTab`) 및 프로젝트 상세 탭(`renderProjectDetailTab`)의 모든 투자 기록 카드에서 투입 금액 옆에 실시간 배율(`x${oddsStr}`)을 깔끔한 모노스페이스 블루 뱃지 스타일로 표시.
+     - 공통 배율 계산 유틸리티(`getRecordOddsStr`) 구축으로 기록 탭, 프로젝트 탭, 달력 탭 간 배율 데이터 산출 방식 100% 일원화.
+  2. **전체 웹앱 보안 점검 및 안티 클로닝·구독/관리자 변조 원천 방어 강화 (v1.9.43)**:
      - **도메인 복제/피싱 원천 차단 (Anti-Cloning Shield)**: `AUTHORIZED_DOMAINS` 정밀화(임의 `*.pages.dev` 차단, `seedfit*.pages.dev`만 공식 허용), 비인가 도메인 접속 시 화면 즉시 파괴 및 공식 웹앱(`https://seedfit.pro/`) 강제 리다이렉트 실행.
      - **Pro 구독 무결성 검증 강화 (Serverless Tamper Guard)**: `generateProChecksum`을 통한 사용자 ID 및 시점 기반 해시 체크섬 도입. 토큰 구조 변조 시 로컬 Pro 권한 즉시 자동 파기.
      - **마스터 관리자 권한 위조 원천 방어**: 로컬스토리지 내 이메일 텍스트 단순 조작 차단을 위해 로그인 시 고유 유저 ID와 결합된 보안 서명(`SEEDFIT_ADMIN_SIG`) 2중 검증 체계 구축.

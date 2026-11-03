@@ -1677,7 +1677,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.9.43').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.9.44').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -3296,7 +3296,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.9.43';
+    const CURRENT_APP_VERSION = 'v1.9.44';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');
@@ -4270,6 +4270,7 @@
             const project = projects.find(p => p.id === r.projectId);
             let statusBadge = '';
             let profitDisplay = '';
+            const oddsStr = getRecordOddsStr(r);
 
             if (r.status === 'PENDING') {
               statusBadge = `<span class="${isLightMode ? 'bg-amber-100 text-amber-800 border-amber-300 pending-glow-badge-light' : 'bg-amber-500/15 text-amber-400 border-amber-500/30 pending-glow-badge-dark'} border text-[10px] font-bold px-2 py-0.5 rounded-full inline-block">대기중 (정산하기)</span>`;
@@ -4301,8 +4302,9 @@
 
                 <div class="flex justify-between items-baseline pt-1">
                   <div>
-                    <div class="text-sm font-bold font-mono ${isLightMode ? 'text-neutral-900' : 'text-white'}">
-                      투입 ${r.investAmount.toLocaleString()}원
+                    <div class="text-sm font-bold font-mono ${isLightMode ? 'text-neutral-900' : 'text-white'} flex items-center space-x-1.5 flex-wrap">
+                      <span>투입 ${r.investAmount.toLocaleString()}원</span>
+                      <span class="text-xs font-semibold text-blue-400 font-mono">x${oddsStr}</span>
                     </div>
                     ${r.status === 'WIN' ? `<div class="text-[11px] text-neutral-400">회수 ${r.returnAmount.toLocaleString()}원</div>` : ''}
                   </div>
@@ -4351,6 +4353,19 @@
       if (norm === '2묶음') return 'bg-violet-500/20 text-violet-400 border border-violet-500/30';
       if (norm === '3묶음') return 'bg-fuchsia-500/20 text-fuchsia-400 border border-fuchsia-500/30';
       return 'bg-neutral-800 text-neutral-300';
+    }
+
+    function getRecordOddsStr(r) {
+      if (!r || !r.investAmount || r.investAmount <= 0) return '0.00';
+      let ret = 0;
+      if (r.expectedReturn && r.expectedReturn > 0) {
+        ret = r.expectedReturn;
+      } else if (r.status === 'WIN' && r.returnAmount && r.returnAmount > 0) {
+        ret = r.returnAmount;
+      } else {
+        ret = Math.round(r.investAmount * 1.9);
+      }
+      return (ret / r.investAmount).toFixed(2);
     }
 
     function updateProjectsStatus() {
@@ -4745,6 +4760,7 @@
           ` : projRecords.map(r => {
             let statusBadge = '';
             let profitDisplay = '';
+            const oddsStr = getRecordOddsStr(r);
 
             if (r.status === 'PENDING') {
               statusBadge = `<span class="${isLightMode ? 'bg-amber-100 text-amber-800 border-amber-300 pending-glow-badge-light' : 'bg-amber-500/15 text-amber-400 border-amber-500/30 pending-glow-badge-dark'} border text-[10px] font-bold px-2 py-0.5 rounded-full inline-block">대기중</span>`;
@@ -4775,8 +4791,9 @@
 
                 <div class="flex justify-between items-baseline pt-1">
                   <div>
-                    <div class="text-sm font-bold font-mono ${isLightMode ? 'text-neutral-900' : 'text-white'}">
-                      투입 ${r.investAmount.toLocaleString()}원
+                    <div class="text-sm font-bold font-mono ${isLightMode ? 'text-neutral-900' : 'text-white'} flex items-center space-x-1.5 flex-wrap">
+                      <span>투입 ${r.investAmount.toLocaleString()}원</span>
+                      <span class="text-xs font-semibold text-blue-400 font-mono">x${oddsStr}</span>
                     </div>
                     ${r.status === 'WIN' ? `<div class="text-[11px] text-neutral-400">회수 ${r.returnAmount.toLocaleString()}원</div>` : ''}
                   </div>
@@ -5159,11 +5176,7 @@
         dayRecordsHtml = selectedInfo.list.map(r => {
           const net = r.status === 'WIN' ? ((r.returnAmount || 0) - r.investAmount) : (r.status === 'LOSE' ? -r.investAmount : 0);
           const timePart = ((r.createdAt || '').split(' ')[1] || '').substring(0, 5);
-          let ret = 0;
-          if (r.expectedReturn && r.expectedReturn > 0) ret = r.expectedReturn;
-          else if (r.status === 'WIN' && r.returnAmount && r.returnAmount > 0) ret = r.returnAmount;
-          else ret = Math.round((r.investAmount || 0) * 1.9);
-          const oddsStr = r.investAmount > 0 ? (ret / r.investAmount).toFixed(2) : '0.00';
+          const oddsStr = getRecordOddsStr(r);
 
           let badge = '';
           let amountText = '';
