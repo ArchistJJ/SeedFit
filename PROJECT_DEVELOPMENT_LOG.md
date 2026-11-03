@@ -1,5 +1,33 @@
 # 프로젝트 개발 로그 (PROJECT DEVELOPMENT LOG)
 
+## [2026-11-03] v1.9.43 전체 웹앱 보안 점검 및 안티 클로닝·구독/관리자 변조 원천 방어 강화
+
+### 1. 요구사항 및 보안 점검 의도
+- 사용자 요청 100% 직시:
+  1. 신규 기능(달력 탭) 추가에 따른 타 기능 영향 및 보안상 잠재 문제 전면 재검토 및 해결.
+  2. 비구독자의 임의 조작을 통한 유료 기능 무단 이용(구독 우회) 방어.
+  3. 동일 서비스 불법 복제(Cloning), 유포, 피싱 호스팅 및 공격 방어.
+  4. 웹앱 전반의 데이터 무결성 및 시스템 보안 다각도 보강.
+
+### 2. 점검 결과 및 보안 보강 내역
+1. **서비스 복제 및 비인가 호스팅 원천 차단 (Anti-Cloning Execution Guard)**:
+   - `AUTHORIZED_DOMAINS` 정밀화: 기존의 와일드카드성 `*.pages.dev` 허용을 배제하고, 공식 프로젝트(`seedfit*.pages.dev`, `seedfit.pro`, `www.seedfit.pro`, `archistjj.github.io`)만 명시적 인가.
+   - 비인가 도메인 실행 킬스위치(Execution Kill-switch): 비인가 도메인에서 접속 시 스크립트 실행을 즉시 중단하고 화면을 파괴한 후 공식 도메인(`https://seedfit.pro/`)으로 즉각 격리 리다이렉트. 비인가 도메인에서의 Supabase API 호출 원천 차단.
+2. **Pro 구독 무결성 검증 강화 (Serverless Tamper Guard)**:
+   - `generateProChecksum`을 도입하여 사용자 고유 ID, 발급 시각, 내부 솔트값을 결합한 해시 체크섬 생성.
+   - `verifyProIntegrity`에서 토큰 디코딩 및 현재 로그인 유저 ID 대조, 체크섬 무결성 검사를 2중 수행하여 로컬 스토리지 임의 주입 시 즉시 권한을 자동 박탈.
+3. **마스터 관리자 권한 위조 원천 방어**:
+   - 로컬 스토리지 내 이메일 텍스트 단순 수정으로 관리자 모드가 열리지 않도록, 정식 OAuth 로그인 시에만 발급되는 서명(`SEEDFIT_ADMIN_SIG`)을 대조하는 `generateAdminSig` 2중 검증 탑재.
+   - `window.isMasterAdminAccount`, `window.isAdminUser`, `window.isUserPro`를 `Object.defineProperty`로 잠금 처리하여 브라우저 콘솔을 통한 함수 재정의 및 조작 원천 차단.
+4. **달력 탭 파라미터 및 권한 가드 보강**:
+   - `navigateCalendarMonth`에 비정상 스텝 방어(`delta === 1 || delta === -1`) 적용.
+   - `jumpCalendarToday`에 누락되었던 Pro 권한 검증(`!isUserPro()`) 추가.
+   - `selectCalendarDay`에 1~31 범위 밖 비정상 값 주입 차단.
+5. **버전 동기화 (v1.9.43)**:
+   - `index.html` (`v1.9.43`, `sw.js?v=1.9.43`), `sw.js` (`seedfit-cache-v1.9.43`), `package.json` (`1.9.43`).
+
+---
+
 ## [2026-11-03] v1.9.42 달력 탭 UI 미니멀 정제 (상단 '오늘' 문구 제거, 수익·손실 일수 금액 제외, 달력 금액 내 '만' 글씨 삭제)
 
 ### 1. 요구사항 및 기획 의도

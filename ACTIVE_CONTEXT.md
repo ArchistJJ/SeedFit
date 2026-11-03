@@ -6,13 +6,19 @@
 ---
 
 ## 0. 멀티 디바이스 작업 즉시 인계 가이드 (Multi-Device Quick Handoff)
-- **인계 시점**: 2026-11-03 15:00 KST
+- **인계 시점**: 2026-11-03 15:35 KST
 - **현재 원격 저장소 동기화 상태**:
   - GitHub 비공개 저장소(`ArchistJJ/SeedFit`), `main` 브랜치에 최신 커밋까지 동기화 완료.
-  - 최신 릴리즈 버전: **`v1.9.42`**
+  - 최신 릴리즈 버전: **`v1.9.43`**
   - Cloudflare Pages 프로덕션 무중단 배포 연동 (`https://seedfit.pro/`, `https://www.seedfit.pro/`).
 - **최근 완료된 핵심 작업 요약**:
-  1. **달력 탭 UI 미니멀 정제 (상단 '오늘' 텍스트/배지 제거, 수익·손실 일수 내 금액 제외, 달력 셀 내 '만' 글씨 삭제) (v1.9.42)**:
+  1. **전체 웹앱 보안 점검 및 안티 클로닝·구독/관리자 변조 원천 방어 강화 (v1.9.43)**:
+     - **도메인 복제/피싱 원천 차단 (Anti-Cloning Shield)**: `AUTHORIZED_DOMAINS` 정밀화(임의 `*.pages.dev` 차단, `seedfit*.pages.dev`만 공식 허용), 비인가 도메인 접속 시 화면 즉시 파괴 및 공식 웹앱(`https://seedfit.pro/`) 강제 리다이렉트 실행.
+     - **Pro 구독 무결성 검증 강화 (Serverless Tamper Guard)**: `generateProChecksum`을 통한 사용자 ID 및 시점 기반 해시 체크섬 도입. 토큰 구조 변조 시 로컬 Pro 권한 즉시 자동 파기.
+     - **마스터 관리자 권한 위조 원천 방어**: 로컬스토리지 내 이메일 텍스트 단순 조작 차단을 위해 로그인 시 고유 유저 ID와 결합된 보안 서명(`SEEDFIT_ADMIN_SIG`) 2중 검증 체계 구축.
+     - **글로벌 프로퍼티 잠금**: `window.isUserPro`, `window.isMasterAdminAccount`, `window.isAdminUser`의 콘솔 변조 방지를 위해 `Object.defineProperty` 불변 잠금.
+     - **달력 탭 파라미터 방어**: `navigateCalendarMonth`, `jumpCalendarToday`, `selectCalendarDay`의 입력값 정제 및 Pro 권한 가드 일원화.
+  2. **달력 탭 UI 미니멀 정제 (상단 '오늘' 텍스트/배지 제거, 수익·손실 일수 내 금액 제외, 달력 셀 내 '만' 글씨 삭제) (v1.9.42)**:
      - 상단 월 이동 바 및 날짜 셀 상단의 `'오늘'` 문구/배지를 제거하여 사각형 테두리 모션만으로 깔끔하게 강조되도록 개선.
      - 월간 요약 카드의 `수익 일수 (+)`, `손실 일수 (-)` 항목에서 괄호 금액을 제외하고 일수(`N일`)만 간결하게 표시.
      - 달력 셀 내부 금액 표기 시 `'만'` 글씨를 삭제하고 숫자만 축약 표기(예: `+12.5`, `-12`)하여 좁은 격자 내 가독성 극대화.

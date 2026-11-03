@@ -1381,12 +1381,22 @@
         const host = window.location.hostname.toLowerCase();
         if (!host || window.location.protocol === 'file:') return true;
         if (AUTHORIZED_DOMAINS.includes(host)) return true;
-        if (host.endsWith('.pages.dev')) return true;
+        // Cloudflare Pages는 공식 배포된 서브도메인만 허용 (타인의 임의 pages.dev 복제 사이트 차단)
+        if (host.startsWith('seedfit') && host.endsWith('.pages.dev')) return true;
         if (host.endsWith('.local') || host.endsWith('.internal')) return true;
         return false;
       } catch (e) {
         return false;
       }
+    }
+
+    // 비인가 복제/피싱 사이트 접속 시 즉시 실행 중단 및 공식 서비스 강제 격리 리다이렉트
+    if (!isAuthorizedOrigin()) {
+      try {
+        window.stop?.();
+        document.documentElement.innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;background:#05070e;color:#fff;font-family:-apple-system,sans-serif;padding:24px;text-align:center;"><h2 style="font-size:18px;font-weight:bold;margin-bottom:8px;">비인가 복제 사이트 접근 차단</h2><p style="font-size:13px;color:#94a3b8;line-height:1.6;margin-bottom:16px;">안전한 데이터 보존과 개인정보 보호를 위해 공식 웹앱으로 즉시 이동합니다.</p><a href="https://seedfit.pro" style="padding:10px 20px;background:#2563eb;color:#fff;text-decoration:none;border-radius:12px;font-size:13px;font-weight:bold;">공식 웹앱(SeedFit.pro)으로 이동</a></div>';
+        setTimeout(() => { window.location.href = 'https://seedfit.pro/'; }, 800);
+      } catch (e) {}
     }
 
     // [보안 3] 브라우저 콘솔 보안 경고 (Self-XSS 방어)
@@ -1504,9 +1514,21 @@
     } catch (e) {}
 
     // [보안 Step 3] 서버 세션 서명 및 Pro 무결성 검증 (Serverless Verification Guard)
+    function generateProChecksum(userIdKey, serverTimestamp) {
+      const raw = `${userIdKey}|${serverTimestamp}|seedfit_pro_integrity_v2`;
+      let hash = 0;
+      for (let i = 0; i < raw.length; i++) {
+        hash = ((hash << 5) - hash) + raw.charCodeAt(i);
+        hash |= 0;
+      }
+      return Math.abs(hash).toString(36);
+    }
+
     function setVerifiedProSession(userIdKey, serverTimestamp) {
       try {
-        const sig = btoa(`${userIdKey}|${serverTimestamp || 'auth'}|seedfit_pro_sec_2026`);
+        const ts = serverTimestamp || new Date().toISOString();
+        const chk = generateProChecksum(userIdKey, ts);
+        const sig = btoa(encodeURIComponent(`${userIdKey}|${ts}|${chk}`));
         safeStorage.set('SEEDFIT_PRO_VERIFIED_TOKEN', sig);
       } catch (e) {}
     }
@@ -1533,10 +1555,30 @@
         return false;
       }
 
+      const userIdKey = `${authUser.provider || 'user'}:${authUser.id}`;
       const token = safeStorage.get('SEEDFIT_PRO_VERIFIED_TOKEN');
       if (!token) {
         safeStorage.set('SEEDFIT_IS_PRO', 'false');
         safeStorage.set('SEEDFIT_IS_TRIAL', 'false');
+        safeStorage.set('SEEDFIT_IS_PAID_PRO', 'false');
+        return false;
+      }
+
+      // 토큰 디코딩 및 무결성 체크섬 정밀 검증 (임의 위조 토큰 원천 차단)
+      try {
+        const decoded = decodeURIComponent(atob(token));
+        const parts = decoded.split('|');
+        if (parts.length < 3) throw new Error('Invalid token structure');
+        const [tokUser, tokTs, tokChk] = parts;
+        if (tokUser !== userIdKey) throw new Error('User mismatch');
+        const expectedChk = generateProChecksum(tokUser, tokTs);
+        if (tokChk !== expectedChk) throw new Error('Checksum invalid');
+      } catch (err) {
+        // 변조 감지 시 즉각 권한 파기
+        safeStorage.set('SEEDFIT_IS_PRO', 'false');
+        safeStorage.set('SEEDFIT_IS_TRIAL', 'false');
+        safeStorage.set('SEEDFIT_IS_PAID_PRO', 'false');
+        clearVerifiedProSession();
         return false;
       }
 
@@ -1635,7 +1677,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.9.42').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.9.43').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -1827,22 +1869,39 @@
       }
     }
 
+    // 마스터 관리자 공식 단독 계정 (오직 이 계정에만 관리자 권한 부여)
+    const MASTER_ADMIN_EMAIL = 'wpdntm0428@gmail.com';
+
+    function generateAdminSig(email, userId) {
+      const raw = `${email}|${userId}|seedfit_admin_key_2026`;
+      let hash = 0;
+      for (let i = 0; i < raw.length; i++) {
+        hash = ((hash << 5) - hash) + raw.charCodeAt(i);
+        hash |= 0;
+      }
+      return Math.abs(hash).toString(36);
+    }
+
     // 사용자 인증 정보 저장
     function setAuthUser(userObj) {
       if (userObj) {
         safeStorage.set('SEEDFIT_AUTH_USER', JSON.stringify(userObj));
         safeStorage.set('SEEDFIT_GUEST_MODE', 'false');
 
-        // 오직 wpdntm0428@gmail.com 계정에만 관리자 및 Pro 권한 자동 부여
+        // 오직 wpdntm0428@gmail.com 계정에만 관리자 및 Pro 권한 자동 부여 (위변조 방지 시그니처 발급)
         const email = (userObj.email || '').toLowerCase().trim();
-        if (email === 'wpdntm0428@gmail.com') {
+        if (email === MASTER_ADMIN_EMAIL && userObj.id) {
+          const sig = generateAdminSig(email, userObj.id);
+          safeStorage.set('SEEDFIT_ADMIN_SIG', sig);
           safeStorage.set('SEEDFIT_IS_ADMIN', 'true');
           safeStorage.set('SEEDFIT_IS_PRO', 'true');
         } else {
+          safeStorage.remove('SEEDFIT_ADMIN_SIG');
           safeStorage.set('SEEDFIT_IS_ADMIN', 'false');
         }
       } else {
         safeStorage.set('SEEDFIT_AUTH_USER', '');
+        safeStorage.remove('SEEDFIT_ADMIN_SIG');
         safeStorage.set('SEEDFIT_IS_ADMIN', 'false');
       }
 
@@ -1888,6 +1947,7 @@
         safeStorage.set('SEEDFIT_IS_PAST_DUE', 'false');
         safeStorage.remove('SEEDFIT_UPDATE_CARD_URL');
         safeStorage.remove('SEEDFIT_PAYMENT_FAILED_AT');
+        safeStorage.remove('SEEDFIT_ADMIN_SIG');
         safeStorage.set('SEEDFIT_IS_ADMIN', 'false');
         clearVerifiedProSession();
         if (typeof window.closeTrialExpiredModal === 'function') {
@@ -2615,13 +2675,15 @@
     // SeedFit Pro 공식 보안 결제 (Lemon Squeezy) 연동 (공식 라이브 모드)
     const LEMON_CHECKOUT_URL = 'https://seedfit.lemonsqueezy.com/checkout/buy/9bdb9e32-e510-4ad7-8269-f70f4a7ff117';
 
-    // 마스터 관리자 공식 단독 계정 (오직 이 계정에만 관리자 권한 부여)
-    const MASTER_ADMIN_EMAIL = 'wpdntm0428@gmail.com';
-
     function isMasterAdminAccount() {
       const authUser = getAuthUser();
-      if (!authUser || !authUser.email) return false;
-      return authUser.email.toLowerCase().trim() === MASTER_ADMIN_EMAIL;
+      if (!authUser || !authUser.email || !authUser.id) return false;
+      const email = authUser.email.toLowerCase().trim();
+      if (email !== MASTER_ADMIN_EMAIL) return false;
+      // 로컬 스토리지 임의 변조 방어: 정식 로그인 시 생성된 서명 대조
+      const sig = safeStorage.get('SEEDFIT_ADMIN_SIG');
+      const expected = generateAdminSig(email, authUser.id);
+      return sig === expected;
     }
 
     function getAdminTestMode() {
@@ -2672,6 +2734,11 @@
       });
       Object.defineProperty(window, 'isMasterAdminAccount', {
         value: isMasterAdminAccount,
+        writable: false,
+        configurable: false
+      });
+      Object.defineProperty(window, 'isAdminUser', {
+        value: isAdminUser,
         writable: false,
         configurable: false
       });
@@ -3229,7 +3296,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.9.42';
+    const CURRENT_APP_VERSION = 'v1.9.43';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');
@@ -4899,7 +4966,8 @@
         showToast('프로 버전을 구독해야 이용이 가능합니다.');
         return;
       }
-      calendarMonth += delta;
+      const step = (delta === 1 || delta === -1) ? delta : 0;
+      calendarMonth += step;
       if (calendarMonth > 12) {
         calendarMonth = 1;
         calendarYear++;
@@ -4917,6 +4985,11 @@
     };
 
     window.jumpCalendarToday = function() {
+      if (!isUserPro()) {
+        window.openSubscriptionModal('달력 탭의 상세 손익 조회는 프로 버전을 구독해야 이용이 가능합니다.');
+        showToast('프로 버전을 구독해야 이용이 가능합니다.');
+        return;
+      }
       const now = new Date();
       calendarYear = now.getFullYear();
       calendarMonth = now.getMonth() + 1;
@@ -4925,7 +4998,9 @@
     };
 
     window.selectCalendarDay = function(day) {
-      calendarSelectedDay = Number(day);
+      const d = parseInt(day, 10);
+      if (!Number.isFinite(d) || d < 1 || d > 31) return;
+      calendarSelectedDay = d;
       renderCurrentTab();
     };
 
