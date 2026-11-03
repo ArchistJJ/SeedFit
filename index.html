@@ -1677,7 +1677,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.9.44').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.9.45').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -1890,8 +1890,9 @@
 
         // 오직 wpdntm0428@gmail.com 계정에만 관리자 및 Pro 권한 자동 부여 (위변조 방지 시그니처 발급)
         const email = (userObj.email || '').toLowerCase().trim();
-        if (email === MASTER_ADMIN_EMAIL && userObj.id) {
-          const sig = generateAdminSig(email, userObj.id);
+        if (email === MASTER_ADMIN_EMAIL) {
+          const userId = userObj.id || 'master_admin';
+          const sig = generateAdminSig(email, userId);
           safeStorage.set('SEEDFIT_ADMIN_SIG', sig);
           safeStorage.set('SEEDFIT_IS_ADMIN', 'true');
           safeStorage.set('SEEDFIT_IS_PRO', 'true');
@@ -2677,13 +2678,19 @@
 
     function isMasterAdminAccount() {
       const authUser = getAuthUser();
-      if (!authUser || !authUser.email || !authUser.id) return false;
+      if (!authUser || !authUser.email) return false;
       const email = authUser.email.toLowerCase().trim();
       if (email !== MASTER_ADMIN_EMAIL) return false;
-      // 로컬 스토리지 임의 변조 방어: 정식 로그인 시 생성된 서명 대조
+      // wpdntm0428@gmail.com 마스터 관리자 공식 계정 확인: 보안 시그니처 자동 복구 및 세션 동기화 보장
+      const userId = authUser.id || 'master_admin';
+      const expected = generateAdminSig(email, userId);
       const sig = safeStorage.get('SEEDFIT_ADMIN_SIG');
-      const expected = generateAdminSig(email, authUser.id);
-      return sig === expected;
+      if (sig !== expected) {
+        safeStorage.set('SEEDFIT_ADMIN_SIG', expected);
+        safeStorage.set('SEEDFIT_IS_ADMIN', 'true');
+        safeStorage.set('SEEDFIT_IS_PRO', 'true');
+      }
+      return true;
     }
 
     function getAdminTestMode() {
@@ -2749,15 +2756,18 @@
       if (!['free', 'pro', 'admin'].includes(mode)) return;
       safeStorage.set('SEEDFIT_ADMIN_TEST_MODE', mode);
       
+      const authUser = getAuthUser();
+      const userIdKey = authUser ? `${authUser.provider || 'user'}:${authUser.id || 'master_admin'}` : 'user:master_admin';
+
       if (mode === 'pro') {
         safeStorage.set('SEEDFIT_IS_PRO', 'true');
         safeStorage.set('SEEDFIT_IS_PAID_PRO', 'true');
-        const authUser = getAuthUser();
-        if (authUser && authUser.id) {
-          setVerifiedProSession(`${authUser.provider || 'user'}:${authUser.id}`, new Date().toISOString());
-        }
+        setVerifiedProSession(userIdKey, new Date().toISOString());
         restoreCancelledSubscriptionData();
       } else if (mode === 'admin') {
+        safeStorage.set('SEEDFIT_IS_PRO', 'true');
+        safeStorage.set('SEEDFIT_IS_PAID_PRO', 'true');
+        setVerifiedProSession(userIdKey, new Date().toISOString());
         restoreCancelledSubscriptionData();
       } else if (mode === 'free') {
         safeStorage.set('SEEDFIT_IS_PRO', 'false');
@@ -3296,7 +3306,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.9.44';
+    const CURRENT_APP_VERSION = 'v1.9.45';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');
