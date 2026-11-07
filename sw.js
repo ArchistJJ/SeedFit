@@ -1,5 +1,5 @@
 // SeedFit (시드핏) PWA Service Worker
-const CACHE_NAME = 'seedfit-cache-v1.9.45';
+const CACHE_NAME = 'seedfit-cache-v1.9.46';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',

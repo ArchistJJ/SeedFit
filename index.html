@@ -1677,7 +1677,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.9.45').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.9.46').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -3306,7 +3306,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.9.45';
+    const CURRENT_APP_VERSION = 'v1.9.46';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');

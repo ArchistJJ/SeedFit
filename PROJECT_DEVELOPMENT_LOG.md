@@ -1,5 +1,25 @@
 # 프로젝트 개발 로그 (PROJECT DEVELOPMENT LOG)
 
+## [2026-11-07] v1.9.46 Lemon Squeezy 테스트 모드(Test Mode) 1개월 주기 자동 웹훅 원천 차단 및 DB 무결성 복구
+
+### 1. 현상 및 원인 정밀 분석
+- **발생 현상**: 현재 라이브 모드로만 운영 중임에도 불구하고 운영자 텔레그램으로 `[테스트 결제]` 알림 2건이 수신됨.
+- **근본 원인**:
+  1. 정확히 **1개월 전인 2026년 10월 7일**, 정식 라이브 모드(`v1.9.15`) 전환 직전에 결제 파이프라인 점검을 위해 본인 테스트 계정(`kakao:5124890917` 'JJ' 계정 및 `wpdntm0428@gmail.com`)으로 Lemon Squeezy **테스트 모드(Test Mode)** 구독 결제를 진행한 바 있음.
+  2. Lemon Squeezy 플랫폼 특성상 스토어를 라이브 모드로 전환하더라도, 과거 테스트 모드 샌드박스에서 생성된 가상 구독(Test Subscription)은 취소·삭제하지 않으면 **매월 같은 날(10월 7일 $\rightarrow$ 11월 7일) 자동으로 1개월 정기 갱신 이벤트(`subscription_payment_success`, `test_mode: true`)를 발생**시켜 웹훅을 전송함.
+  3. 기존 `functions/api/lemon-webhook.js`에서 `test_mode: true`일 때 제목에 `[테스트 결제]`만 붙이고 DB 업데이트 및 텔레그램 알림은 그대로 통과시키고 있었기 때문에, 오늘(11월 7일 15:55~16:03 KST) 1개월 주기 가상 갱신 웹훅 2건이 도달하며 알림이 발송됨.
+
+### 2. 조치 및 영구 방어 내역
+1. **클라우드 DB 테스트 계정 상태 즉시 원복 (Supabase)**:
+   - 테스트 갱신 웹훅으로 인해 `pro`로 변경되었던 테스트 계정(`kakao:5124890917`, 이름: `JJ`)의 `subscription_tier`를 즉시 `free`로 원복하고 `update_card_url`을 초기화하여 실제 유료 구독자 수(2명) 및 MRR($15.54) 집계 무결성 100% 복원 완료.
+2. **테스트 모드 웹훅 서버단 원천 차단 (`functions/api/lemon-webhook.js`)**:
+   - `const isTestMode = attributes.test_mode === true || payload.meta?.test_mode === true;` 감지 시 DB 업데이트 및 텔레그램 알림 전송을 일절 수행하지 않고 즉시 `{ ok: true, ignored: true }`를 반환하도록 차단 가드 탑재.
+   - `X-Signature` 헤더 누락 시에도 즉시 `401 Unauthorized`를 반환하도록 서명 검증 강제화.
+3. **버전 동기화 (v1.9.46)**:
+   - `index.html` (`v1.9.46`, `sw.js?v=1.9.46`), `sw.js` (`seedfit-cache-v1.9.46`), `package.json` (`1.9.46`).
+
+---
+
 ## [2026-11-03] v1.9.45 마스터 관리자 뷰 시뮬레이터(프리/프로/관리자 모드 변환) 복구 및 무결성 강화
 
 ### 1. 요구사항 및 기획 의도

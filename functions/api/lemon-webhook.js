@@ -101,9 +101,15 @@ export async function onRequestPost(context) {
     });
   }
 
-  // 2. Lemon Squeezy X-Signature 서명 검증
+  // 2. Lemon Squeezy X-Signature 서명 검증 (필수 강제)
   const headerSignature = request.headers.get('x-signature') || request.headers.get('X-Signature');
-  if (signingSecret && headerSignature) {
+  if (signingSecret) {
+    if (!headerSignature) {
+      return new Response(JSON.stringify({ ok: false, error: 'Missing signature header' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
     const isValid = await verifyLemonSignature(signingSecret, rawBody, headerSignature);
     if (!isValid) {
       console.warn('Lemon Squeezy signature mismatch');
@@ -129,11 +135,24 @@ export async function onRequestPost(context) {
   const customData = payload.meta?.custom_data || {};
   const targetUserId = customData.user_id || null;
   const attributes = payload.data?.attributes || {};
-  const isTestMode = attributes.test_mode === true;
+  const isTestMode = attributes.test_mode === true || payload.meta?.test_mode === true;
   const userEmail = attributes.user_email || '알 수 없음';
   const status = attributes.status || '';
 
   console.log(`[Lemon Webhook] Event: ${eventName}, Target User: ${targetUserId}, Status: ${status}, Test: ${isTestMode}`);
+
+  // 4. 상용 라이브 환경 보호: 테스트 모드(Test Mode) 웹훅은 DB 반영 및 텔레그램 알림을 원천 차단
+  if (isTestMode) {
+    console.log(`[Lemon Webhook] Ignored test_mode event (${eventName}) for user ${targetUserId}`);
+    return new Response(JSON.stringify({
+      ok: true,
+      ignored: true,
+      reason: 'Test mode events are ignored in live production environment'
+    }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
 
   // Pro 플랜 승격/해지/연체 이벤트 판정
   let isProUpgrade = false;
