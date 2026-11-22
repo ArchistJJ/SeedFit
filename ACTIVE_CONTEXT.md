@@ -6,13 +6,23 @@
 ---
 
 ## 0. 멀티 디바이스 작업 즉시 인계 가이드 (Multi-Device Quick Handoff)
-- **인계 시점**: 2026-11-07 16:07 KST
+- **인계 시점**: 2026-11-23 01:08 KST
 - **현재 원격 저장소 동기화 상태**:
   - GitHub 비공개 저장소(`ArchistJJ/SeedFit`), `main` 브랜치에 최신 커밋까지 동기화 완료.
-  - 최신 릴리즈 버전: **`v1.9.46`**
+  - 최신 릴리즈 버전: **`v1.9.47`**
   - Cloudflare Pages 프로덕션 무중단 배포 연동 (`https://seedfit.pro/`, `https://www.seedfit.pro/`).
 - **최근 완료된 핵심 작업 요약**:
-  1. **Lemon Squeezy 테스트 모드(Test Mode) 웹훅 원천 차단 및 1개월 주기 테스트 갱신 오염 복구 (v1.9.46)**:
+  1. **실제 결제 대행사(Lemon Squeezy) 구독 해지 API 연동 및 웹훅 연체 덮어쓰기 방어 체계 구축 (v1.9.47)**:
+     - **원인 규명**: 텔레그램으로 수신된 정기 갱신 결제 실패 알림은 고객(`기현`, `kakao:5125713325`, 구독 `#2590072`)이 이미 **2026-11-08 12:59 KST**에 앱에서 [구독 취소]를 눌렀음에도, 기존 `confirmCancelSubscription`이 DB만 `free`로 변경하고 실제 Lemon Squeezy 구독 해지 API를 호출하지 않아 발생한 구조적 미연동 문제였음. (다른 유료 구독자 `최동호` 님은 11월 14일 정상 결제 완료.) 또한 `한종환`(`kakao:5127321448`, 구독 `#2591278`) 님 역시 앱 내 취소 후 Lemon Squeezy 측 해지 동기화 대상임을 전수 감사로 확인.
+     - **실제 구독 해지 엔드포인트 신설 (`functions/api/cancel-subscription.js`)**:
+       - 앱 내 [구독 취소] 요청 시 서버리스 환경에서 `DELETE https://api.lemonsqueezy.com/v1/subscriptions/{id}`를 호출해 실제 정기결제를 즉시 해지하고, Supabase DB(`subscription_tier: 'free'`, `cancelled_at`, `data_retention_until`, `settings`)를 일원화 동기화.
+       - 마스터 관리자 전용 소급 해지 동기화(`action: 'sync_cancelled_users'`, `x-admin-secret` 검증) 탑재.
+     - **웹훅 방어 가드 강화 (`functions/api/lemon-webhook.js`)**:
+       - `lemonSubscriptionId` 자동 추적 저장, 이미 앱에서 해지한 계정(`cancelled_at` 존재 & `subscription_tier !== 'pro'`)에 대한 재청구 실패 웹훅 수신 시 `past_due` 덮어쓰기 원천 차단, 연체 유예 3일 카운트다운 리셋 방지, 기존 `settings` JSONB 무손실 병합 보장.
+     - **프론트엔드 안전 해지 UX (`index.html`)**: 중복 요청 잠금(`_isCancellingSubscription`) 및 해지 API 실패 시 결제 중단 없이 안전 안내 모달 노출(허위 취소 처리 방지).
+     - **DB 즉시 정정 (`기현`, `kakao:5125713325`)**: `subscription_tier: 'free'`, `payment_failed_at: null`로 즉시 복구하여 실제 Pro 구독자 수 1명(`최동호`), MRR `$7.77` 정확도 복원.
+     - **남은 1회 설정**: Cloudflare Pages 환경변수에 `LEMON_API_KEY` 등록 후 재배포하면 이후 모든 인앱 취소가 실시간 연동되며, `sync_cancelled_users` 호출로 기존 미반영 해지 건(`#2590072`, `#2591278`)도 일괄 해지 완료 가능.
+  2. **Lemon Squeezy 테스트 모드(Test Mode) 웹훅 원천 차단 및 1개월 주기 테스트 갱신 오염 복구 (v1.9.46)**:
      - **원인 규명**: 정확히 1달 전(2026-10-07) 라이브 모드 전환 직전에 테스트 모드로 결제 테스트했던 구독 건들(`kakao:5124890917` 'JJ' 계정 등)이 Lemon Squeezy 테스트 샌드박스 서버에서 1개월 결제 주기가 도래(2026-11-07)함에 따라 자동으로 테스트 정기 갱신 웹훅(`test_mode: true`)을 발송함.
      - **DB 즉시 원복**: 테스트 웹훅으로 인해 일시적으로 `pro`로 변경되었던 테스트 계정(`kakao:5124890917`)의 등급을 즉시 `free`로 원복하여 실제 유료 구독자 수(2명) 및 MRR($15.54) 무결성 100% 복구.
      - **웹훅 테스트 모드 영구 차단 가드 (`functions/api/lemon-webhook.js`)**: `isTestMode === true`인 이벤트는 DB 반영 및 텔레그램 알림 발송을 수행하지 않고 즉시 무시(`ignored: true`)하도록 원천 차단 및 `X-Signature` 서명 헤더 필수 검증 강제.

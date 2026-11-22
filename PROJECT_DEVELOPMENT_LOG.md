@@ -1,5 +1,37 @@
 # 프로젝트 개발 로그 (PROJECT DEVELOPMENT LOG)
 
+## [2026-11-23] v1.9.47 Lemon Squeezy 실제 정기구독 해지 API 연동 및 웹훅 연체 덮어쓰기 원천 차단
+
+### 1. 현상 및 원인 정밀 분석
+- **발생 현상**: 운영자 텔레그램으로 `SEEDFIT PRO 정기 갱신 결제 실패` 알림이 반복 수신되어, 고객 카드 문제인지 시스템 문제인지 전수 점검 수행.
+- **전수 조사 결과 (68명 전 회원 감사)**:
+  1. 현재 정상 Pro 구독자 `최동호` (`kakao:5128089947`, `#2593253`) 님은 2026-11-14 정상 결제 완료로 결제 게이트웨이 파이프라인 자체는 100% 정상 작동 중.
+  2. 반면 결제 실패 알림의 대상인 `기현` (`kakao:5125713325`, `#2590072`) 님은 **2026-11-08 12:59:19 (KST)**에 이미 앱 내 `[구독 취소]`를 완료(`cancelled_at` 기록 존재)했으나, 당시 `confirmCancelSubscription()`이 앱 DB만 `free`로 변경하고 실제 Lemon Squeezy 구독 해지 API를 호출하지 않았음.
+  3. 이로 인해 30분 뒤(13:29 KST) 및 이후 2주간 Lemon Squeezy의 자동 재결제(Retry)가 반복 실행되어 카드 승인이 거절되었고, 11월 22일 웹훅이 기존 취소 상태를 무시하고 `subscription_tier`를 다시 `past_due`로 덮어쓰는 2차 오염이 발생함.
+  4. 동일 미반영 사례 전수 감사에서 `한종환` (`kakao:5127321448`, `#2591278`) 님 역시 2026-11-08 15:06:29 UTC(11-09 00:06 KST) 앱 내 취소 후 Lemon Squeezy 해지 동기화가 누락된 대상임을 확인.
+
+### 2. 구현 및 보강 내역
+1. **실제 구독 해지 엔드포인트 신설 (`functions/api/cancel-subscription.js`)**:
+   - 앱 내 `[구독 취소]` 실행 시 `DELETE https://api.lemonsqueezy.com/v1/subscriptions/{id}`를 호출해 실제 정기결제를 즉시 해지하고, Supabase `seedfit_user_data`를 `free` + `cancelled_at` + `data_retention_until` + `lemonCancelledAt`으로 원자적 동기화.
+   - `settings.lemonSubscriptionId` → `update_card_url` 정규식 → 이메일 기반 Lemon Squeezy 조회(`findActiveLemonSubscriptionByEmail`) 3단계 구독 ID 식별 로직 탑재.
+   - 마스터 관리자 전용 소급 일괄 해지 동기화 모드(`action: 'sync_cancelled_users'`, `x-admin-secret` 검증) 구축으로 기존 미반영 해지 대상(`#2590072`, `#2591278`) 일괄 처리 지원.
+2. **웹훅 엔드포인트 방어 가드 강화 (`functions/api/lemon-webhook.js`)**:
+   - 수신 페이로드에서 `subscriptionId` 추출 및 `settings.lemonSubscriptionId` 영구 기록.
+   - DB PATCH 전 기존 row를 선조회하여:
+     - **[방어 A]** 이미 앱에서 해지한 무료 계정(`cancelled_at` 존재 & `subscription_tier !== 'pro'`)의 재결제 실패 웹훅 수신 시 `past_due` 덮어쓰기 원천 차단 및 이미 레몬 해지 완료된 건(`lemonCancelledAt`)의 중복 알림 억제.
+     - **[방어 B]** 이미 `past_due` 유예 중인 경우 기존 `payment_failed_at` 유지(3일 유예 카운트다운 리셋 방지).
+     - **[방어 C]** 선조회에 성공했을 때만 `settings` JSONB 병합 저장(기존 설정 유실 방지).
+3. **클라이언트 해지 UX 및 무결성 보강 (`index.html`)**:
+   - `window.confirmCancelSubscription`에 중복 클릭 방어(`_isCancellingSubscription`) 적용.
+   - `/api/cancel-subscription` 호출 실패 시 로컬/DB 상태를 섣불리 취소로 바꾸지 않고 안전 안내 다이얼로그를 표시하여 허위 해지 완료 안내 원천 차단.
+   - 실제 Lemon Squeezy 해지가 성공한 경우 웹훅이 단일 알림을 발송하므로 중복 텔레그램 알림 방지.
+4. **클라우드 DB 즉시 정정 (Supabase)**:
+   - `기현` (`kakao:5125713325`)의 `subscription_tier`를 `free`, `payment_failed_at: null`로 복구하고 `update_card_url`은 보존(소급 API 해지 동기화용). `get_business_summary` 검증 결과 `total_users: 67, pro_users: 1, mrr_usd: 7.77` 확인.
+5. **버전 동기화 (v1.9.47)**:
+   - `index.html` (`v1.9.47`, `sw.js?v=1.9.47`), `sw.js` (`seedfit-cache-v1.9.47`), `package.json` (`1.9.47`).
+
+---
+
 ## [2026-11-07] v1.9.46 Lemon Squeezy 테스트 모드(Test Mode) 1개월 주기 자동 웹훅 원천 차단 및 DB 무결성 복구
 
 ### 1. 현상 및 원인 정밀 분석

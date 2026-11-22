@@ -1677,7 +1677,7 @@
 
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=1.9.46').then((reg) => {
+        navigator.serviceWorker.register('./sw.js?v=1.9.47').then((reg) => {
           if (reg) {
             reg.update();
             document.addEventListener('visibilitychange', () => {
@@ -3021,69 +3021,120 @@
     }
 
     window.confirmCancelSubscription = async function() {
-      const confirmed = await window.showConfirmDialog({
-        title: 'SeedFit Pro 구독 취소',
-        message: '정말 구독을 취소하시겠습니까?\n다음 결제 주기부터 자동 결제가 중단됩니다.',
-        notice: '기존에 등록하신 모든 투자 기록 및 프로젝트 데이터는 해지일로부터 7일 동안만 임시 보존됩니다.\n• 7일 이내에 다시 구독하시면 기존의 모든 데이터가 즉시 연동 복원됩니다.\n• 7일이 경과하면 클라우드에서 영구 삭제되어 복구할 수 없습니다.',
-        confirmText: '구독 취소 (7일 유예 적용)',
-        cancelText: '구독 유지하기',
-        isDestructive: true,
-        icon: 'warning'
-      });
+      if (window._isCancellingSubscription) return;
+      window._isCancellingSubscription = true;
 
-      if (!confirmed) return;
+      try {
+        const confirmed = await window.showConfirmDialog({
+          title: 'SeedFit Pro 구독 취소',
+          message: '정말 구독을 취소하시겠습니까?\n다음 결제 주기부터 자동 결제가 중단됩니다.',
+          notice: '기존에 등록하신 모든 투자 기록 및 프로젝트 데이터는 해지일로부터 7일 동안만 임시 보존됩니다.\n• 7일 이내에 다시 구독하시면 기존의 모든 데이터가 즉시 연동 복원됩니다.\n• 7일이 경과하면 클라우드에서 영구 삭제되어 복구할 수 없습니다.',
+          confirmText: '구독 취소 (7일 유예 적용)',
+          cancelText: '구독 유지하기',
+          isDestructive: true,
+          icon: 'warning'
+        });
 
-      const now = new Date();
-      const cancelledAt = now.toISOString();
-      const retentionDays = 7;
-      const retentionUntil = new Date(now.getTime() + retentionDays * 24 * 60 * 60 * 1000).toISOString();
+        if (!confirmed) return;
 
-      // 마스터 관리자가 프로 시뮬레이션 중이었다면 무료 시뮬레이션으로 전환
-      if (isMasterAdminAccount() && getAdminTestMode() === 'pro') {
+        const now = new Date();
+        const cancelledAt = now.toISOString();
+        const retentionDays = 7;
+        const retentionUntil = new Date(now.getTime() + retentionDays * 24 * 60 * 60 * 1000).toISOString();
+
+        // 마스터 관리자가 프로 시뮬레이션 중이었다면 무료 시뮬레이션으로 전환
+        if (isMasterAdminAccount() && getAdminTestMode() === 'pro') {
+          safeStorage.set('SEEDFIT_CANCELLED_AT', cancelledAt);
+          safeStorage.set('SEEDFIT_RETENTION_UNTIL', retentionUntil);
+          window.setAdminTestMode('free');
+          window.closeMembershipManagementModal();
+          showToast('구독이 취소되었습니다. (7일간 데이터 임시 보존 모드)');
+          return;
+        }
+
+        const authUser = getAuthUser();
+        if (authUser && authUser.id) {
+          const userIdKey = `${authUser.provider || 'user'}:${authUser.id}`;
+          showToast('구독 해지를 처리하고 있습니다...');
+
+          let res = null;
+          let result = {};
+          try {
+            res = await fetch('/api/cancel-subscription', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'x-seedfit-client': 'seedfit-web'
+              },
+              body: JSON.stringify({
+                userId: userIdKey,
+                name: authUser.name || '',
+                email: authUser.email || ''
+              })
+            });
+            try {
+              result = await res.json();
+            } catch (_) {
+              result = {};
+            }
+          } catch (netErr) {
+            console.warn('Cancel subscription endpoint error:', netErr);
+            res = null;
+          }
+
+          if (!res || !res.ok || !result.ok) {
+            await window.showAlertDialog({
+              title: '구독 취소 처리 지연',
+              message: '정기 결제 해지 연동 처리 중 일시적인 오류가 발생했습니다.\n중복 결제를 방지하기 위해 잠시 후 다시 시도하거나 고객센터로 문의해주세요.',
+              notice: '결제 해지가 정상 완료될 때까지 현재 멤버십 상태가 안전하게 유지됩니다.',
+              confirmText: '확인',
+              icon: 'warning'
+            });
+            return;
+          }
+
+          const effectiveCancelledAt = result.cancelledAt || cancelledAt;
+          const effectiveRetentionUntil = result.retentionUntil || retentionUntil;
+
+          safeStorage.set('SEEDFIT_IS_PRO', 'false');
+          safeStorage.set('SEEDFIT_IS_PAID_PRO', 'false');
+          safeStorage.set('SEEDFIT_IS_TRIAL', 'false');
+          safeStorage.set('SEEDFIT_IS_PAST_DUE', 'false');
+          safeStorage.remove('SEEDFIT_IS_PAID_DUE');
+          safeStorage.remove('SEEDFIT_UPDATE_CARD_URL');
+          safeStorage.remove('SEEDFIT_PAYMENT_FAILED_AT');
+          clearVerifiedProSession();
+          safeStorage.set('SEEDFIT_CANCELLED_AT', effectiveCancelledAt);
+          safeStorage.set('SEEDFIT_RETENTION_UNTIL', effectiveRetentionUntil);
+          safeStorage.remove('SEEDFIT_PRO_NOTIFIED_' + userIdKey);
+
+          // 실제 정기결제 해지가 이루어진 경우 웹훅이 단일 알림을 발송하므로 중복 알림 방지
+          if (!result.lemonCancelled) {
+            sendTelegramAdminNotification('cancellation', userIdKey);
+          }
+
+          window.closeMembershipManagementModal();
+          showToast('구독이 정상적으로 취소되었습니다. 다음 결제부터 자동 결제가 중단되며 기존 기록은 7일간 보존됩니다.');
+          renderCurrentTab();
+          return;
+        }
+
+        // 비로그인 fallback 처리
+        safeStorage.set('SEEDFIT_IS_PRO', 'false');
+        safeStorage.set('SEEDFIT_IS_PAID_PRO', 'false');
+        safeStorage.set('SEEDFIT_IS_TRIAL', 'false');
+        safeStorage.set('SEEDFIT_IS_PAST_DUE', 'false');
+        safeStorage.remove('SEEDFIT_IS_PAID_DUE');
+        clearVerifiedProSession();
         safeStorage.set('SEEDFIT_CANCELLED_AT', cancelledAt);
         safeStorage.set('SEEDFIT_RETENTION_UNTIL', retentionUntil);
-        window.setAdminTestMode('free');
+
         window.closeMembershipManagementModal();
-        showToast('구독이 취소되었습니다. (7일간 데이터 임시 보존 모드)');
-        return;
+        showToast('구독이 정상적으로 취소되었습니다. 다음 결제부터 자동 결제가 중단되며 기존 기록은 7일간 보존됩니다.');
+        renderCurrentTab();
+      } finally {
+        window._isCancellingSubscription = false;
       }
-
-      safeStorage.set('SEEDFIT_IS_PRO', 'false');
-      safeStorage.set('SEEDFIT_IS_PAID_PRO', 'false');
-      safeStorage.set('SEEDFIT_IS_TRIAL', 'false');
-      clearVerifiedProSession();
-      safeStorage.set('SEEDFIT_CANCELLED_AT', cancelledAt);
-      safeStorage.set('SEEDFIT_RETENTION_UNTIL', retentionUntil);
-
-      const authUser = getAuthUser();
-      if (authUser && authUser.id) {
-        const userIdKey = `${authUser.provider || 'user'}:${authUser.id}`;
-        const sb = getSupabase(userIdKey);
-        if (sb) {
-          try {
-            await sb.from('seedfit_user_data')
-              .update({
-                subscription_tier: 'free',
-                cancelled_at: cancelledAt,
-                data_retention_until: retentionUntil,
-                updated_at: new Date().toISOString()
-              })
-              .eq('user_id', userIdKey);
-
-            // Pro 알림 플래그 초기화 (향후 재구독 시 알림 재발송 보장)
-            safeStorage.remove('SEEDFIT_PRO_NOTIFIED_' + userIdKey);
-
-            // 운영자 텔레그램 구독 취소 알림 발송 (백그라운드 무음, DB 확정 갱신 보장)
-            sendTelegramAdminNotification('cancellation', userIdKey);
-          } catch (err) {
-            console.warn('Subscription cancel db update failed:', err);
-          }
-        }
-      }
-
-      window.closeMembershipManagementModal();
-      showToast('구독이 취소되었습니다. 7일 이내 재구독 시 데이터가 복원됩니다.');
-      renderCurrentTab();
     };
 
     // [결제 실패 연체 유예 모드] 앱 접속/포커스 시 결제 수단 변경 안내 모달 팝업
@@ -3306,7 +3357,7 @@
       }
     };
 
-    const CURRENT_APP_VERSION = 'v1.9.46';
+    const CURRENT_APP_VERSION = 'v1.9.47';
 
     function showToast(msg) {
       let toast = document.getElementById('toastAlert');

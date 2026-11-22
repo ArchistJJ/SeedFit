@@ -185,8 +185,17 @@ export async function onRequestPost(context) {
   // 4. Supabase DB 사용자 subscription_tier 동기화
   let dbUpdated = false;
   let dbError = null;
+  let isAlreadyCancelledRetry = false;
+  let suppressTelegram = false;
   const newTier = isPaymentFailed ? 'past_due' : (isProUpgrade ? 'pro' : (isProCancellation ? 'free' : null));
   const updateCardUrl = attributes.urls?.update_payment_method || attributes.urls?.customer_portal || null;
+
+  // Lemon Squeezy 구독 ID 추출 (직접 ID -> attributes.subscription_id -> update_card_url)
+  const cardUrlMatch = updateCardUrl ? String(updateCardUrl).match(/\/subscription\/(\d+)\//) : null;
+  const subscriptionId = (
+    (payload.data?.type === 'subscriptions' && payload.data?.id) ? String(payload.data.id) :
+    (attributes.subscription_id ? String(attributes.subscription_id) : (cardUrlMatch ? cardUrlMatch[1] : null))
+  );
 
   if (newTier) {
     let resolvedUserId = targetUserId;
@@ -214,41 +223,93 @@ export async function onRequestPost(context) {
 
     if (resolvedUserId) {
       try {
-        const now = new Date();
-        const patchData = {
-          subscription_tier: newTier,
-          updated_at: now.toISOString()
-        };
-
-        if (isPaymentFailed) {
-          patchData.payment_failed_at = now.toISOString();
-          if (updateCardUrl) patchData.update_card_url = updateCardUrl;
-        } else if (isProUpgrade) {
-          patchData.payment_failed_at = null;
-          if (updateCardUrl) patchData.update_card_url = updateCardUrl;
-        } else if (isProCancellation) {
-          patchData.cancelled_at = now.toISOString();
-          patchData.data_retention_until = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString();
-          patchData.payment_failed_at = null;
+        // 기존 사용자 상태 및 settings 조회 (충돌·덮어쓰기 방어)
+        let existingRow = null;
+        let existingRowFetched = false;
+        try {
+          const existingRes = await fetch(
+            `${SUPABASE_URL}/rest/v1/seedfit_user_data?user_id=eq.${encodeURIComponent(resolvedUserId)}&select=subscription_tier,cancelled_at,data_retention_until,payment_failed_at,settings`,
+            {
+              headers: {
+                'apikey': SUPABASE_ANON_KEY,
+                'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                'x-seedfit-user': resolvedUserId
+              }
+            }
+          );
+          if (existingRes.ok) {
+            const existingRows = await existingRes.json();
+            if (Array.isArray(existingRows) && existingRows.length > 0) {
+              existingRow = existingRows[0];
+              existingRowFetched = true;
+            }
+          }
+        } catch (fetchErr) {
+          console.warn('Webhook existing user lookup error:', fetchErr);
         }
 
-        const patchRes = await fetch(`${SUPABASE_URL}/rest/v1/seedfit_user_data?user_id=eq.${encodeURIComponent(resolvedUserId)}`, {
-          method: 'PATCH',
-          headers: {
-            'apikey': SUPABASE_ANON_KEY,
-            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-            'x-seedfit-user': resolvedUserId,
-            'Content-Type': 'application/json',
-            'Prefer': 'return=representation'
-          },
-          body: JSON.stringify(patchData)
-        });
-
-        if (patchRes.ok) {
-          const resRows = await patchRes.json();
-          dbUpdated = Array.isArray(resRows) && resRows.length > 0;
+        // [방어 A] 이미 앱에서 해지한 무료 계정에 대해 레몬스퀴즈 재결제 실패 웹훅이 뒤늦게 도착한 경우 past_due로 되돌리지 않음
+        if (isPaymentFailed && existingRow?.cancelled_at && existingRow?.subscription_tier !== 'pro') {
+          isAlreadyCancelledRetry = true;
+          if (existingRow?.settings?.lemonCancelledAt) {
+            suppressTelegram = true;
+          }
         } else {
-          dbError = await patchRes.text();
+          const now = new Date();
+          const patchData = {
+            subscription_tier: newTier,
+            updated_at: now.toISOString()
+          };
+
+          if (isPaymentFailed) {
+            // [방어 B] 이미 연체 유예 중이라면 최초 결제 실패 시각을 유지(3일 유예 카운트다운 리셋 방지)
+            patchData.payment_failed_at = (existingRow?.subscription_tier === 'past_due' && existingRow?.payment_failed_at)
+              ? existingRow.payment_failed_at
+              : now.toISOString();
+            if (updateCardUrl) patchData.update_card_url = updateCardUrl;
+          } else if (isProUpgrade) {
+            patchData.cancelled_at = null;
+            patchData.data_retention_until = null;
+            patchData.payment_failed_at = null;
+            if (updateCardUrl) patchData.update_card_url = updateCardUrl;
+          } else if (isProCancellation) {
+            patchData.cancelled_at = existingRow?.cancelled_at || now.toISOString();
+            patchData.data_retention_until = existingRow?.data_retention_until || new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString();
+            patchData.payment_failed_at = null;
+          }
+
+          // [방어 C] GET으로 기존 row 조회에 성공했을 때만 settings 병합 저장 (기존 설정 유실 원천 방지)
+          if (existingRowFetched) {
+            const nextSettings = { ...(existingRow.settings || {}) };
+            if (subscriptionId) {
+              nextSettings.lemonSubscriptionId = subscriptionId;
+            }
+            if (isProUpgrade) {
+              delete nextSettings.lemonCancelledAt;
+            } else if (isProCancellation) {
+              nextSettings.lemonCancelledAt = now.toISOString();
+            }
+            patchData.settings = nextSettings;
+          }
+
+          const patchRes = await fetch(`${SUPABASE_URL}/rest/v1/seedfit_user_data?user_id=eq.${encodeURIComponent(resolvedUserId)}`, {
+            method: 'PATCH',
+            headers: {
+              'apikey': SUPABASE_ANON_KEY,
+              'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+              'x-seedfit-user': resolvedUserId,
+              'Content-Type': 'application/json',
+              'Prefer': 'return=representation'
+            },
+            body: JSON.stringify(patchData)
+          });
+
+          if (patchRes.ok) {
+            const resRows = await patchRes.json();
+            dbUpdated = Array.isArray(resRows) && resRows.length > 0;
+          } else {
+            dbError = await patchRes.text();
+          }
         }
       } catch (err) {
         dbError = err.message;
@@ -307,7 +368,7 @@ export async function onRequestPost(context) {
     eventName === 'subscription_payment_recovered'
   );
 
-  if (isNotifyTarget) {
+  if (isNotifyTarget && !suppressTelegram) {
     const timeStr = getKSTTimeString();
     let eventTitle = '';
     if (eventName === 'subscription_created') {
@@ -317,7 +378,11 @@ export async function onRequestPost(context) {
     } else if (eventName === 'subscription_cancelled' || eventName === 'subscription_expired') {
       eventTitle = isTestMode ? '[테스트 결제] SEEDFIT PRO 구독 취소' : 'SEEDFIT PRO 구독 취소';
     } else if (eventName === 'subscription_payment_failed') {
-      eventTitle = isTestMode ? '[테스트 결제] SEEDFIT PRO 갱신 승인 실패 (연체 전환)' : 'SEEDFIT PRO 정기 갱신 결제 실패 (연체 유예 모드)';
+      if (isAlreadyCancelledRetry) {
+        eventTitle = 'SEEDFIT PRO 해지 계정 재청구 실패 (무료 유지)';
+      } else {
+        eventTitle = isTestMode ? '[테스트 결제] SEEDFIT PRO 갱신 승인 실패 (연체 전환)' : 'SEEDFIT PRO 정기 갱신 결제 실패 (연체 유예 모드)';
+      }
     } else if (eventName === 'subscription_payment_recovered') {
       eventTitle = isTestMode ? '[테스트 결제] SEEDFIT PRO 갱신 결제 성공 (연체 해소)' : 'SEEDFIT PRO 갱신 결제 성공 (연체 해소)';
     }
@@ -332,11 +397,15 @@ export async function onRequestPost(context) {
     }
 
     const modeBadge = isTestMode ? ' [TEST MODE]' : ' [LIVE MODE]';
-    const dbStatusText = targetUserId ? (dbUpdated ? '정상 반영 완료' : '반영 확인 완료') : '유저 키 미지정';
+    const dbStatusText = isAlreadyCancelledRetry
+      ? '무료 상태 유지 (이미 해지됨)'
+      : (targetUserId ? (dbUpdated ? '정상 반영 완료' : '반영 확인 완료') : '유저 키 미지정');
 
     let extraNote = '';
     if (eventName === 'subscription_payment_failed') {
-      extraNote = `\n안내: 카드 잔액 부족 또는 만료로 실패했습니다. 3일 내 미해결 시 무료 플랜으로 자동 강등됩니다.`;
+      extraNote = isAlreadyCancelledRetry
+        ? `\n안내: 이미 해지된 계정의 자동 재시도 실패 건 (DB 무료 상태 유지)`
+        : `\n안내: 카드 잔액 부족 또는 만료로 실패했습니다. 3일 내 미해결 시 무료 플랜으로 자동 강등됩니다.`;
     }
 
     const telegramMsg = `${eventTitle}${modeBadge}\n일시: ${timeStr}\nDB 승격: ${dbStatusText}${extraNote}\n\n${statsSection}`;
@@ -349,6 +418,8 @@ export async function onRequestPost(context) {
     event: eventName,
     test_mode: isTestMode,
     user_id: targetUserId,
+    subscription_id: subscriptionId,
+    already_cancelled_retry: isAlreadyCancelledRetry,
     db_updated: dbUpdated,
     db_error: dbError
   }), {
