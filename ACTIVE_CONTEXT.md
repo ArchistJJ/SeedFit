@@ -6,13 +6,18 @@
 ---
 
 ## 0. 멀티 디바이스 작업 즉시 인계 가이드 (Multi-Device Quick Handoff)
-- **인계 시점**: 2026-11-23 01:08 KST
+- **인계 시점**: 2026-11-23 01:28 KST
 - **현재 원격 저장소 동기화 상태**:
   - GitHub 비공개 저장소(`ArchistJJ/SeedFit`), `main` 브랜치에 최신 커밋까지 동기화 완료.
-  - 최신 릴리즈 버전: **`v1.9.47`**
+  - 최신 릴리즈 버전: **`v1.9.48`**
   - Cloudflare Pages 프로덕션 무중단 배포 연동 (`https://seedfit.pro/`, `https://www.seedfit.pro/`).
 - **최근 완료된 핵심 작업 요약**:
-  1. **실제 결제 대행사(Lemon Squeezy) 구독 해지 API 연동 및 웹훅 연체 덮어쓰기 방어 체계 구축 (v1.9.47)**:
+  1. **소급 해지 API Cloudflare 서브요청(50건) 상한 초과 방지 배치화 및 JSON 예외 처리 (v1.9.48)**:
+     - **원인 규명**: `LEMON_API_KEY` 등록 후 `sync_cancelled_users` 전체 호출 시 68명의 사용자를 순차 조회하면서 Cloudflare Pages Functions 무료 플랜의 요청당 서브요청 한도(50건)를 초과해 `Worker threw exception (1101)`이 발생함.
+     - **해결 내역 (`functions/api/cancel-subscription.js`)**:
+       - `payload.userIds` 직접 타게팅 지원(최대 15명/호출, 전체 리스트 조회 생략) 및 일반 전체 스캔 시 `offset`/`limit`(최대 20명) 페이지네이션 적용.
+       - `onRequestPost` 최상단 `try/catch` 도입으로 예기치 않은 오류 시 HTML 대신 구조화된 JSON `500` 응답 반환 보장.
+  2. **실제 결제 대행사(Lemon Squeezy) 구독 해지 API 연동 및 웹훅 연체 덮어쓰기 방어 체계 구축 (v1.9.47)**:
      - **원인 규명**: 텔레그램으로 수신된 정기 갱신 결제 실패 알림은 고객(`기현`, `kakao:5125713325`, 구독 `#2590072`)이 이미 **2026-11-08 12:59 KST**에 앱에서 [구독 취소]를 눌렀음에도, 기존 `confirmCancelSubscription`이 DB만 `free`로 변경하고 실제 Lemon Squeezy 구독 해지 API를 호출하지 않아 발생한 구조적 미연동 문제였음. (다른 유료 구독자 `최동호` 님은 11월 14일 정상 결제 완료.) 또한 `한종환`(`kakao:5127321448`, 구독 `#2591278`) 님 역시 앱 내 취소 후 Lemon Squeezy 측 해지 동기화 대상임을 전수 감사로 확인.
      - **실제 구독 해지 엔드포인트 신설 (`functions/api/cancel-subscription.js`)**:
        - 앱 내 [구독 취소] 요청 시 서버리스 환경에서 `DELETE https://api.lemonsqueezy.com/v1/subscriptions/{id}`를 호출해 실제 정기결제를 즉시 해지하고, Supabase DB(`subscription_tier: 'free'`, `cancelled_at`, `data_retention_until`, `settings`)를 일원화 동기화.

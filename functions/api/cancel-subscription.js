@@ -174,29 +174,51 @@ async function handleSyncCancelledUsers(request, env, payload) {
     }, 503);
   }
 
-  const listRes = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_admin_users_list`, {
-    method: 'POST',
-    headers: {
-      'apikey': SUPABASE_ANON_KEY,
-      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({ caller_user_id: MASTER_ADMIN_USER_ID })
-  });
+  const hasExplicitUserIds = Array.isArray(payload.userIds) && payload.userIds.length > 0;
+  let targetEntries = [];
+  let totalUsers = null;
+  let offset = 0;
+  let limit = 20;
+  let nextOffset = null;
 
-  if (!listRes.ok) {
-    return jsonResponse({ ok: false, error: 'Failed to fetch admin user list' }, 502);
-  }
+  if (hasExplicitUserIds) {
+    targetEntries = payload.userIds
+      .filter(id => typeof id === 'string' && id.trim())
+      .slice(0, 15)
+      .map(id => ({ user_id: id.trim() }));
+    totalUsers = targetEntries.length;
+    limit = targetEntries.length;
+  } else {
+    const listRes = await fetch(`${SUPABASE_URL}/rest/v1/rpc/get_admin_users_list`, {
+      method: 'POST',
+      headers: {
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ caller_user_id: MASTER_ADMIN_USER_ID })
+    });
 
-  const users = await listRes.json();
-  if (!Array.isArray(users)) {
-    return jsonResponse({ ok: false, error: 'Invalid user list response' }, 502);
+    if (!listRes.ok) {
+      return jsonResponse({ ok: false, error: 'Failed to fetch admin user list' }, 502);
+    }
+
+    const users = await listRes.json();
+    if (!Array.isArray(users)) {
+      return jsonResponse({ ok: false, error: 'Invalid user list response' }, 502);
+    }
+
+    offset = Math.max(0, Number(payload.offset) || 0);
+    limit = Math.min(20, Math.max(1, Number(payload.limit) || 20));
+    totalUsers = users.length;
+    targetEntries = users.slice(offset, offset + limit);
+    nextOffset = (offset + limit < users.length) ? (offset + limit) : null;
   }
 
   const results = [];
   const forceSync = payload.force === true;
 
-  for (const u of users) {
+  for (const u of targetEntries) {
     if (!u || !u.user_id) continue;
     const fetched = await fetchSupabaseUserRow(u.user_id);
     if (!fetched.ok || !fetched.row) continue;
@@ -243,6 +265,10 @@ async function handleSyncCancelledUsers(request, env, payload) {
 
   return jsonResponse({
     ok: true,
+    totalUsers,
+    offset,
+    limit,
+    nextOffset,
     processedCount: results.length,
     results
   }, 200);
@@ -260,115 +286,122 @@ export async function onRequestOptions() {
 }
 
 export async function onRequestPost(context) {
-  const { request, env } = context;
-
-  let payload = {};
   try {
-    payload = await request.json();
-  } catch (_) {
-    return jsonResponse({ ok: false, error: 'Invalid JSON payload' }, 400);
-  }
+    const { request, env } = context;
 
-  if (payload && payload.action === 'sync_cancelled_users') {
-    return handleSyncCancelledUsers(request, env, payload);
-  }
-
-  const origin = request.headers.get('origin');
-  if (!isAllowedOrigin(origin)) {
-    return jsonResponse({ ok: false, error: 'Forbidden origin' }, 403);
-  }
-
-  const { userId, name, email } = payload || {};
-  if (typeof userId !== 'string' || !/^(kakao|google|email):.+/.test(userId)) {
-    return jsonResponse({ ok: false, error: 'Invalid userId' }, 400);
-  }
-
-  const fetched = await fetchSupabaseUserRow(userId);
-  if (!fetched.ok) {
-    return jsonResponse({ ok: false, error: 'Database lookup failed' }, 502);
-  }
-  if (!fetched.row) {
-    return jsonResponse({ ok: false, error: 'User not found' }, 404);
-  }
-
-  const row = fetched.row;
-  if (
-    typeof row.email === 'string' && row.email.trim() &&
-    typeof email === 'string' && email.trim() &&
-    row.email.trim().toLowerCase() !== email.trim().toLowerCase()
-  ) {
-    return jsonResponse({ ok: false, error: 'User verification failed' }, 403);
-  }
-  if (
-    typeof row.name === 'string' && row.name.trim() &&
-    typeof name === 'string' && name.trim() &&
-    row.name.trim() !== name.trim()
-  ) {
-    return jsonResponse({ ok: false, error: 'User verification failed' }, 403);
-  }
-
-  let subscriptionId = extractSubscriptionId(row);
-  const needsLemonCancel = Boolean(subscriptionId) || row.subscription_tier === 'pro' || row.subscription_tier === 'past_due';
-  let cancelResult = null;
-
-  if (needsLemonCancel) {
-    const lemonApiKey = env && env.LEMON_API_KEY;
-    if (!lemonApiKey) {
-      return jsonResponse({
-        ok: false,
-        code: 'LEMON_API_KEY_MISSING',
-        error: '결제 시스템 해지 연동 설정이 아직 완료되지 않았습니다.'
-      }, 503);
+    let payload = {};
+    try {
+      payload = await request.json();
+    } catch (_) {
+      return jsonResponse({ ok: false, error: 'Invalid JSON payload' }, 400);
     }
 
-    if (!subscriptionId && row.email) {
-      subscriptionId = await findActiveLemonSubscriptionByEmail(lemonApiKey, row.email);
+    if (payload && payload.action === 'sync_cancelled_users') {
+      return await handleSyncCancelledUsers(request, env, payload);
     }
 
-    if (subscriptionId) {
-      cancelResult = await cancelLemonSubscription(lemonApiKey, subscriptionId);
-      if (!cancelResult.cancelled && !cancelResult.notFound) {
+    const origin = request.headers.get('origin');
+    if (!isAllowedOrigin(origin)) {
+      return jsonResponse({ ok: false, error: 'Forbidden origin' }, 403);
+    }
+
+    const { userId, name, email } = payload || {};
+    if (typeof userId !== 'string' || !/^(kakao|google|email):.+/.test(userId)) {
+      return jsonResponse({ ok: false, error: 'Invalid userId' }, 400);
+    }
+
+    const fetched = await fetchSupabaseUserRow(userId);
+    if (!fetched.ok) {
+      return jsonResponse({ ok: false, error: 'Database lookup failed' }, 502);
+    }
+    if (!fetched.row) {
+      return jsonResponse({ ok: false, error: 'User not found' }, 404);
+    }
+
+    const row = fetched.row;
+    if (
+      typeof row.email === 'string' && row.email.trim() &&
+      typeof email === 'string' && email.trim() &&
+      row.email.trim().toLowerCase() !== email.trim().toLowerCase()
+    ) {
+      return jsonResponse({ ok: false, error: 'User verification failed' }, 403);
+    }
+    if (
+      typeof row.name === 'string' && row.name.trim() &&
+      typeof name === 'string' && name.trim() &&
+      row.name.trim() !== name.trim()
+    ) {
+      return jsonResponse({ ok: false, error: 'User verification failed' }, 403);
+    }
+
+    let subscriptionId = extractSubscriptionId(row);
+    const needsLemonCancel = Boolean(subscriptionId) || row.subscription_tier === 'pro' || row.subscription_tier === 'past_due';
+    let cancelResult = null;
+
+    if (needsLemonCancel) {
+      const lemonApiKey = env && env.LEMON_API_KEY;
+      if (!lemonApiKey) {
         return jsonResponse({
           ok: false,
-          code: 'LEMON_CANCEL_FAILED',
-          error: '정기 결제 해지 처리 중 오류가 발생했습니다.',
-          detail: cancelResult.error
-        }, 502);
+          code: 'LEMON_API_KEY_MISSING',
+          error: '결제 시스템 해지 연동 설정이 아직 완료되지 않았습니다.'
+        }, 503);
+      }
+
+      if (!subscriptionId && row.email) {
+        subscriptionId = await findActiveLemonSubscriptionByEmail(lemonApiKey, row.email);
+      }
+
+      if (subscriptionId) {
+        cancelResult = await cancelLemonSubscription(lemonApiKey, subscriptionId);
+        if (!cancelResult.cancelled && !cancelResult.notFound) {
+          return jsonResponse({
+            ok: false,
+            code: 'LEMON_CANCEL_FAILED',
+            error: '정기 결제 해지 처리 중 오류가 발생했습니다.',
+            detail: cancelResult.error
+          }, 502);
+        }
       }
     }
-  }
 
-  const nowIso = new Date().toISOString();
-  const cancelledAt = row.cancelled_at || nowIso;
-  const retentionUntil = row.data_retention_until || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-  const mergedSettings = {
-    ...(row.settings || {}),
-    ...(subscriptionId ? { lemonSubscriptionId: subscriptionId, lemonCancelledAt: nowIso } : {})
-  };
+    const nowIso = new Date().toISOString();
+    const cancelledAt = row.cancelled_at || nowIso;
+    const retentionUntil = row.data_retention_until || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+    const mergedSettings = {
+      ...(row.settings || {}),
+      ...(subscriptionId ? { lemonSubscriptionId: subscriptionId, lemonCancelledAt: nowIso } : {})
+    };
 
-  const patchRes = await patchSupabaseUserRow(userId, {
-    subscription_tier: 'free',
-    cancelled_at: cancelledAt,
-    data_retention_until: retentionUntil,
-    payment_failed_at: null,
-    settings: mergedSettings,
-    updated_at: nowIso
-  });
+    const patchRes = await patchSupabaseUserRow(userId, {
+      subscription_tier: 'free',
+      cancelled_at: cancelledAt,
+      data_retention_until: retentionUntil,
+      payment_failed_at: null,
+      settings: mergedSettings,
+      updated_at: nowIso
+    });
 
-  if (!patchRes.ok) {
+    if (!patchRes.ok) {
+      return jsonResponse({
+        ok: false,
+        error: '구독 상태 저장 중 오류가 발생했습니다.',
+        detail: patchRes.error
+      }, 500);
+    }
+
+    return jsonResponse({
+      ok: true,
+      lemonCancelled: Boolean(subscriptionId && cancelResult?.cancelled),
+      alreadyCancelled: Boolean(cancelResult?.alreadyCancelled),
+      subscriptionId: subscriptionId || null,
+      cancelledAt,
+      retentionUntil
+    }, 200);
+  } catch (err) {
     return jsonResponse({
       ok: false,
-      error: '구독 상태 저장 중 오류가 발생했습니다.',
-      detail: patchRes.error
+      error: err?.message || 'Internal server error'
     }, 500);
   }
-
-  return jsonResponse({
-    ok: true,
-    lemonCancelled: Boolean(subscriptionId && cancelResult?.cancelled),
-    alreadyCancelled: Boolean(cancelResult?.alreadyCancelled),
-    subscriptionId: subscriptionId || null,
-    cancelledAt,
-    retentionUntil
-  }, 200);
 }

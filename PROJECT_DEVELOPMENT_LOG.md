@@ -1,5 +1,21 @@
 # 프로젝트 개발 로그 (PROJECT DEVELOPMENT LOG)
 
+## [2026-11-23] v1.9.48 소급 해지 API Cloudflare 50 서브요청 한도 방어 배치화 및 최상위 JSON 오류 처리
+
+### 1. 현상 및 원인
+- `LEMON_API_KEY` 등록 및 재배포 완료 후 `sync_cancelled_users` 실행 시 Cloudflare Error `1101` (`Worker threw exception`) HTTP 500 반환 확인.
+- 원인: 68명의 전체 회원에 대해 1인당 1회씩 개별 `fetch`를 반복하여 Cloudflare Workers 요청당 50 subrequest 제한을 초과함.
+
+### 2. 구현 및 보강 내역
+1. **`functions/api/cancel-subscription.js` 배치화 및 타게팅 지원**:
+   - `payload.userIds` 배열이 전달된 경우(최대 15건) `get_admin_users_list` 전체 조회 없이 지정된 대상만 즉시 조회/해지 처리.
+   - `userIds` 미전달 시에도 `offset`/`limit`(최대 20건/호출) 페이지네이션과 `nextOffset` 반환을 적용하여 회원 수가 증가해도 50 서브요청 상한을 절대 넘지 않도록 구조 개선.
+   - `onRequestPost` 최상위 `try/catch`를 추가하여 모든 예외를 JSON 형태로 반환하도록 보강.
+2. **버전 동기화 (v1.9.48)**:
+   - `index.html` (`v1.9.48`, `sw.js?v=1.9.48`), `sw.js` (`seedfit-cache-v1.9.48`), `package.json` (`1.9.48`).
+
+---
+
 ## [2026-11-23] v1.9.47 Lemon Squeezy 실제 정기구독 해지 API 연동 및 웹훅 연체 덮어쓰기 원천 차단
 
 ### 1. 현상 및 원인 정밀 분석
